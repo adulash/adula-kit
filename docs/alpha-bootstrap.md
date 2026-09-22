@@ -6,11 +6,18 @@ version tag and channel `alpha`. It runs the normal release gates and full CI,
 then signs the exact tested archives through GitHub OIDC. No npm token enters CI.
 The tag must point to current main so the signed source identity is exact.
 
-Download `signed-alpha-<run-id>`, verify `SHA256SUMS`, and publish each archive with
-an authenticated owner session, `--tag alpha --access public --ignore-scripts`
-and `--provenance=false --provenance-file=<archive>.sigstore`. The false flag selects
-the already signed bundle instead of attempting to generate another one locally;
-it does not omit provenance. npm verifies the package digest and Sigstore signature.
+Download `signed-alpha-<run-id>` and run:
+
+```sh
+node scripts/publish-bootstrap.mjs <npm-11.19-root> <signed-artifact-directory> --verify
+node scripts/publish-bootstrap.mjs <npm-11.19-root> <signed-artifact-directory> --publish
+```
+
+The helper verifies all checksums, release gates, package identities and Sigstore
+bundles before publishing through npm's publisher and normal interactive 2FA
+handler. It forces the public `alpha` tag and attaches the signed provenance.
+This avoids npm CLI's conflicting provenance flags and the manifest's automatic
+provenance generation setting without changing or repacking the tested archives.
 Never repack, change the bundle, publish a placeholder, or use latest/next.
 
 After publication, configure each package's trusted publisher for
