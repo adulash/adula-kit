@@ -1,0 +1,9 @@
+{{{ exports({ to: app.makePath('app/services/kit.ts') }) }}}
+import db from '@adonisjs/lucid/services/db'
+import { ActorStore, ResourceService } from '@adula/kit'
+import { registry } from '#start/modules'
+
+export function kit() {
+  const knex = db.connection().getWriteClient()
+  return { registry, resources: new ResourceService(knex, registry), actors: new ActorStore(knex, registry) }
+}

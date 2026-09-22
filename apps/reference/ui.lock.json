@@ -1,0 +1,158 @@
+{
+  "version": "0.2.0-alpha.1",
+  "kitCompatibility": "0.2",
+  "files": {
+    "inertia/components/ui/button.tsx": {
+      "hash": "79dd6f75f8136394442202d6b8b922fb269eaad0a5dba579397c9d5b41f893bb",
+      "component": "button"
+    },
+    "inertia/components/ui/input.tsx": {
+      "hash": "0c9457181f6ddc80969bcf854e92c362903a55b6e889fbef3fd85343ecc4af5b",
+      "component": "input"
+    },
+    "inertia/components/ui/textarea.tsx": {
+      "hash": "5cafcfeeee29534f449387a16b585f5923d2faab1a0cdc50a874416b175f59ce",
+      "component": "textarea"
+    },
+    "inertia/components/ui/select.tsx": {
+      "hash": "a2c30e25b945c43baa874845e841104df23e5f1b39623f1387a41cccaa4502f9",
+      "component": "select"
+    },
+    "inertia/components/ui/checkbox.tsx": {
+      "hash": "ba0ac64064e2d8fa7299d53e9e84b9a4772fef8dd4cf6170c56d3030a1d69941",
+      "component": "checkbox"
+    },
+    "inertia/components/ui/switch.tsx": {
+      "hash": "c9652d79050f4ec5b9327564338b646bf84044a1d70c32f527162deabab78105",
+      "component": "switch"
+    },
+    "inertia/components/ui/radio-group.tsx": {
+      "hash": "61eac2e7db42dcf202ff0ee4ef5a1faff987bce198dfed36944d288ac2c36582",
+      "component": "radio-group"
+    },
+    "inertia/components/ui/table.tsx": {
+      "hash": "e3c2bc345a7f9f834c614a7a1740be10bc853bc9df50c93a1d22603863a57418",
+      "component": "table"
+    },
+    "inertia/components/ui/form.tsx": {
+      "hash": "18c15d0630a094360d7088a0fb9f6ad87e6e09779e88aa27001af74c21d73177",
+      "component": "form"
+    },
+    "inertia/components/ui/label.tsx": {
+      "hash": "b823de7355666bd6a6a2cf88a6630e436d021b38fdbef5b749fac0921b86f44d",
+      "component": "label"
+    },
+    "inertia/components/ui/dialog.tsx": {
+      "hash": "6618db2b9a9add8246d92fed5a5be1005d8716b35a1869ae96c3f5c82d052d67",
+      "component": "dialog"
+    },
+    "inertia/components/ui/sheet.tsx": {
+      "hash": "731fa227456aa317f883ed50a2f52d2469f9191ec4522fd32ef66be7ce9cd0bc",
+      "component": "sheet"
+    },
+    "inertia/components/ui/dropdown-menu.tsx": {
+      "hash": "b936eeed29a00251519a1b7040571e14c024426aec4c4f88125c650e09a274ad",
+      "component": "dropdown-menu"
+    },
+    "inertia/components/ui/popover.tsx": {
+      "hash": "d8bfac795e9750a8994836b9f773ddceb4892730f9ee1e02e498fb6892c3be44",
+      "component": "popover"
+    },
+    "inertia/components/ui/command.tsx": {
+      "hash": "77fc0ca97298577226335dffeb7eb89ec80bb22683695ef17ea2bf97a3883313",
+      "component": "command"
+    },
+    "inertia/components/ui/calendar.tsx": {
+      "hash": "d936d1aa27c7e586630c2a9b1bd7711cf8b48a5b53f8a36b25b85eda40a59296",
+      "component": "calendar"
+    },
+    "inertia/components/ui/badge.tsx": {
+      "hash": "13a9380dfff853ee730c14a52df49f22aecd31f40f2998d7c1e7ec458b6e1650",
+      "component": "badge"
+    },
+    "inertia/components/ui/card.tsx": {
+      "hash": "ef8305b12c3112dab42a4708b41b1ebcc042fa5ab4c20f039da8d45b09ed5059",
+      "component": "card"
+    },
+    "inertia/components/ui/tabs.tsx": {
+      "hash": "85c60361fe283f036e742e3e964ed426ad02f457babc5de703c6ae372f3c7e2d",
+      "component": "tabs"
+    },
+    "inertia/components/ui/sonner.tsx": {
+      "hash": "7816205638b0630f7ee649c1e36adc10ebe0f27c9db6320dcc64a32489b634cc",
+      "component": "sonner"
+    },
+    "inertia/components/ui/skeleton.tsx": {
+      "hash": "f51ce0fcd31e5c31437382e80ea0af94b4fc3d64221d27091d36824546780a43",
+      "component": "skeleton"
+    },
+    "inertia/components/ui/pagination.tsx": {
+      "hash": "be080224e17bf866b2e04c25c251b511e1e9b1562b0b16bb3b814c4ba4a5c0df",
+      "component": "pagination"
+    },
+    "inertia/components/ui/tooltip.tsx": {
+      "hash": "611e4305879b2773eafe76bf3c5caa69d8e47367fd97887a71634a27828f4433",
+      "component": "tooltip"
+    },
+    "inertia/components/ui/separator.tsx": {
+      "hash": "7d943e8c309f8d530f25433ffc9167f771e635f2eeb1c3b55fa16955068c1657",
+      "component": "separator"
+    },
+    "inertia/components/ui/alert.tsx": {
+      "hash": "d03dcae5cdb63c381c1144ca9a0c49ba0e46466967d7deb94662034042acb034",
+      "component": "alert"
+    },
+    "inertia/components/ui/resource-page.tsx": {
+      "hash": "b42141dd839d557a40275a1fda0964cfc1fe63a6a633349001c93069b9e24fa0",
+      "component": "resource-page"
+    },
+    "inertia/components/ui/data-table.tsx": {
+      "hash": "445a4d7f88007189d3fb2bc639e98a450bedf9a168c8f7a20aa9754e7f6c5f85",
+      "component": "data-table"
+    },
+    "inertia/components/ui/can.tsx": {
+      "hash": "66bc071a7e60a67237cc049dee930c66ad47e489c68b3fd0a20c1c50b3d91bba",
+      "component": "can"
+    },
+    "inertia/components/ui/resource-value.tsx": {
+      "hash": "3d591aa60865545a42af41f819fb8a3474d0b9e02cd55c425a9e0856fff668f2",
+      "component": "resource-value"
+    },
+    "inertia/components/ui/resource-form.tsx": {
+      "hash": "36c9a1087068ce9ef46bcb1d8a84adca8c3655630e5fc0413e11e3d1f7c0f5a0",
+      "component": "resource-form"
+    },
+    "inertia/components/ui/resource-field.tsx": {
+      "hash": "1668a2f2fc224c7b115e5aca15e44a8ea82bfeb1d34b0c0c0779c0dfc1c14af7",
+      "component": "resource-field"
+    },
+    "inertia/components/ui/resource-show.tsx": {
+      "hash": "0f7121ae9d20b7d547599f6594c34cbdce6873ebd5c0baa47af1fd02b3adf9ad",
+      "component": "resource-show"
+    },
+    "inertia/components/ui/resource-actions.tsx": {
+      "hash": "738245c46e2dc5e6ada362ed24eb13369618648f435f21e06d7b099fef63c91a",
+      "component": "resource-actions"
+    },
+    "inertia/components/ui/resource-surface.tsx": {
+      "hash": "8b1e125b00cb487e249ca241bab2afcb15a027ad96e3975596658bd2e5971e83",
+      "component": "resource-surface"
+    },
+    "inertia/components/ui/ui-preferences.tsx": {
+      "hash": "a3e8ff39f640a2377cf9403b7001eb683e3b1ec2958765ea33b54f423e87ca52",
+      "component": "ui-preferences"
+    },
+    "inertia/components/ui/hijri-calendar.tsx": {
+      "hash": "cae2500903e79142c6d716d2ee191a4bbc9ee501ea11ce9b00bce61626462bcd",
+      "component": "hijri-calendar"
+    },
+    "inertia/components/ui/confirm-action.tsx": {
+      "hash": "5c93f00dbcb35a03da196e59f72bc1fde9a987ec025a0f0537cfa0a12f013ad0",
+      "component": "confirm-action"
+    },
+    "inertia/components/ui/calendar_date.ts": {
+      "hash": "f41962e057abf26945ce77f16625af7f12ead8f5ad68eed3508b3f4f8c11aeb5",
+      "component": "calendar-date"
+    }
+  }
+}

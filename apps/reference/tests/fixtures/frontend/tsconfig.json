@@ -1,0 +1,10 @@
+{
+  "extends": "../../../inertia/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "~/*": ["../../../inertia/*"],
+      "@generated/*": ["../../../.adonisjs/client/*"]
+    }
+  },
+  "include": ["./**/*.ts", "./**/*.tsx"]
+}

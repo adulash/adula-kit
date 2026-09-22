@@ -1,0 +1,4 @@
+services:
+  backup:
+    volumes:
+      - uploads:/app/apps/reference/storage/uploads

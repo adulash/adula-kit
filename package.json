@@ -1,0 +1,30 @@
+{
+  "name": "adula",
+  "version": "0.2.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "build": "pnpm --filter @adula/kit build && pnpm --filter @adula/ui build && pnpm --filter @adula/create-app build && pnpm --filter @adula/reference build",
+    "typecheck": "pnpm --filter @adula/kit build && pnpm -r typecheck",
+    "test": "pnpm --filter @adula/kit test && pnpm --filter @adula/ui test && pnpm --filter @adula/reference test && pnpm --filter @adula/create-app test",
+    "test:kit": "pnpm --filter @adula/kit test",
+    "test:consumer": "node scripts/test-consumer.mjs",
+    "test:medical": "node scripts/test-medical-consumer.mjs",
+    "test:create": "node scripts/test-create.mjs",
+    "test:upgrade": "node scripts/test-upgrade.mjs",
+    "test:upgrade:synthetic": "node scripts/test-upgrade.mjs --synthetic",
+    "test:s3": "node scripts/test-s3.mjs",
+    "dev": "pnpm --filter @adula/kit build && pnpm --filter @adula/reference dev",
+    "doctor": "pnpm --filter @adula/reference exec node ace adula:doctor",
+    "lint": "pnpm -r lint",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "test:release": "node --test tests/release/*.test.mjs",
+    "check:release": "node scripts/check-release.mjs",
+    "release:status": "node scripts/release-status.mjs"
+  }
+}

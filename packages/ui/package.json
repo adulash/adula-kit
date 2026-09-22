@@ -1,0 +1,47 @@
+{
+  "name": "@adula/ui",
+  "version": "0.2.0-alpha.1",
+  "license": "MIT",
+  "type": "module",
+  "description": "Arabic RTL shadcn registry copied into AdonisJS applications",
+  "files": [
+    "build",
+    "LICENSE.shadcn.md",
+    "UPSTREAM.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    "./package.json": "./package.json",
+    "./registry/*": "./build/*.json"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "build": "node ../../scripts/build-ui-registry.mjs"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adulash/adula-kit.git",
+    "directory": "packages/ui"
+  },
+  "homepage": "https://github.com/adulash/adula-kit/tree/main/packages/ui#readme",
+  "bugs": {
+    "url": "https://github.com/adulash/adula-kit/issues"
+  },
+  "author": "adula contributors",
+  "keywords": [
+    "adonisjs",
+    "business-applications",
+    "arabic",
+    "rtl",
+    "shadcn",
+    "react"
+  ]
+}

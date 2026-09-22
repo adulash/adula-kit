@@ -1,0 +1,16 @@
+{{{ exports({ to: app.makePath('start/kit_routes.ts') }) }}}
+import router from '@adonisjs/core/services/router'
+import { middleware } from '#start/kernel'
+const ResourcesController = () => import('#controllers/resources_controller')
+
+router.group(() => {
+  router.get('/resources/:resource', [ResourcesController, 'index'])
+  router.get('/resources/:resource/create', [ResourcesController, 'create'])
+  router.get('/resources/:resource/:id/edit', [ResourcesController, 'edit'])
+  router.get('/resources/:resource/:id', [ResourcesController, 'show'])
+  router.post('/resources/:resource', [ResourcesController, 'store'])
+  router.patch('/resources/:resource/:id', [ResourcesController, 'update'])
+  router.delete('/resources/:resource/:id', [ResourcesController, 'destroy'])
+  router.post('/resources/:resource/:id/submit', [ResourcesController, 'submit'])
+  router.post('/resources/:resource/:id/cancel', [ResourcesController, 'cancel'])
+}).use(middleware.auth())

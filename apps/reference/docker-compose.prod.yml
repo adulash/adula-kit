@@ -1,0 +1,98 @@
+# Local integration is verified; staging/restore acceptance is still required.
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN is required}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      web: { condition: service_healthy }
+  web: &application
+    image: adula-reference:${APP_VERSION:?APP_VERSION is required}
+    build:
+      context: ../..
+      dockerfile: apps/reference/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SESSION_DRIVER: database
+    volumes: [uploads:/app/apps/reference/storage/uploads]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+  worker:
+    <<: *application
+    command: node ace.js adula:worker
+    healthcheck:
+      test: [CMD, node, ace.js, 'adula:runtime:health', '--service=worker']
+      interval: 30s
+      timeout: 15s
+      start_period: 30s
+      retries: 3
+  scheduler:
+    <<: *application
+    command: node ace.js scheduler:run
+    volumes:
+      - uploads:/app/apps/reference/storage/uploads
+      - backups:/backups:ro
+    scale: 1
+    healthcheck:
+      test: [CMD, node, ace.js, 'adula:runtime:health', '--service=scheduler']
+      interval: 30s
+      timeout: 15s
+      start_period: 30s
+      retries: 3
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    command: postgres -c shared_preload_libraries=pg_stat_statements
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  backup:
+    image: adula-reference:${APP_VERSION:?APP_VERSION is required}
+    user: root
+    restart: unless-stopped
+    env_file: .env
+    environment: { DB_HOST: postgres, DB_PORT: 5432, REDIS_HOST: redis, REDIS_PORT: 6379, NODE_ENV: production }
+    command: sh deploy/backup.sh
+    healthcheck: { disable: true }
+    volumes:
+      - backups:/backups
+      - uploads:/app/apps/reference/storage/uploads:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+volumes:
+  caddy_data:
+  uploads:
+  backups:
+  pgdata:
+  redisdata:

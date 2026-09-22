@@ -1,0 +1,16 @@
+node_modules/
+.pnpm-store/
+.work/
+**/build/
+**/coverage/
+**/.env
+**/.env.test
+**/tmp/
+**/storage/
+**/public/assets/
+test-results/
+playwright-report/
+*.tgz
+*.log
+.DS_Store
+.playwright-mcp/

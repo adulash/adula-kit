@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "declaration": true },
+  "include": ["index.ts", "configure.ts", "stubs/main.ts", "src/**/*.ts", "providers/**/*.ts", "commands/**/*.ts", "database/**/*.ts"],
+  "exclude": ["build", "node_modules", "tests", "bin"]
+}

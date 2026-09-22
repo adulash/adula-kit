@@ -1,0 +1,92 @@
+{
+  "target": "1.0.0",
+  "version": "0.2.0-alpha.1",
+  "phases": [
+    {
+      "id": 0,
+      "status": "pending",
+      "evidence": [
+        "docs/evidence/s3-setup-2026-09-21.json",
+        "docs/evidence/docker-backup-2026-09-22.json",
+        "docs/evidence/local-staging-2026-09-22.json"
+      ],
+      "remaining": "Remaining creator/deployment container paths, remote CI/branch protection and timed feasibility exercise. Local application/backup Docker services and real S3 recovery passed. The @adula scope is reserved by the owner."
+    },
+    {
+      "id": 1,
+      "status": "pending",
+      "evidence": [
+        "docs/evidence/external-mail-runtime-2026-09-21.json",
+        "docs/evidence/offsite-database-restore-2026-09-21.json",
+        "docs/evidence/offsite-attachment-restore-2026-09-21.json",
+        "docs/evidence/source-s3-acceptance-2026-09-21.json",
+        "docs/evidence/operational-backup-2026-09-22.json",
+        "docs/evidence/docker-backup-2026-09-22.json",
+        "docs/evidence/scheduled-backup-2026-09-22.json",
+        "docs/evidence/backup-monitor-repair-2026-09-22.json",
+        "docs/evidence/local-staging-2026-09-22.json"
+      ],
+      "remaining": "Staging deployment, natural daily/monthly scheduled execution and resource contract gaps. Source-S3 recovery, COMPLETE ordering and scheduler volume permissions passed direct command and local Docker acceptance. No production supervision acceptance. Accelerated timer dispatch/recovery passed; offsite monitor prefix isolation and COMPLETE checks were repaired and tested."
+    },
+    {
+      "id": 2,
+      "status": "pending",
+      "evidence": [
+        "docs/evidence/medical-consumer-2026-09-22.json"
+      ],
+      "remaining": "Local disposable medical consumer and bound-attachment restore passed. k6 list/save latency budgets failed (p95 504.83/463.00ms); staging performance, human RTL review including localized date order, genuine published minor upgrade and council 1 remain pending."
+    },
+    {
+      "id": 3,
+      "status": "pending",
+      "evidence": [],
+      "remaining": "Business collaboration, assignments, import, printing, webhooks, templates/SSE, API tokens/OpenAPI and human ASVS review of 2FA; each with consumer and test."
+    },
+    {
+      "id": 4,
+      "status": "pending",
+      "evidence": [],
+      "remaining": "Complete document lifecycle and versioned durable XState workflows, six node types, concurrency/recovery tests and approval/retry screens."
+    },
+    {
+      "id": 5,
+      "status": "pending",
+      "evidence": [],
+      "remaining": "Capability generation, full idea review, five reviewer skills, isolated acceptance consumers replacing deleted educational modules, second k6 and agent exercise."
+    },
+    {
+      "id": 6,
+      "status": "pending",
+      "evidence": [],
+      "remaining": "Public API extraction, independent disposable framework consumer integration, customization/data preservation, Docker runtime/recovery and council 2 ADR. No permanent medical product is required (ADR 024). A published-predecessor upgrade applies after a baseline exists."
+    },
+    {
+      "id": 7,
+      "status": "pending",
+      "evidence": [],
+      "remaining": "All framework 1.0 criteria accepted, independent consumer acceptance, public MIT repository and gap reporting; authorized release and verified npm publishing."
+    }
+  ],
+  "updatedAt": "2026-09-22",
+  "scopeAmendments": [
+    "docs/decisions/021-optional-oauth.md",
+    "docs/decisions/024-framework-alpha-and-local-staging.md"
+  ],
+  "optionalIntegrations": {
+    "oauth": {
+      "requiredForBaseRelease": false,
+      "enabled": false,
+      "externalVerification": "not performed; owner declined current setup",
+      "decision": "docs/decisions/021-optional-oauth.md"
+    }
+  },
+  "alpha": {
+    "version": "0.2.0-alpha.1",
+    "authorized": true,
+    "reviewedBy": "repository owner (conversation)",
+    "reviewedAt": "2026-09-22",
+    "evidence": [
+      "docs/evidence/alpha-authorization-2026-09-22.json"
+    ]
+  }
+}

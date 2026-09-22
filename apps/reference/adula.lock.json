@@ -1,0 +1,8 @@
+{
+  "version": "0.2.0-alpha.1",
+  "managedRules": "31de59c27e9ab9b0c6030a5170e3fe2b398ec3ead1496a98abef6111f7d55a6e",
+  "skills": {
+    ".agents/skills/adula-idea-review/SKILL.md": "bc82e972b98cfe1815150ad7c111969c05f307da24839d48c62a77f92d032d67",
+    ".agents/skills/adula-frontend-design/SKILL.md": "a8c3b02f1454beb775213551030fe9b4f77ff70bd9fbe3365f2622cf40d6ec2e"
+  }
+}
