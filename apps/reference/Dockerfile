@@ -29,6 +29,7 @@ COPY --from=builder --chown=node:node /app/packages/ui/package.json ./node_modul
 COPY --from=builder --chown=node:node /app/packages/ui/build ./node_modules/@adula/ui/build
 COPY --from=builder --chown=node:node /app/apps/reference/build ./
 COPY --from=builder --chown=node:node /app/apps/reference/AGENTS.md ./AGENTS.md
+COPY --from=builder --chown=node:node /app/apps/reference/CLAUDE.md /app/apps/reference/KIT_GAPS.md ./
 COPY --from=builder --chown=node:node /app/apps/reference/adula.lock.json /app/apps/reference/ui.lock.json ./
 COPY --from=builder --chown=node:node /app/apps/reference/.agents ./.agents
 # Doctor verifies project-owned UI hashes and inventories customized pages.
