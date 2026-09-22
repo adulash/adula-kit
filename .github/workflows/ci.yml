@@ -108,4 +108,7 @@ jobs:
             .work/adula-create-app-*.tgz
             .work/SHA256SUMS
           if-no-files-found: error
+          # Only the four allowlisted artifact paths above are uploaded. The
+          # parent .work directory is hidden and contains other private fixtures.
+          include-hidden-files: true
           retention-days: 14
