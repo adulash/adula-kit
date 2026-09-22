@@ -7,7 +7,8 @@
       "status": "pending",
       "evidence": [
         "docs/evidence/s3-setup-2026-09-21.json",
-        "docs/evidence/docker-backup-2026-09-22.json"
+        "docs/evidence/docker-backup-2026-09-22.json",
+        "docs/evidence/local-staging-2026-09-22.json"
       ],
       "remaining": "Remaining creator/deployment container paths, remote CI/branch protection and timed feasibility exercise. Local application/backup Docker services and real S3 recovery passed. The @adula scope is reserved by the owner."
     },
@@ -22,7 +23,8 @@
         "docs/evidence/operational-backup-2026-09-22.json",
         "docs/evidence/docker-backup-2026-09-22.json",
         "docs/evidence/scheduled-backup-2026-09-22.json",
-        "docs/evidence/backup-monitor-repair-2026-09-22.json"
+        "docs/evidence/backup-monitor-repair-2026-09-22.json",
+        "docs/evidence/local-staging-2026-09-22.json"
       ],
       "remaining": "Staging deployment, natural daily/monthly scheduled execution and resource contract gaps. Source-S3 recovery, COMPLETE ordering and scheduler volume permissions passed direct command and local Docker acceptance. No production supervision acceptance. Accelerated timer dispatch/recovery passed; offsite monitor prefix isolation and COMPLETE checks were repaired and tested."
     },

@@ -10,6 +10,7 @@ import { requireSyntheticRehearsal } from '../../scripts/upgrade-mode.mjs'
 
 test('release report exposes all pending phases even when version fails first', async () => {
   const report = await releaseStatus()
+  assert.equal(report.channels.alpha.guardPassed, true)
   assert.equal(report.channels.next.guardPassed, false)
   assert.equal(report.channels.latest.guardPassed, false)
   assert.equal(report.phases.length, 8)

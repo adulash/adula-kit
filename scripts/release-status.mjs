@@ -7,7 +7,7 @@ import { checkRelease } from './check-release.mjs'
 export async function releaseStatus(root = fileURLToPath(new URL('../', import.meta.url))) {
   const readiness = JSON.parse(await readFile(resolve(root, 'docs/release-readiness.json'), 'utf8'))
   const channels = {}
-  for (const channel of ['next', 'latest']) {
+  for (const channel of ['alpha', 'next', 'latest']) {
     try {
       await checkRelease({ root, channel })
       channels[channel] = { guardPassed: true }

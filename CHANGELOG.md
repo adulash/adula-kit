@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0-alpha.1 — release candidate preparation, 2026-09-22
+
+* Prepare the owner-authorized experimental alpha distribution and one-command
+  creator; keep next/latest and incomplete 1.0 acceptance explicitly blocked.
+* Select local production-mode Docker staging and framework-only delivery (ADR 024).
+* Correct the source/provenance destination to adulash/adula-kit.
+* Include managed diagnostic files in the production image so initial installation
+  and doctor can verify the same UI and agent assets as the source checkout.
+* Use PostgreSQL 17 backup/restore clients in CI; the first remote run exposed the
+  runner's incompatible default PostgreSQL 16 client.
+
 ## 0.2.0 — unreleased
 
 * Add @adula/create-app for one-command creation from an empty folder: AdonisJS, application screens, kit/UI, managed design skill, company identity, isolated PostgreSQL/Redis, fresh migrations, administrator setup and verified assets. Keep registry availability pending publication and host/external-service prerequisites explicit.
