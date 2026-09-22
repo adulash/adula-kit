@@ -29,6 +29,12 @@ COPY --from=builder --chown=node:node /app/packages/ui/package.json ./node_modul
 COPY --from=builder --chown=node:node /app/packages/ui/build ./node_modules/@adula/ui/build
 COPY --from=builder --chown=node:node /app/apps/reference/build ./
 COPY --from=builder --chown=node:node /app/apps/reference/AGENTS.md ./AGENTS.md
+COPY --from=builder --chown=node:node /app/apps/reference/adula.lock.json /app/apps/reference/ui.lock.json ./
+COPY --from=builder --chown=node:node /app/apps/reference/.agents ./.agents
+# Doctor verifies project-owned UI hashes and inventories customized pages.
+# These sources are diagnostics only; the HTTP server serves compiled assets.
+COPY --from=builder --chown=node:node /app/apps/reference/inertia/components/ui ./inertia/components/ui
+COPY --from=builder --chown=node:node /app/apps/reference/inertia/pages ./inertia/pages
 COPY --from=builder --chown=node:node /app/apps/reference/deploy ./deploy
 RUN ln -s ../../.pnpm/node_modules node_modules/@adula/kit/node_modules     && mkdir -p storage/uploads && chown node:node storage storage/uploads
 RUN node -e "const fs=require('node:fs'); for (const name of ['kit','ui']) { if (!fs.realpathSync('node_modules/@adula/'+name).startsWith(process.cwd()+'/')) throw new Error('Non-portable workspace dependency: '+name) }"     && node --input-type=module -e "await import('@adula/kit'); await import('@adula/ui/package.json', {with:{type:'json'}})"

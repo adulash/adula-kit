@@ -64,6 +64,17 @@ jobs:
         with: { version: 11.19.0 }
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: pnpm }
+      - name: Use PostgreSQL 17 backup and restore clients
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -x /usr/lib/postgresql/17/bin/pg_dump ]; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client-17
+          fi
+          echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
+          /usr/lib/postgresql/17/bin/pg_dump --version
+          /usr/lib/postgresql/17/bin/pg_restore --version
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @adula/reference exec playwright install --with-deps chromium --only-shell
       - run: pnpm build
