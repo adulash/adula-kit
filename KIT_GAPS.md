@@ -29,16 +29,23 @@ The earlier local-attachment offsite exercise remains recorded separately (docs/
 
 Needed by: generated entities and the independent phase 2 consumer.
 Implemented: generated HTTP fixtures for every reference resource with persisted values, scope isolation, uniqueness, conflicts and soft deletion; all-field service fixtures; attachment field contracts; independent configure/install/module commands; Node-based consumer orchestration; pinned CI starter configuration.
-Remaining: the dynamic resource controller still has an unknown Tuyau response type, so request/response assertions per field kind are not derived from the route types; remote CI has never executed; JSON, attachment and hasMany authorization predicates remain explicitly unsupported.
+Remaining: the dynamic resource controller still has an unknown Tuyau response type, so request/response assertions per field kind are not derived from the route types; remote CI is now executing through PR #1; JSON, attachment and hasMany authorization predicates remain explicitly unsupported.
 Next: type the dynamic controller's responses, then prove a genuinely different published minor version in a consumer that customized a component and a page. Reinstalling local archives or synthesizing a predecessor from current source is not that upgrade test.
 
 ## GAP-003 — Operational acceptance and external resources
 
 Needed by: mandatory staging and offsite restoration gates.
 Implemented: isolated PostgreSQL 17/Redis, production assets, Compose/Caddy, backup-object checks, watchdog, restore reconciliation and a scheduled monthly restore drill.
-Constraint: Docker Engine 29.8.1 and Compose 5.5.1 are available inside Ubuntu WSL; isolated image build, healthy web/worker/scheduler, daily-shell startup, scheduler restore drill and actual mixed-disk recovery passed; staging address/SSH is not supplied. S3 and offsite credentials are configured, and isolated database/local-file/source-S3 recovery exercises passed; scheduled backup operation and production recovery remain unverified. The owner confirmed reservation of @adula on 2026-09-19. The repository remains private; npm trusted publishers, remote CI and branch protection are not configured/verified. GitHub pushes remain on hold. The prepared release workflow does not resolve these external prerequisites.
-Next: deploy staging and exercise scheduled offsite record-plus-attachment restoration. Remote CI and branch protection also await GitHub authorization.
-Workaround: none. Local operation of the shipped services does not replace staging and natural schedule acceptance. No deployment or published package is claimed.
+Current: the owner selected local Docker staging and lifted the GitHub hold. The
+production build is running on loopback with separate volumes, healthy services,
+successful initial signup/install/doctor and startup offsite backup. An empty-core
+manual restore passed; it is not new bound-file or natural-monthly evidence. See
+docs/evidence/local-staging-2026-09-22.json. The owner separately attests testing
+operations. No external host is required for the selected environment.
+Remaining: PR CI success and merge, effective branch protection and npm first
+publication/trusted publishing. GitHub's current private-repository plan rejects
+branch protection; public visibility and npm CLI authentication await the owner.
+No external production-capacity or public TLS claim is made.
 
 ## GAP-004 — Phase 2 performance budget and the vertical slice
 
@@ -51,11 +58,11 @@ Next: profile request/query/pool contention and rerun on actual staging hardware
 ## GAP-005 — Later approved roadmap
 
 Needed by: the plan's 1.0 completion criterion.
-Remaining: phases 3–7 business features, the XState engine, the five reviewer skills, the full medical-assets application, production acceptance and public release.
+Remaining: phases 3–7 business features, the XState engine, the five reviewer skills, independent framework-consumer integration/runtime acceptance and public release (ADR 024 removes a permanent medical product).
 Scope: the owner explicitly selected full 1.0 acceptance. Deleted educational modules must stay out of normal operation; isolated fixtures or independent applications provide feature consumers. See docs/acceptance-1.0.md and docs/release-readiness.json.
 Constraint: the plan explicitly forbids phase 3 before the independently upgraded and restored phase 2 slice passes.
-Next: follow the original gates in order. Publication requires the user's explicit authorization.
+Next: follow the framework gates in order under ADR 024. The owner authorized 0.2.0-alpha.1 only; latest/next remain blocked.
 
 ## Schedule follow-up — 2026-09-22
 
-Accelerated Docker timer dispatch, repeated bound-record/local/S3 restore, missing-archive rejection and automatic recovery passed. The two monitoring defects found in that run were repaired: listing and assessment honor BACKUP_S3_PREFIX, and COMPLETE is required in the same recent snapshot. Regression tests and real-provider command checks passed; see docs/evidence/backup-monitor-repair-2026-09-22.json. Evidence: docs/evidence/scheduled-backup-2026-09-22.json. Natural daily/monthly operation and staging remain open.
+Accelerated Docker timer dispatch, repeated bound-record/local/S3 restore, missing-archive rejection and automatic recovery passed. The two monitoring defects found in that run were repaired: listing and assessment honor BACKUP_S3_PREFIX, and COMPLETE is required in the same recent snapshot. Regression tests and real-provider command checks passed; see docs/evidence/backup-monitor-repair-2026-09-22.json. Evidence: docs/evidence/scheduled-backup-2026-09-22.json. Natural daily/monthly machine evidence remains separate from owner attestation; selected local Docker staging is now recorded in the newer evidence.

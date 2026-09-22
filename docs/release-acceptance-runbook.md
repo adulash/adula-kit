@@ -148,24 +148,13 @@ test application is temporary, needs no identity, and will be deleted. This does
 not accept a phase or lift the existing `latest`/`next` guards. Retain its acceptance
 artifacts until their evidence has been reviewed; this packet does not delete it.
 
-Resolve the following before dependent external work:
+Resolved by the owner: local Docker staging, GitHub PR/CI/merge authorization,
+alpha publication, no published predecessor, and framework-only scope (ADR 024).
+Operations are owner-attested; human RTL review remains a separate open gate.
 
-- Actual staging host, SSH user/configured access, domain, deployment directory,
-  capacity and isolated service/storage destinations. Do not put secrets in docs.
-- Explicit lifting of the earlier local-only restriction, the GitHub repository,
-  npm owner and authorized publication scope. A separate experimental channel,
-  if requested, needs an explicit policy decision; it must not bypass the current
-  release workflow or be represented as accepted `next`/`latest`.
-- The previously published baseline version and independent consumer location,
-  or confirmation that no published baseline exists. No synthetic predecessor.
-- Named human interface reviewer, backup/restore schedule and timezone,
-  operational owner and the actual observation window.
-- The production consumer that will satisfy phases 6/7 after the disposable
-  application is removed, or an explicit owner decision to amend that requirement.
-  The temporary test application cannot be counted as a production consumer.
-
-While these inputs are pending, local performance diagnosis and existing phase
-0–2 implementation/validation may proceed. Phases 3–7 remain gated by phase 2.
+External publication still requires effective repository visibility/protection,
+first-package npm authentication and publisher configuration. Never request secrets
+in chat. The actual local environment is described in [local staging](local-staging.md).
 
 ## 4. Independent slice, genuine upgrade and complete 1.0
 
@@ -175,8 +164,8 @@ The latter rejects `ADULA_PREVIOUS_VERSION` before filesystem/database mutation 
 never obtains a published predecessor. It does not establish upgrade acceptance.
 
 The genuine exercise needs an independently published baseline after phase 0/1
-acceptance, and a genuinely different minor candidate. Until both exist this gate
-remains blocked. Do not relabel source or remove migrations to invent a predecessor.
+acceptance, and a genuinely different minor candidate. The owner confirmed no predecessor exists; this exercise applies to a subsequent
+minor release and does not block the first alpha (ADR 024). Do not relabel source or remove migrations to invent a predecessor.
 
 1. Create the medical-assets slice in its own repository through public entrypoints
    and project-owned modules/UI. Include scope, relations, inline children, field
@@ -197,7 +186,7 @@ remains blocked. Do not relabel source or remove migrations to invent a predeces
 Phases 3–7 retain the complete scope in [1.0 acceptance](acceptance-1.0.md): business
 collaboration/notifications/import/printing/webhooks/tokens/2FA; document lifecycle
 and durable versioned XState workflows; capabilities/five reviewers/feature consumers;
-full production medical-assets app with upgrade/monthly restore and council 2; then
+independent disposable framework consumer integration/recovery and council 2; then
 public release. Every feature needs a consumer and meaningful test. No phase is
 promoted by this preparation.
 

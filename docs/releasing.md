@@ -6,7 +6,7 @@
 
 | Setting | Actual value / state |
 |---|---|
-| npm organization | `@adula`, reserved by the owner |
+| npm scope | `@adula`, owned by npm account `adula` |
 | Packages | `@adula/kit`, `@adula/ui`, `@adula/create-app` |
 | Repository | `adulash/adula-kit`; visibility verified before provenance publishing |
 | Workflow | `release.yml` |
