@@ -67,7 +67,7 @@
       "remaining": "All framework 1.0 criteria accepted, independent consumer acceptance, public MIT repository and gap reporting; authorized release and verified npm publishing."
     }
   ],
-  "updatedAt": "2026-09-22",
+  "updatedAt": "2026-09-23",
   "scopeAmendments": [
     "docs/decisions/021-optional-oauth.md",
     "docs/decisions/024-framework-alpha-and-local-staging.md"
@@ -87,6 +87,12 @@
     "reviewedAt": "2026-09-22",
     "evidence": [
       "docs/evidence/alpha-authorization-2026-09-22.json"
-    ]
+    ],
+    "publicationEvidence": "docs/evidence/alpha-publication-2026-09-23.json",
+    "registryTags": [
+      "alpha",
+      "latest"
+    ],
+    "latestAliasAuthorization": "Owner amendment 2026-09-23, ADR 024; experimental alias only, no stable acceptance"
   }
 }

@@ -2,11 +2,11 @@
 
 After signing in, open **الإعداد الأولي** to review identity and test notifications, mail receipt, storage and runtime services. See [initial setup](initial-setup.md).
 
-Version **0.2.0-alpha.1 is unreleased**. The npm scope is reserved, but no package has been published. Use local archives until an authorized release exists.
+Version **0.2.0-alpha.1 is published and experimental**. Both `alpha` and the owner-authorized `latest` alias select this version. `next` is not published. A default installation is still experimental, not 1.0 acceptance.
 
 ## New application: one command
 
-After publication, the standalone initializer is:
+The standalone initializer is:
 
 ```sh
 npm create @adula/app@alpha my-app
@@ -18,7 +18,7 @@ The wizard requests company identity and administrator email, downloads pnpm and
 
 Terminal instructions are English; the application stays Arabic. Interactive terminals show color and a spinner across six stages; `NO_COLOR=1` or redirected output produces plain lines. Detailed installation output is in ignored `tmp/install.log`.
 
-Before publication, first run `pnpm test:create` in this repository to produce the three verified archives. Then invoke the creator using their actual absolute paths:
+For local archive testing, first run `pnpm test:create` in this repository to produce the three verified archives. Then invoke the creator using their actual absolute paths:
 
 ```sh
 npm exec --yes --package=/path/to/adula-create-app-0.2.0-alpha.1.tgz -- create-adula my-app --packages /path/to/archives

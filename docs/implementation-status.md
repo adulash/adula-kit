@@ -1,10 +1,10 @@
-# Implementation status — 2026-09-22
+# Implementation status — 2026-09-23
 
-The approved v4 plan is preserved as a historical baseline; [ADR 021](decisions/021-optional-oauth.md) records the owner-approved exclusion of OAuth from base release requirements. The kit/UI/creator package manifests identify an **unreleased 0.2.0 implementation in progress**, not an accepted 1.0 kit. Local package installation is not the plan's independently upgraded, restored and production-proven release.
+The approved v4 plan is preserved as a historical baseline; [ADR 021](decisions/021-optional-oauth.md) records the owner-approved exclusion of OAuth from base release requirements. The kit/UI/creator packages are published as **experimental 0.2.0-alpha.1**, not an accepted 1.0 kit. Publication does not prove an independently upgraded, restored and production-operated release.
 
-On 2026-09-22 the owner lifted the earlier local-only restriction: push to `adulash/adula-kit` through a PR, merge after CI succeeds, and publish `0.2.0-alpha.1` on `alpha`. Local Docker staging was selected. The owner reports personally testing operations. This authorization does not accept any phase; `latest` and `next` remain blocked. See [ADR 024](decisions/024-framework-alpha-and-local-staging.md).
+The repository is public and main is protected by required PRs and passing CI. PRs 1–3 were merged after success. All three npm packages have signed provenance and configured GitHub trusted publishers. Local Docker staging is running. The owner approved retaining `latest` alongside `alpha` for this experimental version; `next` remains absent. See [ADR 024](decisions/024-framework-alpha-and-local-staging.md) and [dated publication evidence](evidence/alpha-publication-2026-09-23.json). No phase acceptance is inferred. The sections below retain the earlier dated implementation history.
 
-## Current checkpoint — 2026-09-21
+## Historical checkpoint — 2026-09-21
 
 The [confirmed-achievements ledger](confirmed-achievements.md) separates demonstrated component outcomes from the still-open phase gates. The 2026-09-21 [source review](evidence/implementation-review-2026-09-21.json) reran all six local validation commands: 282 tests and five release guards passed on PostgreSQL 17.6.
 
