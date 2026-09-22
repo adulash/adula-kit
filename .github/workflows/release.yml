@@ -12,6 +12,11 @@ on:
         default: alpha
         type: choice
         options: [alpha, next, latest]
+      bootstrap:
+        description: Sign alpha archives for the owner's first authenticated publication
+        required: true
+        default: false
+        type: boolean
 permissions:
   contents: read
 concurrency:
@@ -54,6 +59,7 @@ jobs:
       ref: ${{ needs.prepare.outputs.sha }}
       release-channel: ${{ inputs.channel }}
   publish:
+    if: inputs.bootstrap != true
     needs: [prepare, verify]
     runs-on: ubuntu-latest
     environment: npm
@@ -91,3 +97,42 @@ jobs:
           npm publish ".work/release/adula-kit-${VERSION}.tgz" --access public --provenance --tag "$RELEASE_CHANNEL" --ignore-scripts
           npm publish ".work/release/adula-ui-${VERSION}.tgz" --access public --provenance --tag "$RELEASE_CHANNEL" --ignore-scripts
           npm publish ".work/release/adula-create-app-${VERSION}.tgz" --access public --provenance --tag "$RELEASE_CHANNEL" --ignore-scripts
+  bootstrap:
+    if: inputs.bootstrap == true && inputs.channel == 'alpha'
+    needs: [prepare, verify]
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: npm install --global npm@11.19.1
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-packages-${{ github.run_id }}
+          path: .work/release
+      - name: Verify and sign the exact consumer-tested alpha archives
+        env:
+          RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
+        run: |
+          cd .work/release
+          sha256sum --check SHA256SUMS
+          cd ../..
+          node scripts/check-release.mjs --artifacts=.work/release --channel=alpha
+          node scripts/sign-bootstrap.mjs "$(npm root -g)/npm"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-alpha-${{ github.run_id }}
+          path: |
+            .work/release/*.tgz
+            .work/release/*.sigstore
+            .work/release/SHA256SUMS
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
