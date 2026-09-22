@@ -303,6 +303,7 @@ try {
     )
     const response = await page.goto(`${appEnv.APP_URL}/admin/users`)
     assert.equal(response.status(), 200)
+    await page.getByText('owner@example.test', { exact: true }).waitFor({ state: 'visible' })
     assert((await page.locator('body').innerText()).includes('owner@example.test'))
     await page.screenshot({
       path: join(work, 'create-app-admin.png'),
