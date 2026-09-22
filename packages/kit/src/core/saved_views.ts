@@ -1,0 +1,162 @@
+import type { Knex } from 'knex'
+import type { ResourceRegistry } from '../resource/registry.js'
+import type { Resource } from '../resource/types.js'
+import { buildAbility, type Actor } from '../auth/ability.js'
+import { KitError } from '../admin/errors.js'
+
+export type SavedViewQuery = {
+  search?: string
+  sort?: string
+  direction?: 'asc' | 'desc'
+  filters?: Record<string, string | number | boolean | null>
+}
+export type SavedView = {
+  id: number
+  name: string
+  query: SavedViewQuery
+  shared: boolean
+  own: boolean
+}
+
+const NAME_LIMIT = 60
+const VIEW_LIMIT = 50
+
+/**
+ * A saved view is stored user input that later drives a list query, so every key
+ * is validated against the resource definition before it is written and again
+ * when it is read back: a field that stopped being sortable or filterable must
+ * not resurrect as an unchecked query parameter after an upgrade.
+ */
+export class SavedViews {
+  constructor(
+    private db: Knex,
+    private registry: ResourceRegistry
+  ) {}
+
+  async list(name: string, actor: Actor): Promise<SavedView[]> {
+    const resource = this.authorize(name, actor)
+    const rows = await this.db('saved_views')
+      .where('resource', resource.name)
+      .where((where) => where.where('user_id', actor.id).orWhere('shared', true))
+      .orderBy('name')
+      .limit(VIEW_LIMIT * 2)
+    return rows.flatMap((row) => {
+      const query = this.sanitize(resource, row.query)
+      return query
+        ? [
+            {
+              id: Number(row.id),
+              name: String(row.name),
+              query,
+              shared: Boolean(row.shared),
+              own: Number(row.user_id) === actor.id,
+            },
+          ]
+        : []
+    })
+  }
+
+  async save(
+    name: string,
+    actor: Actor,
+    input: { name: string; query: unknown; shared?: boolean }
+  ): Promise<SavedView> {
+    const resource = this.authorize(name, actor)
+    const label = typeof input.name === 'string' ? input.name.trim() : ''
+    if (!label || label.length > NAME_LIMIT)
+      throw new KitError(422, 'E_VIEW_NAME', 'اسم العرض مطلوب ولا يتجاوز 60 حرفاً')
+    const query = this.sanitize(resource, input.query, true)!
+    const shared = input.shared === true
+    const existing = await this.db('saved_views')
+      .where({ user_id: actor.id, resource: resource.name, name: label })
+      .first('id')
+    if (!existing) {
+      const [{ count }] = await this.db('saved_views')
+        .where({ user_id: actor.id, resource: resource.name })
+        .count<{ count: string }[]>('* as count')
+      if (Number(count) >= VIEW_LIMIT)
+        throw new KitError(422, 'E_VIEW_LIMIT', 'بلغت الحد الأقصى للعروض المحفوظة لهذا الكيان')
+    }
+    const values = {
+      user_id: actor.id,
+      resource: resource.name,
+      name: label,
+      query: JSON.stringify(query),
+      shared,
+      updated_at: this.db.fn.now(),
+    }
+    const [row] = existing
+      ? await this.db('saved_views').where('id', existing.id).update(values).returning('*')
+      : await this.db('saved_views').insert(values).returning('*')
+    return { id: Number(row.id), name: label, query, shared, own: true }
+  }
+
+  async remove(name: string, actor: Actor, id: number) {
+    const resource = this.authorize(name, actor)
+    const removed = await this.db('saved_views')
+      .where({ id, resource: resource.name, user_id: actor.id })
+      .del()
+    if (!removed) throw new KitError(404, 'E_VIEW_NOT_FOUND', 'العرض المحفوظ غير موجود')
+  }
+
+  private authorize(name: string, actor: Actor): Resource {
+    const resource = this.registry.get(name)
+    const ability = buildAbility(actor.rules, this.registry.all())
+    if (!resource.actions.includes('view') || !ability.can('view', resource.name))
+      throw new KitError(403, 'E_FORBIDDEN', 'ليس لديك صلاحية لهذا الكيان')
+    return resource
+  }
+
+  /** Returns null for a stored view the resource no longer supports; throws on user input. */
+  private sanitize(resource: Resource, value: unknown, strict = false): SavedViewQuery | null {
+    const reject = (code: string, message: string) => {
+      if (strict) throw new KitError(422, code, message)
+      return null
+    }
+    if (!value || typeof value !== 'object' || Array.isArray(value))
+      return reject('E_VIEW_QUERY', 'تعريف العرض غير صالح')
+    const input = value as Record<string, unknown>
+    for (const key of Object.keys(input))
+      if (!['search', 'sort', 'direction', 'filters'].includes(key))
+        return reject('E_VIEW_QUERY', `مفتاح غير مدعوم في العرض: ${key}`)
+    const query: SavedViewQuery = {}
+    if (input.search !== undefined && input.search !== null && input.search !== '') {
+      if (typeof input.search !== 'string' || input.search.length > 200)
+        return reject('E_VIEW_QUERY', 'نص البحث غير صالح')
+      if (!Object.values(resource.fields).some((field) => field.searchable))
+        return reject('E_VIEW_QUERY', 'هذا الكيان لا يدعم البحث النصي')
+      query.search = input.search
+    }
+    if (input.sort !== undefined && input.sort !== null && input.sort !== '') {
+      if (typeof input.sort !== 'string' || !resource.fields[input.sort]?.sortable)
+        return reject('E_VIEW_QUERY', 'حقل الفرز غير مدعوم')
+      query.sort = input.sort
+      if (input.direction !== undefined && input.direction !== null) {
+        if (input.direction !== 'asc' && input.direction !== 'desc')
+          return reject('E_VIEW_QUERY', 'اتجاه الفرز غير صالح')
+        query.direction = input.direction
+      }
+    } else if (input.direction !== undefined && input.direction !== null && input.direction !== '')
+      return reject('E_VIEW_QUERY', 'اتجاه الفرز يحتاج حقل فرز')
+    if (input.filters !== undefined && input.filters !== null) {
+      if (typeof input.filters !== 'object' || Array.isArray(input.filters))
+        return reject('E_VIEW_QUERY', 'تصفية العرض غير صالحة')
+      const filters: Record<string, string | number | boolean | null> = {}
+      for (const [key, entry] of Object.entries(input.filters as Record<string, unknown>)) {
+        if (!resource.fields[key]?.filterable)
+          return reject('E_VIEW_QUERY', `حقل التصفية غير مدعوم: ${key}`)
+        if (entry === undefined || entry === '') continue
+        if (
+          entry !== null &&
+          typeof entry !== 'string' &&
+          typeof entry !== 'number' &&
+          typeof entry !== 'boolean'
+        )
+          return reject('E_VIEW_QUERY', `قيمة التصفية غير صالحة: ${key}`)
+        filters[key] = entry
+      }
+      if (Object.keys(filters).length) query.filters = filters
+    }
+    return query
+  }
+}

@@ -1,0 +1,93 @@
+name: Release npm packages
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact version in the reviewed v-prefixed tag
+        required: true
+        type: string
+      channel:
+        description: alpha for the authorized experimental release; next/latest remain acceptance-gated
+        required: true
+        default: alpha
+        type: choice
+        options: [alpha, next, latest]
+permissions:
+  contents: read
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.release.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: Verify destination, tag and acceptance
+        id: release
+        env:
+          VERSION: ${{ inputs.version }}
+          RELEASE_CHANNEL: ${{ inputs.channel }}
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$REPOSITORY_PRIVATE" = false
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(next|alpha|beta|rc)\.[0-9]+)?$ ]]
+          sha=$(git rev-parse "refs/tags/v${VERSION}^{commit}")
+          git merge-base --is-ancestor "$sha" origin/main
+          git checkout --detach "$sha"
+          node --input-type=module -e "import fs from 'node:fs'; if (JSON.parse(fs.readFileSync('packages/kit/package.json')).version !== process.env.VERSION) throw new Error('Tag/version mismatch')"
+          node scripts/check-release.mjs --channel="$RELEASE_CHANNEL"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+  verify:
+    needs: prepare
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.prepare.outputs.sha }}
+      release-channel: ${{ inputs.channel }}
+  publish:
+    needs: [prepare, verify]
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Use an OIDC-capable npm CLI
+        run: npm install --global npm@11
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-packages-${{ github.run_id }}
+          path: .work/release
+      - name: Verify the downloaded consumer-tested archives
+        env:
+          RELEASE_CHANNEL: ${{ inputs.channel }}
+        run: |
+          cd .work/release
+          sha256sum --check SHA256SUMS
+          cd ../..
+          node scripts/check-release.mjs --artifacts=.work/release --channel="$RELEASE_CHANNEL"
+      - name: Publish through npm trusted publishing
+        env:
+          VERSION: ${{ inputs.version }}
+          RELEASE_CHANNEL: ${{ inputs.channel }}
+        run: |
+          npm publish ".work/release/adula-kit-${VERSION}.tgz" --access public --provenance --tag "$RELEASE_CHANNEL" --ignore-scripts
+          npm publish ".work/release/adula-ui-${VERSION}.tgz" --access public --provenance --tag "$RELEASE_CHANNEL" --ignore-scripts
+          npm publish ".work/release/adula-create-app-${VERSION}.tgz" --access public --provenance --tag "$RELEASE_CHANNEL" --ignore-scripts

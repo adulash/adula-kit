@@ -1,0 +1,8 @@
+{{{ exports({ to: app.makePath('app/controllers/resources_controller.ts') }) }}}
+import { createResourceController } from '@adula/kit'
+import { kit } from '#services/kit'
+
+export default createResourceController(async (ctx) => {
+  const runtime = kit()
+  return { ...runtime, actor: await runtime.actors.load(ctx.auth.getUserOrFail().id) }
+})

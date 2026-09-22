@@ -1,0 +1,1 @@
+{{{ exports({ to: app.makePath('tests/helpers/resource_contract.ts') }) }}}

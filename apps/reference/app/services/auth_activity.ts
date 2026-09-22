@@ -1,0 +1,51 @@
+import db from '@adonisjs/lucid/services/db'
+import type { HttpContext } from '@adonisjs/core/http'
+
+/** Authentication events recorded in the kit "activities" table (resource "users"). */
+export type AuthAction =
+  | 'login'
+  | 'login_failed'
+  | 'logout'
+  | 'password_reset_requested'
+  | 'password_reset_delivery_failed'
+  | 'password_reset'
+  | 'session_revoked'
+  | 'oauth_login'
+  | 'profile_updated'
+  | 'password_changed'
+
+export type AuthActivityEntry = {
+  /** The user the event is about; also the record id of the activity row. */
+  userId: number
+  /** Defaults to the user (self-service). Administrators pass their own id. */
+  actorId?: number
+  action: AuthAction
+  changes?: Record<string, unknown>
+}
+
+type Client = ReturnType<ReturnType<typeof db.connection>['getWriteClient']>
+
+/** Request facts stored with every authentication activity. */
+export function requestContext(ctx: Pick<HttpContext, 'request'>) {
+  return {
+    ip: ctx.request.ip(),
+    userAgent: ctx.request.header('user-agent')?.slice(0, 512) ?? null,
+  }
+}
+
+/**
+ * Failed logins for unknown e-mails cannot be stored here (actor_id references
+ * users); the limiter alone counts those.
+ */
+export async function logAuthActivity(
+  entry: AuthActivityEntry,
+  client: Client = db.connection().getWriteClient()
+) {
+  await client('activities').insert({
+    resource: 'users',
+    record_id: entry.userId,
+    actor_id: entry.actorId ?? entry.userId,
+    action: entry.action,
+    changes: JSON.stringify(entry.changes ?? {}),
+  })
+}

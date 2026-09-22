@@ -1,0 +1,25 @@
+name: Kit gap
+description: Report a missing capability with a concrete consumer
+title: "GAP: "
+body:
+  - type: textarea
+    id: consumer
+    attributes:
+      label: Consumer and use case
+      description: Which application needs this? Include kit/UI versions without credentials or private records.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Include reproducible steps and the existing extension point you tried.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance evidence
+      description: What consumer and test would prove that this gap is closed?
+    validations:
+      required: true

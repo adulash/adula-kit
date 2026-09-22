@@ -1,0 +1,101 @@
+@import 'tailwindcss' source(none);
+@import 'tw-animate-css';
+@import '@fontsource/noto-sans-arabic/400.css';
+@import '@fontsource/noto-sans-arabic/500.css';
+@import '@fontsource/noto-sans-arabic/600.css';
+@import '@fontsource/noto-sans-arabic/700.css';
+@source "../";
+
+@theme inline {
+  --font-sans: 'Noto Sans Arabic', sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--secondary);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--primary);
+  --color-destructive: #b64239;
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: #659981;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --background: #f4f6f2;
+  --foreground: #1c3028;
+  --card: #ffffff;
+  --primary: #185640;
+  --secondary: #edf1eb;
+  --muted-foreground: #65766b;
+  --accent: #e5eee5;
+  --border: #dbe3d9;
+  --radius: 0.625rem;
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+  button,
+  [role='button'] {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline-offset: 3px;
+  }
+  [dir='rtl'] {
+    text-align: start;
+  }
+}
+body {
+  font-family: var(--font-sans);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Keep the persistent shell fixed; animate only incoming page content. */
+@keyframes adula-page-enter {
+  from {
+    opacity: 0.35;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.adula-page-enter {
+  animation: adula-page-enter 180ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .adula-page-enter {
+    animation: none;
+  }
+}

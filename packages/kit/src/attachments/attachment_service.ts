@@ -1,0 +1,251 @@
+import type { Knex } from 'knex'
+import { KitError } from '../admin/errors.js'
+import { identifier } from '../resource/define_resource.js'
+import type { JsonValue } from '../resource/types.js'
+
+export type AttachmentSummary = {
+  id: number
+  name: string
+  size: number
+  mimeType: string
+  url: string
+}
+export type AttachmentRecord = {
+  id: number
+  disk: string
+  path: string
+  name: string
+  originalName: string
+  size: number
+  mimeType: string
+  extname: string
+  data: Record<string, JsonValue>
+  uploadedBy: number
+  orgUnitId: number | null
+  resource: string | null
+  recordId: number | null
+  field: string | null
+  createdAt: string
+  deletedAt: string | null
+}
+export type UploadInput = {
+  disk: string
+  path: string
+  name: string
+  originalName: string
+  size: number
+  mimeType: string
+  extname: string
+  data: Record<string, unknown>
+  uploadedBy: number
+  orgUnitId?: number | null
+  resource?: string | null
+  field?: string | null
+}
+export type ClaimInput = {
+  attachmentId: number
+  actor: { id: number }
+  resource: string
+  field: string
+  /** Omitted while a record is being created: the upload is verified but not bound yet. */
+  recordId?: number
+  orgUnitId?: number | null
+  scoped: boolean
+}
+
+const MAX_ID = 2147483647
+const REJECTED = 'المرفق غير موجود أو لا يخصك'
+
+export function attachmentUrl(id: number) {
+  return `/attachments/${id}`
+}
+export function isAttachmentId(value: unknown): value is number {
+  return Number.isSafeInteger(value) && Number(value) >= 1 && Number(value) <= MAX_ID
+}
+/** Disk keys stay relative and slash-separated so files move between disks unchanged. */
+export function isRelativeDiskPath(path: unknown): path is string {
+  return (
+    typeof path === 'string' &&
+    path.length > 0 &&
+    path.length <= 1024 &&
+    !path.startsWith('/') &&
+    !path.includes('\\') &&
+    !path.includes('\0') &&
+    !/^[a-zA-Z]:/.test(path) &&
+    path.split('/').every((segment) => segment !== '' && segment !== '.' && segment !== '..')
+  )
+}
+function text(value: unknown, max: number) {
+  return (
+    typeof value === 'string' && value.length > 0 && value.length <= max && !value.includes('\0')
+  )
+}
+export function summarizeAttachment(row: Record<string, unknown>): AttachmentSummary {
+  return {
+    id: Number(row.id),
+    name: String(row.original_name),
+    size: Number(row.size),
+    mimeType: String(row.mime_type),
+    url: attachmentUrl(Number(row.id)),
+  }
+}
+function fromRow(row: Record<string, unknown>): AttachmentRecord {
+  const stamp = (value: unknown) => (value instanceof Date ? value.toISOString() : value)
+  return {
+    id: Number(row.id),
+    disk: String(row.disk),
+    path: String(row.path),
+    name: String(row.name),
+    originalName: String(row.original_name),
+    size: Number(row.size),
+    mimeType: String(row.mime_type),
+    extname: String(row.extname),
+    data: (row.data ?? {}) as Record<string, JsonValue>,
+    uploadedBy: Number(row.uploaded_by),
+    orgUnitId:
+      row.org_unit_id === null || row.org_unit_id === undefined ? null : Number(row.org_unit_id),
+    resource: row.resource === null || row.resource === undefined ? null : String(row.resource),
+    recordId: row.record_id === null || row.record_id === undefined ? null : Number(row.record_id),
+    field: row.field === null || row.field === undefined ? null : String(row.field),
+    createdAt: String(stamp(row.created_at)),
+    deletedAt:
+      row.deleted_at === null || row.deleted_at === undefined
+        ? null
+        : String(stamp(row.deleted_at)),
+  }
+}
+
+/** Records a stored file. The host performs the Drive write; the kit only keeps verified metadata. */
+export async function registerUpload(db: Knex, input: UploadInput): Promise<AttachmentRecord> {
+  if (!text(input.disk, 100) || !/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(input.disk))
+    throw new KitError(422, 'E_ATTACHMENT_INPUT', 'Invalid disk name')
+  if (!isRelativeDiskPath(input.path))
+    throw new KitError(422, 'E_ATTACHMENT_INPUT', 'Attachment paths must be relative disk keys')
+  if (
+    !text(input.name, 255) ||
+    input.name.includes('/') ||
+    input.name !== input.path.split('/').at(-1)
+  )
+    throw new KitError(422, 'E_ATTACHMENT_INPUT', 'Attachment name must be the last path segment')
+  if (!text(input.originalName, 255) || /[/\\]/.test(input.originalName))
+    throw new KitError(422, 'E_ATTACHMENT_INPUT', 'Invalid original file name')
+  if (!Number.isSafeInteger(input.size) || input.size < 0)
+    throw new KitError(422, 'E_ATTACHMENT_INPUT', 'Invalid file size')
+  if (
+    typeof input.mimeType !== 'string' ||
+    input.mimeType.length > 255 ||
+    /[\r\n\0]/.test(input.mimeType)
+  )
+    throw new KitError(422, 'E_ATTACHMENT_INPUT', 'Invalid content type')
+  if (typeof input.extname !== 'string' || !/^[a-z0-9]{0,32}$/.test(input.extname))
+    throw new KitError(422, 'E_ATTACHMENT_INPUT', 'Invalid file extension')
+  if (!input.data || typeof input.data !== 'object' || Array.isArray(input.data))
+    throw new KitError(422, 'E_ATTACHMENT_INPUT', 'Attachment data must be an object')
+  if (!isAttachmentId(input.uploadedBy))
+    throw new KitError(422, 'E_ATTACHMENT_INPUT', 'Invalid uploader')
+  if (input.orgUnitId !== undefined && input.orgUnitId !== null && !isAttachmentId(input.orgUnitId))
+    throw new KitError(422, 'E_ATTACHMENT_INPUT', 'Invalid organization unit')
+  for (const key of ['resource', 'field'] as const) {
+    const value = input[key]
+    if (
+      value !== undefined &&
+      value !== null &&
+      (typeof value !== 'string' || !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(value))
+    )
+      throw new KitError(422, 'E_ATTACHMENT_INPUT', `Invalid ${key}`)
+  }
+  if (input.resource) identifier(input.resource)
+  const [row] = await db('attachments')
+    .insert({
+      disk: input.disk,
+      path: input.path,
+      name: input.name,
+      original_name: input.originalName,
+      size: input.size,
+      mime_type: input.mimeType || 'application/octet-stream',
+      extname: input.extname,
+      data: JSON.stringify(input.data),
+      uploaded_by: input.uploadedBy,
+      org_unit_id: input.orgUnitId ?? null,
+      resource: input.resource ?? null,
+      field: input.field ?? null,
+    })
+    .returning('*')
+  return fromRow(row)
+}
+
+export async function findAttachment(db: Knex, id: unknown): Promise<AttachmentRecord | undefined> {
+  if (!isAttachmentId(id)) return undefined
+  const row = await db('attachments').where('id', id).whereNull('deleted_at').first()
+  return row ? fromRow(row) : undefined
+}
+
+/** One query per resource page: callers collect every attachment id first. */
+export async function loadAttachments(db: Knex, ids: readonly number[]) {
+  const summaries = new Map<number, AttachmentSummary>()
+  const valid = [...new Set(ids.filter(isAttachmentId))]
+  if (!valid.length) return summaries
+  const rows = await db('attachments')
+    .whereIn('id', valid)
+    .whereNull('deleted_at')
+    .select('id', 'original_name', 'size', 'mime_type')
+  for (const row of rows) summaries.set(Number(row.id), summarizeAttachment(row))
+  return summaries
+}
+
+/**
+ * Ownership is decided inside the caller's transaction: a rejected claim rolls
+ * the whole record write back. Only the uploader may bind an upload, and an
+ * upload binds to exactly one record field.
+ */
+export async function claimAttachment(trx: Knex.Transaction, input: ClaimInput) {
+  if (!isAttachmentId(input.attachmentId)) throw new KitError(422, 'E_ATTACHMENT', REJECTED)
+  const row = await trx('attachments').where('id', input.attachmentId).forUpdate().first()
+  if (!row || row.deleted_at !== null || Number(row.uploaded_by) !== Number(input.actor.id))
+    throw new KitError(422, 'E_ATTACHMENT', REJECTED)
+  if (
+    (row.resource !== null && row.resource !== input.resource) ||
+    (row.field !== null && row.field !== input.field)
+  )
+    throw new KitError(422, 'E_ATTACHMENT', 'المرفق مخصص لحقل آخر')
+  const bound = row.record_id !== null
+  const sameRecord =
+    bound &&
+    input.recordId !== undefined &&
+    Number(row.record_id) === Number(input.recordId) &&
+    row.resource === input.resource &&
+    row.field === input.field
+  if (bound && !sameRecord) throw new KitError(422, 'E_ATTACHMENT', 'المرفق مرتبط بسجل آخر')
+  const orgUnitId =
+    input.scoped && input.orgUnitId !== undefined && input.orgUnitId !== null
+      ? Number(input.orgUnitId)
+      : null
+  if (
+    input.scoped &&
+    !sameRecord &&
+    row.org_unit_id !== null &&
+    (orgUnitId === null || Number(row.org_unit_id) !== orgUnitId)
+  )
+    throw new KitError(422, 'E_ATTACHMENT', 'المرفق يتبع وحدة تنظيمية أخرى')
+  if (input.recordId === undefined) return fromRow(row)
+  const [updated] = await trx('attachments')
+    .where('id', input.attachmentId)
+    .update({
+      resource: input.resource,
+      field: input.field,
+      record_id: input.recordId,
+      org_unit_id: input.scoped ? orgUnitId : row.org_unit_id,
+    })
+    .returning('*')
+  return fromRow(updated)
+}
+
+/** Unbinding keeps the file and its metadata for restore drills; only the row is soft-deleted. */
+export async function releaseAttachment(db: Knex, id: number) {
+  if (!isAttachmentId(id)) return false
+  const changed = await db('attachments')
+    .where('id', id)
+    .whereNull('deleted_at')
+    .update({ deleted_at: db.fn.now() })
+  return changed > 0
+}

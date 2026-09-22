@@ -1,0 +1,96 @@
+name: CI
+on:
+  push:
+  pull_request:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        default: ""
+      release-channel:
+        type: string
+        default: ""
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: adula_test
+          POSTGRES_USER: adula
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U adula -d adula_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://adula:ci-only-password@127.0.0.1:5432/adula_test
+      NODE_ENV: test
+      APP_KEY: ci-only-key-never-use-in-a-deployment-12345
+      APP_URL: http://127.0.0.1:3334
+      HOST: 127.0.0.1
+      PORT: 3334
+      LOG_LEVEL: silent
+      SESSION_DRIVER: memory
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_USER: adula
+      DB_PASSWORD: ci-only-password
+      DB_DATABASE: adula_test
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      DRIVE_DISK: local
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+      # The revision is recorded in the original cached GitHub archive's pax comment.
+      - name: Check out the official consumer fixture
+        uses: actions/checkout@v4
+        with:
+          repository: adonisjs/starter-kits
+          ref: 7e1c7930ec260ea38c3eb394eb192e05c12d3f7b
+          path: .work/starter-kits-main
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.19.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @adula/reference exec playwright install --with-deps chromium --only-shell
+      - run: pnpm build
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm test:release
+      - run: pnpm test:consumer
+      - run: pnpm --filter @adula/create-app pack --pack-destination "$GITHUB_WORKSPACE/.work"
+      - run: pnpm test:create --reuse-packages
+      - run: pnpm test:create --docker --reuse-packages
+      - run: pnpm check:release --artifacts=.work
+      - name: Verify release acceptance
+        if: inputs.release-channel != ''
+        env:
+          RELEASE_CHANNEL: ${{ inputs.release-channel }}
+        run: pnpm check:release --channel="$RELEASE_CHANNEL"
+      - run: pnpm check:boundaries
+      - run: pnpm audit --prod --audit-level high
+      - name: Retain the exact consumer-tested packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-packages-${{ github.run_id }}
+          path: |
+            .work/adula-kit-*.tgz
+            .work/adula-ui-*.tgz
+            .work/adula-create-app-*.tgz
+            .work/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 14

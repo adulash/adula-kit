@@ -1,0 +1,30 @@
+<!-- adula-kit:start (managed by adula:doctor — do not edit) -->
+
+# adula-kit rules
+
+A plugin is just code that has not been written yet. No abstraction before the second need.
+
+Structure
+
+1. One system. Every entity lives in app/modules/<module>. No separate "apps".
+2. Generate the resource scaffold with adula:resource and follow its typed definition. Reuse an existing project resource when available; never assume educational modules are installed.
+3. New entity: `node ace adula:resource <name> --module=<module>`, then fill the fields.
+4. Before creating an entity, check the registry. Same meaning exists → belongsTo. Never duplicate a table.
+5. A module writes only its own tables; dependency direction follows start/modules.ts, never backwards.
+6. Modules talk through events, never by importing each other's controllers. Heavy listeners go to jobs.
+7. Every resource declares `scoped` explicitly. Standard columns are generated; never edit them. Migrations follow expand/contract: never drop or rename a column in the same release that stops using it.
+8. Deletes are soft. Changeable lists come from lookups. Approvable documents use `submittable: true`.
+9. Notify via notify(), number via sequence, configure via settings. Nothing else.
+
+Security 10. Every route passes the authorize middleware. Every transformer uses `serialize` (explicit pick). 11. Never write crypto, sessions, or auth flows; use kit. 2FA and impersonation changes need a human review. 12. Never delete or weaken a test to make the build pass.
+
+UI 13. Before designing or changing any interface, read and apply `.agents/skills/adula-frontend-design/SKILL.md` (the kit's bundled frontend-design skill for business applications). At project kickoff, request the company's identity before the first design: name, logo, colors, fonts and brand guidelines when available. Reuse supplied identity, ask only for missing information, and preserve it in project-owned docs/design-identity.md. Fill the resource definition before writing a page. Override only via pages/<resource>/. 14. Compose interfaces from the project-owned shadcn/ui components in inertia/components/ui/. Use Button, Input, Select, Table, Card and the other registry primitives instead of hand-styled native controls or homemade equivalents. Semantic HTML for structure, text and form submission is allowed. Add components only via `node ace adula:ui add`, never `shadcn add`. 15. All forms (including create/edit) and row/record detail views use shadcn Dialog (modal) by default. Use ResourceSurface for resource forms/details; do not choose a standalone page, Sheet or custom overlay unless the user explicitly requests that alternative. View dialogs close on outside click; edit dialogs ask before closing by default. Honor system preferences for Gregorian, Hijri or both calendars and reduced motion. RTL by default; Arabic labels; English identifiers. Installation terminal instructions are English. Preserve explicit user exceptions and project-owned customizations.
+
+Boundaries 16. Never modify node_modules/@adula and never use patch-package (enforced by lint). Do not re-implement a kit service under another name (checked in review). 17. A limitation is recorded in KIT_GAPS.md (template inside) and reported to the developer — never worked around. 18. Only packages already in package.json. Ask before adding one. 19. New module or workflow → run the idea-review skill first. Field changes do not need it. 20. Before finishing: `npm run typecheck && npm test && node ace adula:doctor`.
+<!-- adula-kit:end -->
+
+## Project rules
+
+This is a reference consumer. Additions approved by the implementation plan are authorized.
+
+The owner removed the educational customers/orders/tasks modules from normal operation. Their acceptance fixtures live under tests/fixtures and load only in test mode. Do not restore these modules or their links to the application. Preserve project-owned domain modules and database data.

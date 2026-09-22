@@ -1,0 +1,47 @@
+import { test } from '@japa/runner'
+import User from '#models/user'
+import db from '@adonisjs/lucid/services/db'
+import app from '@adonisjs/core/services/app'
+import { randomUUID } from 'node:crypto'
+
+test.group('Packed consumer integration', () => {
+  test('generated CRUD, actual organizational isolation, serialization and soft deletion', async ({ client, assert }) => {
+    assert.isTrue(app.inTest)
+    const knex = db.connection().getWriteClient()
+    const database = (await knex.raw('SELECT current_database() as name')).rows[0].name
+    assert.match(database, /^adula_consumer_\d+_test$/)
+    const suffix = randomUUID()
+    const admin = await User.create({ fullName: 'مدير', email: `admin-${suffix}@example.test`, password: 'test-only-password-123' })
+    const outside = await User.create({ fullName: 'خارج النطاق', email: `outside-${suffix}@example.test`, password: 'test-only-password-123' })
+    const [org] = await knex('org_units').insert({ name: 'جهة الاختبار', type: 'root', path: `test_${suffix.replaceAll('-', '_')}` }).returning('id')
+    const [role] = await knex('roles').insert({ name: `admin-${suffix}`, permission_level: 1 }).returning('id')
+    await knex('role_rules').insert({ role_id: role.id, subject: 'all', action: 'manage' })
+    await knex('user_roles').insert([{ user_id: admin.id, role_id: role.id }, { user_id: outside.id, role_id: role.id }])
+    await knex('user_org_units').insert({ user_id: admin.id, org_unit_id: org.id })
+    const result = await client.post('/resources/samples').loginAs(admin).withCsrfToken()
+      .header('Accept', 'application/json').json({ title: 'سجل مستقل', orgUnitId: org.id })
+    result.assertStatus(201)
+    const record = result.body().data
+    assert.equal(record.title, 'سجل مستقل')
+    assert.notProperty(record, 'createdBy')
+    assert.notProperty(record, 'orgPath')
+    const denied = await client.get(`/resources/samples/${record.id}`).loginAs(outside).header('Accept', 'application/json')
+    denied.assertStatus(404)
+    const invalid = await client.patch(`/resources/samples/${record.id}`).loginAs(admin).withCsrfToken()
+      .header('Accept', 'application/json').json({ createdBy: outside.id })
+    invalid.assertStatus(422)
+    const updated = await client.patch(`/resources/samples/${record.id}`).loginAs(admin).withCsrfToken()
+      .header('Accept', 'application/json').json({ title: 'سجل محدث' })
+    updated.assertStatus(200)
+    assert.equal(updated.body().data.title, 'سجل محدث')
+    const removed = await client.delete(`/resources/samples/${record.id}`).loginAs(admin).withCsrfToken().header('Accept', 'application/json')
+    removed.assertStatus(200)
+    assert.exists((await knex('samples').where('id', record.id).first()).deleted_at)
+    assert.equal(Number((await knex('outbox').whereRaw("payload->>'id' = ?", [String(record.id)]).whereRaw("payload->>'resource' = ?", ['samples']).count('* as count').first())?.count), 3)
+  })
+  test('official signup creates the user consumed by adula:install', async ({ client }) => {
+    const result = await client.post('/signup').withCsrfToken().redirects(0)
+      .form({ fullName: 'مسؤول التثبيت', email: process.env.ADULA_ADMIN_EMAIL ?? 'install@example.test', password: 'test-only-password-123', passwordConfirmation: 'test-only-password-123' })
+    result.assertStatus(302)
+  })
+})

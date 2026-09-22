@@ -1,0 +1,328 @@
+#!/usr/bin/env node
+import { Progress } from './progress.mjs'
+import { parseArgs } from 'node:util'
+import { createInterface } from 'node:readline/promises'
+import { randomBytes } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
+import { resolve, join, delimiter } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import {
+  assertEmpty,
+  projectName,
+  renderProject,
+  writeNew,
+  dotenv,
+  prepareEnvironment,
+  composeFile,
+  readIdentity,
+  readJson,
+} from './project.mjs'
+import {
+  run,
+  packageManager,
+  packageManagerBin,
+  freePort,
+  pingRedis,
+  createDatabases,
+  databaseNames,
+  childEnvironment,
+} from './system.mjs'
+
+export const help = `Create a new business application with AdonisJS and adula
+
+  npm create @adula/app@latest my-app
+
+  --company "Company name"     Company display name (Arabic supported)
+  --admin-email email          Administrator email
+  --identity brand.json        Company logo, primaryColor, fontFamily and guidelines
+  --services docker|existing   Default: Docker; requires Docker Compose
+  --connection local.json      PostgreSQL and Redis profile for existing services
+  --database name              Fresh database name; existing databases are rejected
+  --packages directory         Local kit and UI archives for pre-publication testing
+  --yes                       Noninteractive; requires company and administrator email
+  --help                      Show help
+
+Requires Node.js 24+ and npm. Installs pnpm, AdonisJS, adula, the Arabic UI,
+databases, administrator and agent skills. External SMTP, OAuth and S3 require
+your configuration. Credentials are saved privately in tmp/dev-admin.txt.
+Set NO_COLOR=1 for plain progress output.
+`
+
+function validateConnection(profile) {
+  if (!profile || typeof profile !== 'object' || Array.isArray(profile))
+    throw new Error('The connection file must contain a JSON object.')
+  for (const key of ['postgres', 'redis']) {
+    const value = profile[key]
+    if (
+      !value ||
+      typeof value.host !== 'string' ||
+      !value.host ||
+      /[\r\n\0]/.test(value.host) ||
+      !Number.isInteger(value.port) ||
+      value.port < 1 ||
+      value.port > 65535
+    )
+      throw new Error(`Invalid ${key} connection: provide host and port.`)
+    if (value.password !== undefined && typeof value.password !== 'string')
+      throw new Error(`Invalid ${key} password.`)
+  }
+  if (
+    typeof profile.postgres.user !== 'string' ||
+    !profile.postgres.user ||
+    typeof profile.postgres.password !== 'string'
+  )
+    throw new Error('Provide PostgreSQL user and password. The account needs CREATEDB permission.')
+  if (profile.postgres.database || profile.postgres.testDatabase)
+    throw new Error(
+      'Do not specify an existing database. Setup creates two fresh databases; maintenanceDatabase is only for the administrative connection.'
+    )
+  return profile
+}
+
+export async function main(argv = process.argv.slice(2)) {
+  const { values, positionals } = parseArgs({
+    args: argv.filter((arg) => arg !== '--'),
+    allowPositionals: true,
+    options: {
+      'help': { type: 'boolean' },
+      'yes': { type: 'boolean' },
+      'company': { type: 'string' },
+      'admin-email': { type: 'string' },
+      'identity': { type: 'string' },
+      'services': { type: 'string', default: 'docker' },
+      'connection': { type: 'string' },
+      'database': { type: 'string' },
+      'packages': { type: 'string' },
+    },
+  })
+  if (values.help) {
+    console.log(help)
+    return
+  }
+  if (Number(process.versions.node.split('.')[0]) < 24)
+    throw new Error('Creating an application requires Node.js 24 or later.')
+  if (positionals.length > 1) throw new Error('Specify one project directory.')
+  if (values.database !== undefined && !/^[a-z][a-z0-9_]{0,49}$/.test(values.database))
+    throw new Error(
+      'Database name must start with a lowercase letter and use lowercase letters, digits or underscores (up to 50 characters).'
+    )
+  if (!['docker', 'existing'].includes(values.services))
+    throw new Error('--services must be docker or existing.')
+  if (values.services === 'existing' && !values.connection)
+    throw new Error('Provide --connection when using existing services.')
+  if (values.services === 'docker' && values.connection)
+    throw new Error('--connection is only available for existing services.')
+  let directory = positionals[0]
+  let company = values.company
+  let email = values['admin-email']
+  let identityFile = values.identity
+  const interactive = process.stdin.isTTY && !values.yes
+  if (interactive) {
+    const prompt = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    })
+    try {
+      directory ||= await prompt.question('Application directory: ')
+      company ||= await prompt.question('Company name as it should appear in the application: ')
+      email ||= await prompt.question('Administrator email: ')
+      identityFile ||= await prompt.question(
+        'Company identity JSON (logo, colors, fonts, guidelines; Enter to record as pending): '
+      )
+    } finally {
+      prompt.close()
+    }
+  }
+  if (!directory || !company || !email)
+    throw new Error('Provide a directory, --company and --admin-email, or run interactively.')
+  if (!/^[^\s@'\0]+@[^\s@'\0]+\.[^\s@'\0]+$/.test(email) || email.length > 254)
+    throw new Error('Invalid administrator email.')
+  const target = resolve(directory)
+  const name = projectName(target)
+  await assertEmpty(target)
+  const identity = await readIdentity(identityFile || undefined, company)
+  const template = JSON.parse(await readFile(new URL('./template.json', import.meta.url), 'utf8'))
+  const manager = await packageManager()
+  const suffix = randomBytes(6).toString('hex')
+  const names = values.database
+    ? { database: values.database, testDatabase: `${values.database}_test` }
+    : databaseNames(name, suffix)
+  const ports = new Set()
+  const allocatePort = async () => {
+    let port = await freePort()
+    while (ports.has(port)) port = await freePort()
+    ports.add(port)
+    return port
+  }
+  const env = childEnvironment()
+  const pathKey = Object.keys(env).find((key) => key.toLowerCase() === 'path') ?? 'PATH'
+  env[pathKey] = [
+    await packageManagerBin(),
+    join(target, 'node_modules/.bin'),
+    env[pathKey] ?? '',
+  ].join(delimiter)
+  let profile
+  const progress = new Progress()
+  try {
+    progress.start('Check services and prepare configuration')
+    if (values.services === 'docker') {
+      await run('docker', ['compose', 'version'], { env, quiet: true })
+      await run('docker', ['info'], { env, quiet: true })
+      profile = {
+        postgres: {
+          host: '127.0.0.1',
+          port: await allocatePort(),
+          user: 'adula',
+          password: randomBytes(24).toString('hex'),
+        },
+        redis: { host: '127.0.0.1', port: await allocatePort() },
+      }
+    } else {
+      profile = validateConnection(await readJson(resolve(values.connection), 'connection'))
+      await pingRedis(profile.redis)
+    }
+    const port = await allocatePort()
+    const testPort = await allocatePort()
+    const appEnv = {
+      TZ: 'UTC',
+      NODE_ENV: 'development',
+      HOST: '127.0.0.1',
+      PORT: port,
+      LOG_LEVEL: 'info',
+      APP_KEY: randomBytes(32).toString('base64url'),
+      APP_URL: `http://127.0.0.1:${port}`,
+      ADULA_NAMESPACE: `${name}-${suffix}`,
+      COMPOSE_PROJECT_NAME: `${name}-${suffix}`,
+      SESSION_DRIVER: 'database',
+      DB_HOST: profile.postgres.host,
+      DB_PORT: profile.postgres.port,
+      DB_USER: profile.postgres.user,
+      DB_PASSWORD: profile.postgres.password,
+      DB_DATABASE: names.database,
+      REDIS_HOST: profile.redis.host,
+      REDIS_PORT: profile.redis.port,
+      ...(profile.redis.password ? { REDIS_PASSWORD: profile.redis.password } : {}),
+      DRIVE_DISK: 'local',
+      LIMITER_STORE: 'redis',
+      MAIL_MAILER: 'smtp',
+      MAIL_FROM_NAME: identity.company,
+      MAIL_FROM_ADDRESS: email,
+      SMTP_HOST: '127.0.0.1',
+      SMTP_PORT: 1025,
+    }
+    // Validate all local archives before the first write.
+    if (values.packages)
+      for (const kind of ['kit', 'ui'])
+        await readFile(resolve(values.packages, `adula-${kind}-${template.version}.tgz`))
+    progress.start('Create AdonisJS application and company identity')
+    await renderProject(target, template, {
+      name,
+      identity,
+      packageFiles: values.packages,
+    })
+    const encodedEnv = await prepareEnvironment(target, appEnv)
+    await writeNew(target, '.env', dotenv(encodedEnv), true)
+    await writeNew(
+      target,
+      '.env.test',
+      dotenv({
+        ...encodedEnv,
+        NODE_ENV: 'test',
+        PORT: testPort,
+        APP_URL: `http://127.0.0.1:${testPort}`,
+        APP_KEY: randomBytes(32).toString('base64url'),
+        DB_DATABASE: names.testDatabase,
+      }),
+      true
+    )
+    await writeNew(
+      target,
+      '.env.example',
+      dotenv({
+        ...encodedEnv,
+        APP_KEY: '',
+        DB_PASSWORD: '',
+        ...(profile.redis.password ? { REDIS_PASSWORD: '' } : {}),
+      })
+    )
+    const password = randomBytes(24).toString('base64url')
+    await writeNew(
+      target,
+      'tmp/dev-admin.txt',
+      `Local development administrator\nEmail: ${email}\nPassword: ${password}\n`,
+      true
+    )
+    await writeNew(
+      target,
+      'README.md',
+      `# ${name}\n\nCreated with @adula/create-app ${template.version}. Node.js 24+ is required.\n\n## Local development\n\n\`\`\`sh\nnpm run dev\n\`\`\`\n\nOpen ${appEnv.APP_URL}. Administrator credentials are in ignored tmp/dev-admin.txt. After signing in, open /admin/setup and follow docs/initial-setup.md to review identity and verify service readiness.\nRun workers separately with node ace adula:worker, the outbox dispatcher with node ace adula:outbox, and the scheduler with node ace scheduler:run.\n\n${values.services === 'docker' ? 'PostgreSQL 17 and Redis 7 run in Docker. Start them with docker compose up -d --wait; stop with docker compose stop. Named volumes retain data; never use down -v unless deliberately deleting the local databases.' : 'PostgreSQL 17 and Redis use your existing services. Installation created fresh databases; keep .env and .env.test private.'}\n\n## Verification\n\nRun npm run typecheck, npm test, npm run lint and npm run build. Tests use the separate *_test database and a distinct Redis namespace.\n\n## Company identity\n\nRead docs/design-identity.md and the managed design skill before changing UI. Source files and shadcn components belong to this application.\n\n## External services and production\n\nLocal file storage is enabled. SMTP (including a local relay), OAuth provider credentials, S3, off-site backups, and production deployment need actual destination configuration. The creator does not enable unconfigured external services. Production requires backup variables validated in start/env.ts.\n\n## Incomplete installation\n\nReview the reported failing step; files and databases are retained. After resolving it, use npm exec --yes --package=pnpm@11.19.0 -- pnpm install, node ace migration:run, and node ace adula:setup. Setup reads tmp/dev-admin.txt; it refuses to promote an existing account with a different password. Then run node ace adula:doctor and npm run build. Never recreate over a nonempty directory.\n`
+    )
+    await writeNew(target, 'tmp/install.log', '', true)
+    const options = {
+      cwd: target,
+      env,
+      logFile: join(target, 'tmp/install.log'),
+    }
+    progress.start('Install AdonisJS, adula and UI dependencies')
+    await run(manager[0], [...manager.slice(1), 'install', '--prod=false'], options)
+    progress.start('Start services and create fresh databases')
+    if (values.services === 'docker') {
+      await writeNew(target, 'compose.yaml', composeFile())
+      await run(
+        'docker',
+        ['compose', '--env-file', '.env', 'up', '-d', '--wait', '--wait-timeout', '120'],
+        options
+      )
+      await pingRedis(profile.redis)
+    }
+    await createDatabases(profile.postgres, names)
+    progress.start('Apply migrations and configure administrator, UI and skills')
+    await run(process.execPath, ['ace', 'codegen'], options)
+    await run(process.execPath, ['ace', 'migration:run', '--force'], options)
+    await run(process.execPath, ['ace', 'adula:setup'], options)
+    const sourceFiles = [
+      ...Object.keys(template.files).filter((path) => /\.(?:ts|tsx|js|json|css)$/.test(path)),
+      'inertia/brand.ts',
+      'inertia/css/brand.css',
+    ]
+    await run(
+      manager[0],
+      [...manager.slice(1), 'exec', 'prettier', '--write', ...sourceFiles],
+      options
+    )
+    await run(process.execPath, ['ace', 'adula:doctor'], options)
+    progress.start('Typecheck and build the application')
+    await run(manager[0], [...manager.slice(1), 'run', 'typecheck'], options)
+    await run(manager[0], [...manager.slice(1), 'run', 'build'], options)
+    await writeNew(
+      target,
+      'adula-setup.json',
+      JSON.stringify(
+        {
+          version: template.version,
+          completed: true,
+          services: values.services,
+          database: names.database,
+          testDatabase: names.testDatabase,
+        },
+        null,
+        2
+      ) + '\n'
+    )
+    progress.finish()
+    console.log(
+      `\nYour application is ready: ${target}\nAdministrator credentials: tmp/dev-admin.txt\nInstallation log: tmp/install.log\nNext: cd "${target}"\n      npm run dev\nOpen: ${appEnv.APP_URL}\n`
+    )
+  } catch (error) {
+    progress.finish(true)
+    throw error
+  }
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
+  main().catch((error) => {
+    console.error(
+      `\nSetup did not complete: ${error.message}\nCreated files and databases are retained so you can inspect and resume setup.`
+    )
+    process.exitCode = 1
+  })

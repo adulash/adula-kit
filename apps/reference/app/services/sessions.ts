@@ -1,0 +1,165 @@
+import db from '@adonisjs/lucid/services/db'
+import type { HttpContext } from '@adonisjs/core/http'
+import { logAuthActivity, requestContext } from '#services/auth_activity'
+
+/** A signed-in browser session as shown to users and administrators. */
+export type UserSession = {
+  id: string
+  userId: number
+  ip: string | null
+  userAgent: string | null
+  createdAt: string
+  lastSeenAt: string
+  revokedAt: string | null
+}
+export type ActiveSession = UserSession & { email: string; fullName: string | null }
+
+/** Presence is refreshed at most once per window to keep reads cheap. */
+const PRESENCE_WINDOW_MS = 5 * 60 * 1000
+
+const knex = () => db.connection().getWriteClient()
+const iso = (value: unknown) => (value instanceof Date ? value.toISOString() : String(value))
+function toSession(row: Record<string, unknown>): UserSession {
+  return {
+    id: String(row.id),
+    userId: Number(row.user_id),
+    ip: (row.ip as string | null) ?? null,
+    userAgent: (row.user_agent as string | null) ?? null,
+    createdAt: iso(row.created_at),
+    lastSeenAt: iso(row.last_seen_at),
+    revokedAt: row.revoked_at ? iso(row.revoked_at) : null,
+  }
+}
+
+/** Records the current session for a user right after login, signup or OAuth login. */
+export async function recordSession(ctx: HttpContext, userId: number) {
+  const { ip, userAgent } = requestContext(ctx)
+  await knex()('user_sessions')
+    .insert({ id: ctx.session.sessionId, user_id: userId, ip, user_agent: userAgent })
+    .onConflict('id')
+    .merge({ user_id: userId, ip, user_agent: userAgent, last_seen_at: knex().fn.now() })
+}
+
+/** A voluntary logout closes the row without a "session_revoked" activity. */
+export async function endSession(sessionId: string) {
+  await knex()('user_sessions')
+    .where({ id: sessionId })
+    .whereNull('revoked_at')
+    .update({ revoked_at: knex().fn.now() })
+}
+
+export type SessionState = { active: true } | { active: false; reason: 'disabled' | 'revoked' }
+
+/** The silent and strict auth middleware both check; one query per request is enough. */
+const checked = new WeakMap<HttpContext, Promise<SessionState>>()
+
+/**
+ * Verifies that the authenticated request still owns a live session: the user
+ * is not disabled and the session row was not revoked. Sessions created outside
+ * the login flow (for example by the test client) are recorded lazily, and the
+ * presence timestamp is refreshed at most every five minutes.
+ */
+export function ensureSessionActive(ctx: HttpContext): Promise<SessionState> {
+  let pending = checked.get(ctx)
+  if (!pending) {
+    pending = checkSession(ctx)
+    checked.set(ctx, pending)
+  }
+  return pending
+}
+
+async function checkSession(ctx: HttpContext): Promise<SessionState> {
+  const user = ctx.auth.user
+  if (!user) return { active: true }
+  if (user.disabledAt) return { active: false, reason: 'disabled' }
+  const sessionId = ctx.session.sessionId
+  const row = await knex()('user_sessions').where({ id: sessionId }).first()
+  if (!row) {
+    const { ip, userAgent } = requestContext(ctx)
+    await knex()('user_sessions')
+      .insert({ id: sessionId, user_id: user.id, ip, user_agent: userAgent })
+      .onConflict('id')
+      .ignore()
+    return { active: true }
+  }
+  if (row.revoked_at) return { active: false, reason: 'revoked' }
+  const stale = Date.now() - new Date(row.last_seen_at).getTime() > PRESENCE_WINDOW_MS
+  if (stale || row.user_id !== user.id) {
+    const { ip, userAgent } = requestContext(ctx)
+    await knex()('user_sessions')
+      .where({ id: sessionId })
+      .update({ user_id: user.id, ip, user_agent: userAgent, last_seen_at: knex().fn.now() })
+  }
+  return { active: true }
+}
+
+/** Live sessions of one user, most recently seen first. */
+export async function listUserSessions(userId: number): Promise<UserSession[]> {
+  const rows = await knex()('user_sessions')
+    .where({ user_id: userId })
+    .whereNull('revoked_at')
+    .orderBy('last_seen_at', 'desc')
+  return rows.map(toSession)
+}
+
+/** Every live session across users, for the administrative screen. */
+export async function listActiveSessions(): Promise<ActiveSession[]> {
+  const rows = await knex()('user_sessions')
+    .join('users', 'users.id', 'user_sessions.user_id')
+    .whereNull('user_sessions.revoked_at')
+    .orderBy('user_sessions.last_seen_at', 'desc')
+    .select('user_sessions.*', 'users.email', 'users.full_name')
+  return rows.map((row) => ({
+    ...toSession(row),
+    email: String(row.email),
+    fullName: (row.full_name as string | null) ?? null,
+  }))
+}
+
+/**
+ * Revokes one session: marks the row, deletes the session-store row so the
+ * guard drops it on the next request, and records the activity for the owner.
+ * Returns null when the session is unknown or already revoked.
+ */
+export async function revokeSession(sessionId: string, actorId: number) {
+  return await knex().transaction(async (trx) => {
+    const [row] = await trx('user_sessions')
+      .where({ id: sessionId })
+      .whereNull('revoked_at')
+      .update({ revoked_at: trx.fn.now() })
+      .returning('*')
+    if (!row) return null
+    await trx('sessions').where({ id: sessionId }).delete()
+    await logAuthActivity(
+      {
+        userId: row.user_id,
+        actorId,
+        action: 'session_revoked',
+        changes: { sessionIds: [sessionId], ip: row.ip, userAgent: row.user_agent },
+      },
+      trx
+    )
+    return toSession(row)
+  })
+}
+
+/** Revokes every live session of a user, optionally keeping the current one. */
+export async function revokeUserSessions(
+  userId: number,
+  actorId: number,
+  options: { except?: string } = {}
+) {
+  return await knex().transaction(async (trx) => {
+    const query = trx('user_sessions').where({ user_id: userId }).whereNull('revoked_at')
+    if (options.except) query.whereNot({ id: options.except })
+    const rows = await query.update({ revoked_at: trx.fn.now() }).returning('*')
+    if (!rows.length) return 0
+    const ids = rows.map((row) => String(row.id))
+    await trx('sessions').whereIn('id', ids).delete()
+    await logAuthActivity(
+      { userId, actorId, action: 'session_revoked', changes: { sessionIds: ids } },
+      trx
+    )
+    return rows.length
+  })
+}

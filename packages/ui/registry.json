@@ -1,0 +1,520 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "adula",
+  "homepage": "https://www.npmjs.com/package/@adula/ui",
+  "items": [
+    {
+      "name": "button",
+      "dependencies": [
+        "cn@0.3.0",
+        "radix-ui@1.6.7",
+        "class-variance-authority@0.7.1",
+        "lucide-react@1.47.0"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/button.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "input",
+      "dependencies": ["cn@0.3.0", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/input.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "textarea",
+      "dependencies": ["cn@0.3.0", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/textarea.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "select",
+      "dependencies": ["cn@0.3.0", "radix-ui@1.6.7", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/select.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "checkbox",
+      "dependencies": ["cn@0.3.0", "radix-ui@1.6.7", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/checkbox.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "switch",
+      "dependencies": ["cn@0.3.0", "radix-ui@1.6.7", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/switch.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "radio-group",
+      "dependencies": ["cn@0.3.0", "radix-ui@1.6.7", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/radio-group.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "table",
+      "dependencies": ["cn@0.3.0", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/table.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "form",
+      "dependencies": [
+        "cn@0.3.0",
+        "radix-ui@1.6.7",
+        "@hookform/resolvers@5.9.1",
+        "zod@4.6.5",
+        "react-hook-form@7.88.0",
+        "lucide-react@1.47.0"
+      ],
+      "registryDependencies": ["button", "label"],
+      "files": [
+        {
+          "path": "registry/ui/form.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "label",
+      "dependencies": ["cn@0.3.0", "radix-ui@1.6.7", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/label.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "dialog",
+      "dependencies": ["cn@0.3.0", "radix-ui@1.6.7", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/dialog.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui",
+      "registryDependencies": ["ui-preferences"]
+    },
+    {
+      "name": "sheet",
+      "dependencies": ["cn@0.3.0", "radix-ui@1.6.7", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/sheet.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "dropdown-menu",
+      "dependencies": ["cn@0.3.0", "radix-ui@1.6.7", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/dropdown-menu.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "popover",
+      "dependencies": ["cn@0.3.0", "radix-ui@1.6.7", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/popover.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "command",
+      "dependencies": ["cn@0.3.0", "cmdk@1.1.1", "lucide-react@1.47.0"],
+      "registryDependencies": ["dialog"],
+      "files": [
+        {
+          "path": "registry/ui/command.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "calendar",
+      "dependencies": [
+        "cn@0.3.0",
+        "react-day-picker@10.0.1",
+        "date-fns@4.4.0",
+        "lucide-react@1.47.0"
+      ],
+      "registryDependencies": ["button"],
+      "files": [
+        {
+          "path": "registry/ui/calendar.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "badge",
+      "dependencies": [
+        "cn@0.3.0",
+        "radix-ui@1.6.7",
+        "class-variance-authority@0.7.1",
+        "lucide-react@1.47.0"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/badge.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "card",
+      "dependencies": ["cn@0.3.0", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/card.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "tabs",
+      "dependencies": [
+        "cn@0.3.0",
+        "radix-ui@1.6.7",
+        "class-variance-authority@0.7.1",
+        "lucide-react@1.47.0"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/tabs.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "sonner",
+      "dependencies": ["sonner@2.0.8", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/sonner.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "skeleton",
+      "dependencies": ["cn@0.3.0", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/skeleton.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "pagination",
+      "dependencies": ["cn@0.3.0", "lucide-react@1.47.0"],
+      "registryDependencies": ["button"],
+      "files": [
+        {
+          "path": "registry/ui/pagination.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "tooltip",
+      "dependencies": ["cn@0.3.0", "radix-ui@1.6.7", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/tooltip.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "docs": "The `tooltip` component has been added. Remember to wrap your app with the `TooltipProvider` component.\n\n```tsx title=\"app/layout.tsx\"\nimport { TooltipProvider } from \"@/components/ui/tooltip\"\n\nexport default function RootLayout({ children }: { children: React.ReactNode }) {\n  return (\n    <html lang=\"en\">\n      <body>\n        <TooltipProvider>{children}</TooltipProvider>\n      </body>\n    </html>\n  )\n}\n```\n",
+      "type": "registry:ui"
+    },
+    {
+      "name": "separator",
+      "dependencies": ["cn@0.3.0", "radix-ui@1.6.7", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/separator.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "alert",
+      "dependencies": ["cn@0.3.0", "class-variance-authority@0.7.1", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/alert.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "type": "registry:ui"
+    },
+    {
+      "name": "can",
+      "type": "registry:ui",
+      "registryDependencies": [],
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/can.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "resource-value",
+      "type": "registry:ui",
+      "registryDependencies": ["badge", "calendar-date", "ui-preferences"],
+      "dependencies": ["lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/resource-value.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "resource-field",
+      "type": "registry:ui",
+      "registryDependencies": [
+        "input",
+        "textarea",
+        "button",
+        "label",
+        "select",
+        "switch",
+        "popover",
+        "calendar",
+        "command",
+        "resource-value",
+        "hijri-calendar",
+        "calendar-date",
+        "ui-preferences"
+      ],
+      "dependencies": ["axios@1.19.0", "date-fns@4.4.0", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/resource-field.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "data-table",
+      "type": "registry:ui",
+      "registryDependencies": [
+        "button",
+        "input",
+        "badge",
+        "can",
+        "resource-actions",
+        "resource-field",
+        "resource-value",
+        "ui-preferences"
+      ],
+      "dependencies": [
+        "@tanstack/react-table@9.2.4",
+        "@tanstack/react-virtual@3.14.13",
+        "axios@1.19.0",
+        "lucide-react@1.47.0"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/data-table.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "resource-form",
+      "type": "registry:ui",
+      "registryDependencies": [
+        "button",
+        "alert",
+        "label",
+        "resource-actions",
+        "resource-field",
+        "resource-value"
+      ],
+      "dependencies": ["axios@1.19.0", "sonner@2.0.8", "lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/resource-form.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "resource-show",
+      "type": "registry:ui",
+      "registryDependencies": [
+        "button",
+        "badge",
+        "skeleton",
+        "can",
+        "resource-actions",
+        "resource-value",
+        "ui-preferences"
+      ],
+      "dependencies": ["lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/resource-show.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "resource-page",
+      "type": "registry:ui",
+      "registryDependencies": [
+        "button",
+        "data-table",
+        "resource-form",
+        "resource-show",
+        "resource-surface"
+      ],
+      "dependencies": ["lucide-react@1.47.0"],
+      "files": [
+        {
+          "path": "registry/ui/resource-page.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "resource-actions",
+      "type": "registry:ui",
+      "registryDependencies": ["button", "dialog", "can"],
+      "dependencies": ["axios@1.19.0", "sonner@2.0.8"],
+      "files": [
+        {
+          "path": "registry/ui/resource-actions.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "resource-surface",
+      "type": "registry:ui",
+      "registryDependencies": ["button", "dialog"],
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/resource-surface.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "ui-preferences",
+      "type": "registry:ui",
+      "registryDependencies": [],
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/ui-preferences.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "calendar-date",
+      "type": "registry:ui",
+      "registryDependencies": [],
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/calendar_date.ts",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "hijri-calendar",
+      "type": "registry:ui",
+      "registryDependencies": ["button", "select", "calendar-date"],
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/hijri-calendar.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
+      "name": "confirm-action",
+      "type": "registry:ui",
+      "registryDependencies": ["dialog", "button"],
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/ui/confirm-action.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    }
+  ]
+}

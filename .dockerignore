@@ -1,0 +1,13 @@
+.git
+.work
+**/node_modules
+**/build
+**/.env
+**/.env.test
+**/.env.*
+.playwright-mcp
+**/storage
+**/tmp
+**/public/assets
+**/coverage
+*.log

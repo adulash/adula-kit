@@ -1,0 +1,47 @@
+import { test } from '@japa/runner'
+import { randomUUID } from 'node:crypto'
+import User from '#models/user'
+import db from '@adonisjs/lucid/services/db'
+import mail from '@adonisjs/mail/services/main'
+import UserInvitationNotification from '#mails/user_invitation_notification'
+
+test('starter has healthy services and protects administration', async ({ client, assert }) => {
+  const health = await client.get('/health')
+  health.assertStatus(200)
+  assert.equal(health.body().database, 'ok')
+  assert.equal(health.body().redis, 'ok')
+  const anonymous = await client.get('/admin/users').redirects(0)
+  anonymous.assertStatus(302)
+  const password = 'test-only-password-123'
+  const member = await User.create({ email: `member-${randomUUID()}@example.test`, password })
+  const login = await client.post('/login').withCsrfToken().redirects(0).form({ email: member.email, password })
+  login.assertStatus(302)
+  login.assertHeader('location', '/')
+  const denied = await client.get('/admin/users').loginAs(member).header('Accept', 'application/json')
+  denied.assertStatus(403)
+})
+
+test('fresh installation includes permission-protected email invitations and acceptance', async ({ client, assert }) => {
+  const knex = db.connection().getWriteClient()
+  const password = 'invitation-password-123'
+  const admin = await User.create({ email: `invite-admin-${randomUUID()}@example.test`, password })
+  const [role] = await knex('roles').insert({ name: `invite-admin-${randomUUID()}` }).returning('id')
+  await knex('role_rules').insert({ role_id: role.id, subject: 'all', action: 'manage' })
+  await knex('user_roles').insert({ user_id: admin.id, role_id: role.id })
+  const { mails } = mail.fake()
+  try {
+    const page = await client.get('/users/invite').loginAs(admin).withInertia()
+    page.assertStatus(200)
+    assert.isTrue(page.body().props.canInviteUsers)
+    const email = `invited-${randomUUID()}@example.test`
+    const sent = await client.post('/users/invite').loginAs(admin).withCsrfToken().header('Accept', 'application/json').json({ email, fullName: 'مستخدم مدعو' })
+    sent.assertStatus(200)
+    const [notification] = mails.sent((entry) => entry instanceof UserInvitationNotification) as UserInvitationNotification[]
+    const token = notification.invitationUrl.split('/').pop()!
+    const accepted = await client.post(`/invitations/${token}`).withCsrfToken().header('Accept', 'application/json').json({ password, passwordConfirmation: password })
+    accepted.assertStatus(200)
+    const user = await User.verifyCredentials(email, password)
+    const denied = await client.post('/users/invite').loginAs(user).withCsrfToken().header('Accept', 'application/json').json({ email: `blocked-${email}`, fullName: 'غير مصرح' })
+    denied.assertStatus(403)
+  } finally { mail.restore() }
+})
