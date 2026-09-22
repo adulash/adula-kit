@@ -41,6 +41,65 @@ export async function run(
   }
 }
 
+export async function checkDocker(execute = run, platform = process.platform) {
+  const alternative =
+    'Alternatively, use --services existing --connection ./local.json with PostgreSQL 17 and Redis (see the creator README).'
+  let command = 'docker'
+  let prefix = []
+  try {
+    await execute('docker', ['compose', 'version'], { quiet: true })
+  } catch {
+    if (platform === 'win32') {
+      try {
+        // A newly installed Docker Desktop may not be in this process's PATH yet.
+        command = join(
+          process.env.ProgramFiles ?? 'C:\\Program Files',
+          'Docker/Docker/resources/bin/docker.exe'
+        )
+        await execute(command, ['compose', 'version'], { quiet: true })
+      } catch {
+        try {
+          command = 'wsl.exe'
+          prefix = ['--exec', 'docker']
+          await execute(command, [...prefix, 'compose', 'version'], { quiet: true })
+        } catch {
+          throw Object.assign(
+            new Error(
+              'Docker with Compose was not found in PowerShell or the default WSL distribution. Install and start Docker Desktop, or provide Docker with Compose in your default WSL distribution. ' +
+                alternative
+            ),
+            { code: 'DOCKER_MISSING' }
+          )
+        }
+      }
+    } else {
+      throw Object.assign(
+        new Error(
+          'Docker with Compose is required. Install Docker and Compose, then verify docker compose version. ' +
+            alternative
+        ),
+        { code: 'DOCKER_MISSING' }
+      )
+    }
+  }
+  try {
+    await execute(command, [...prefix, 'info'], { quiet: true })
+  } catch {
+    throw Object.assign(
+      new Error(
+        `Docker Compose is available, but the Docker engine is not reachable. Start Docker Desktop or your Docker service and verify ${[command, ...prefix, 'info'].join(' ')} in this terminal. ` +
+          alternative
+      ),
+      { code: 'DOCKER_STOPPED' }
+    )
+  }
+  return {
+    command,
+    prefix,
+    display: [command.includes(' ') ? `& "${command}"` : command, ...prefix].join(' '),
+  }
+}
+
 export async function packageManager() {
   // Keep the installer outside the project whose dependency tree it updates.
   // Direct JavaScript entries also avoid shell interpretation on Windows.

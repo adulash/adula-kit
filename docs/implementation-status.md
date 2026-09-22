@@ -4,6 +4,38 @@ The approved v4 plan is preserved as a historical baseline; [ADR 021](decisions/
 
 The repository is public and main is protected by required PRs and passing CI. PRs 1–3 were merged after success. All three npm packages have signed provenance and configured GitHub trusted publishers. Local Docker staging is running. The owner approved retaining `latest` alongside `alpha` for this experimental version; `next` remains absent. See [ADR 024](decisions/024-framework-alpha-and-local-staging.md) and [dated publication evidence](evidence/alpha-publication-2026-09-23.json). No phase acceptance is inferred. The sections below retain the earlier dated implementation history.
 
+## Creator prerequisites — 0.2.0-alpha.2 preparation, 2026-09-23
+
+The first external alpha trial exposed delayed directory validation and an
+unhelpful Docker spawn error in Windows PowerShell. Supplied destinations are
+now checked before company prompts, and Docker/Compose preflight runs before
+prompts, package setup or project writes. Diagnostics distinguish unavailable
+Compose from an unreachable engine and explain Windows/WSL execution and the
+existing PostgreSQL 17 plus Redis alternative. Company display names remain
+independent of lowercase project directory names. Failure output no longer
+asserts that files/databases were created when preflight stopped installation.
+
+Regression coverage includes early invalid-name rejection, both Docker failure
+paths, successful preflight ordering, and a real CLI child process with Docker
+absent from PATH that must leave the target nonexistent. This is a local source
+correction; npm 0.2.0-alpha.1 has not been replaced or republished.
+
+The owner expanded the correction to operational Windows support: reuse native
+Docker or Docker in the default WSL distribution, and ask before installing
+missing Docker Desktop with winget. Declining offers an existing PostgreSQL/Redis
+profile or cancellation. Unattended mode never installs host software. A stopped
+engine can be retried; installer/restart failures stop before project creation.
+Consent, refusal, cancellation, restart, engine retry and WSL selection have
+regression coverage. Windows installer execution itself is not claimed as tested
+on a clean machine; its consent flow is tested with an injected executor.
+
+Local verification passed: build, typecheck, lint, boundaries, 132 kit tests,
+4 UI tests and 17 creator tests (one Unix-only test skipped on Windows). The
+reference suite passed on retry using GNU tar on PATH and permission to launch
+Playwright; the first run selected Windows BSD tar and could not launch the
+browser in the sandbox. PostgreSQL 17 used the dedicated test database. Logs:
+`.work/creator-preflight-*.log`. No archive or publication acceptance is claimed.
+
 ## Historical checkpoint — 2026-09-21
 
 The [confirmed-achievements ledger](confirmed-achievements.md) separates demonstrated component outcomes from the still-open phase gates. The 2026-09-21 [source review](evidence/implementation-review-2026-09-21.json) reran all six local validation commands: 282 tests and five release guards passed on PostgreSQL 17.6.

@@ -35,7 +35,7 @@ export function validateContents(pkg, files) {
   const required = ['package/package.json', 'package/README.md']
   if (pkg.name === '@adula/kit') required.push('package/LICENSE.md', 'package/build/index.js', 'package/build/index.d.ts', 'package/build/configure.js', 'package/build/commands/main.js', 'package/build/agent/AGENTS.template.md', 'package/build/agent/skills/adula-frontend-design/SKILL.md', 'package/build/agent/skills/idea-review/SKILL.md')
   else if (pkg.name === '@adula/ui') required.push('package/LICENSE', 'package/LICENSE.shadcn.md', 'package/UPSTREAM.json', 'package/build/manifest.json', 'package/build/dialog.json', 'package/build/resource-page.json', 'package/build/resource-surface.json')
-  else required.push('package/LICENSE', 'package/build/cli.mjs', 'package/build/project.mjs', 'package/build/system.mjs', 'package/build/template.json')
+  else required.push('package/LICENSE', 'package/build/cli.mjs', 'package/build/project.mjs', 'package/build/system.mjs', 'package/build/prerequisites.mjs', 'package/build/template.json')
   for (const path of required) assert(paths.has(path), `Required package file missing: ${path}`)
   for (const target of [...Object.values(pkg.exports ?? {}), ...Object.values(pkg.bin ?? {})]) {
     const path = `package/${target.replace(/^\.\//, '')}`

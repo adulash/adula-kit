@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0-alpha.2 — 2026-09-23
+
+* Validate the supplied project directory before collecting company details.
+* Check Docker Compose and engine availability before prompts or project writes,
+  with Windows/WSL guidance and the existing PostgreSQL/Redis alternative.
+* Reuse Docker in the default WSL distribution from Windows automatically; ask
+  before installing missing Docker Desktop with winget in interactive setup.
+  Declining offers existing services or cancellation; unattended mode never installs.
+* Clarify that company display names may retain uppercase letters and that
+  preflight failures do not necessarily leave files or databases behind.
+* Keep matching kit/UI/creator versions on alpha; no stable acceptance is claimed.
+
 ## 0.2.0-alpha.1 — release candidate preparation, 2026-09-22
 
 * Prepare the owner-authorized experimental alpha distribution and one-command

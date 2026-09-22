@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { parseEnv, promisify } from 'node:util'
 import { createRequire } from 'node:module'
-import { pathToFileURL } from 'node:url'
+import { pathToFileURL, fileURLToPath } from 'node:url'
 import { createServer } from 'node:net'
 import {
   assertEmpty,
@@ -25,12 +25,77 @@ import {
   pingRedis,
   packageManager,
   packageManagerBin,
+  checkDocker,
 } from '../src/system.mjs'
 import { main } from '../src/cli.mjs'
 
+test('invalid directory is rejected before missing company details or Docker checks', async () => {
+  await assert.rejects(main(['Dental-Gate', '--yes']), /dental-gate.*Dental-Gate/)
+})
+
+test('Docker preflight distinguishes missing Compose from an unavailable engine', async () => {
+  const calls = []
+  await checkDocker(async (command, args) => {
+    calls.push([command, ...args])
+  })
+  assert.deepEqual(calls, [
+    ['docker', 'compose', 'version'],
+    ['docker', 'info'],
+  ])
+  await assert.rejects(
+    checkDocker(async () => {
+      throw new Error('missing')
+    }, 'win32'),
+    /Docker with Compose.*PowerShell.*--services existing/
+  )
+  await assert.rejects(
+    checkDocker(async (_command, args) => {
+      if (args[0] === 'info') throw new Error('stopped')
+    }),
+    /engine is not reachable.*docker info/
+  )
+})
+
+test('CLI with no Docker fails before writing an application', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'adula-preflight-'))
+  const target = join(root, 'dental-gate')
+  const env = childEnvironment()
+  for (const key of Object.keys(env)) if (key.toLowerCase() === 'path') delete env[key]
+  env.PATH = root
+  env.ProgramFiles = root
+  await assert.rejects(
+    promisify(execFile)(
+      process.execPath,
+      [
+        fileURLToPath(new URL('../src/cli.mjs', import.meta.url)),
+        target,
+        '--company',
+        'Dental-Gate',
+        '--admin-email',
+        'admin@example.test',
+        '--yes',
+      ],
+      { env, windowsHide: true }
+    ),
+    (error) => {
+      assert.match(error.stderr, /Docker with Compose.*--services existing/)
+      assert.doesNotMatch(error.stderr, /ERR_MODULE_NOT_FOUND/)
+      return true
+    }
+  )
+  await assert.rejects(access(target), { code: 'ENOENT' })
+})
+
 test('the generated consumer includes the complete operational recovery command chain', async () => {
-  const template = JSON.parse(await readFile(new URL('../build/template.json', import.meta.url), 'utf8'))
-  for (const name of ['backup_create', 'backup_verify_snapshot', 'backup_restore_files', 'backup_restore_test'])
+  const template = JSON.parse(
+    await readFile(new URL('../build/template.json', import.meta.url), 'utf8')
+  )
+  for (const name of [
+    'backup_create',
+    'backup_verify_snapshot',
+    'backup_restore_files',
+    'backup_restore_test',
+  ])
     assert.ok(template.files[`commands/${name}.ts`], `Missing operational command ${name}`)
   for (const name of ['backup_snapshot', 'backup_publish'])
     assert.ok(template.files[`app/services/${name}.ts`], `Missing snapshot service ${name}`)

@@ -2,7 +2,8 @@
 
 Creates a complete, project-owned AdonisJS 7 application with adula, React/Inertia,
 shadcn/ui, authentication, administration and the managed business-design skill.
-Version 0.2.0-alpha.1 is **published and experimental**. Both alpha and the owner-authorized latest alias select this version; next is absent.
+Version 0.2.0-alpha.2 is **experimental**, intended for the alpha channel.
+The owner-authorized latest alias remains on 0.2.0-alpha.1; next is absent.
 
 ```sh
 npm create @adula/app@alpha my-app
@@ -12,6 +13,28 @@ Requires Node.js 24+ and npm. The default provisions PostgreSQL 17 and Redis 7
 through an existing Docker installation with Compose. pnpm is bootstrapped through
 npm and installed as a project-local development dependency; neither a global
 pnpm installation nor a pre-existing AdonisJS application is required.
+
+Use a lowercase directory such as `dental-gate`; the company display name can be
+`Dental-Gate`. The creator checks a supplied directory and Docker before asking
+for company details or creating project files.
+
+On Windows, setup checks native Docker, the standard Docker Desktop location,
+then Docker in the default WSL distribution. When WSL Docker is selected, Node.js
+and application files remain on Windows; Compose runs through `wsl.exe --exec`.
+The generated README records the matching service start/stop command.
+
+If Docker is absent, the interactive wizard asks for explicit permission before
+installing Docker Desktop using `winget`. Pressing Enter or answering no never
+installs software: you can supply an existing-services profile or cancel. Windows
+may request administrator approval or a restart; complete Docker Desktop setup
+and rerun the same command if needed. No application files/databases are created
+before the service preflight succeeds. `--yes` never authorizes host installation.
+On other operating systems, setup provides installation guidance and the existing
+services alternative. A stopped engine is detected separately and can be retried.
+Existing PostgreSQL 17 **and Redis** are supported via the connection profile below.
+
+Host installation references: [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+and [WinGet install options](https://learn.microsoft.com/windows/package-manager/winget/install).
 
 The wizard requests the company name, administrator email and company identity.
 An optional identity JSON file contains `primaryColor` (six-digit hex), `logo`
