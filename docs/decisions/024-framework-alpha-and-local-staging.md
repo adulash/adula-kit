@@ -35,3 +35,12 @@ integration and runtime verification rather than delivery of a permanent medical
 product. Phase 7 remains complete framework scope, documentation, passing tests
 and an authorized public release. Local Docker results do not claim external
 capacity, public TLS, or an operated customer deployment.
+
+## Owner amendment, 2026-09-23
+
+After initial npm publication, the registry exposed `latest` alongside `alpha`.
+The owner explicitly approved retaining both for `0.2.0-alpha.1` after being told
+that unqualified installation would select this experimental version. This
+supersedes the earlier requirement that the registry have no `latest` alias for
+this version only. `next` remains absent. No phase or stable release gate is
+accepted by this amendment, and future stable releases retain the 1.0 gates.

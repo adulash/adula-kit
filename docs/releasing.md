@@ -1,6 +1,6 @@
 # Preparing and publishing packages
 
-**Publication is being prepared.** On 2026-09-22 the owner authorized a PR, passing CI and merge to `adulash/adula-kit`, then the explicit `0.2.0-alpha.1` release on `alpha`. `latest` and `next` remain blocked. See ADR 024.
+**Experimental 0.2.0-alpha.1 is published.** The owner authorized reviewed PRs, passing CI and merge, then alpha publication. On 2026-09-23 the owner also approved retaining `latest` as an alias of this experimental version; `next` remains absent. This does not accept stable 1.0. See ADR 024 and the [publication evidence](evidence/alpha-publication-2026-09-23.json).
 
 ## Destination
 
@@ -10,11 +10,11 @@
 | Packages | `@adula/kit`, `@adula/ui`, `@adula/create-app` |
 | Repository | `adulash/adula-kit`; visibility verified before provenance publishing |
 | Workflow | `release.yml` |
-| GitHub environment | `npm`; configure required reviewers and restrict branches to `main` |
+| GitHub environment | `npm`; restricted to protected branches; `main` requires PR and CI |
 | Authentication | npm trusted publishing, GitHub-hosted runner, OIDC |
-| Current version / target | 0.2.0-alpha.1 unreleased / complete 1.0.0 |
+| Current version / target | 0.2.0-alpha.1 published experimental / complete 1.0.0 pending |
 
-Configure a trusted publisher for **each package**: owner `adulash`, repository `adula-kit`, workflow `release.yml`, environment `npm`, with publishing permission. If npm requires an authenticated initial package bootstrap, resolve it separately with the owner. The workflow does not establish account setup or supply credentials.
+Trusted publishers were configured for **all three packages**: owner `adulash`, repository `adula-kit`, workflow `release.yml`, environment `npm`, with publishing permission. The first publication used [signed bootstrap archives](alpha-bootstrap.md) and an authenticated owner session. The workflow does not establish account setup or supply credentials.
 
 npm trusted publishing requires at least npm 11.5.1 and Node 22.14; the workflow uses Node 24 and npm 11. Public provenance requires public source and package visibility. See [trusted publishing](https://docs.npmjs.com/trusted-publishers/) and [provenance](https://docs.npmjs.com/generating-provenance-statements/). No npm token belongs in source.
 
@@ -33,7 +33,7 @@ pnpm check:release --artifacts=.work
 pnpm check:release --channel=latest
 ```
 
-The last command **must fail today**: 0.2.0-alpha.1 is not complete 1.0. Packaging checks validate versions, provenance metadata, licensing, skills/commands, exports, UI assets and absence of private/test files, then write `.work/SHA256SUMS`. They do not establish product stability.
+The last command **must fail today**: 0.2.0-alpha.1 is not complete 1.0. The owner's one-version registry alias exception does not authorize a stable release or disable future acceptance gates. Packaging checks validate versions, provenance metadata, licensing, skills/commands, exports, UI assets and absence of private/test files, then write `.work/SHA256SUMS`. They do not establish product stability.
 
 When acceptance justifies a candidate, update all three package versions, workspace/reference versions, agent/UI lock versions, changelog and `release-readiness.json`; rebuild and repeat both consumer tests. The creator pins matching kit/UI versions in its bundled template. Keep migrations additive. Previews use an explicit prerelease such as `1.0.0-rc.1` on `next`; stable uses `v1.0.0` on `latest`. These are future examples, not existing releases.
 

@@ -2,7 +2,7 @@
 
 Creates a complete, project-owned AdonisJS 7 application with adula, React/Inertia,
 shadcn/ui, authentication, administration and the managed business-design skill.
-Version 0.2.0-alpha.1 is **unreleased**; registry commands become available after publication.
+Version 0.2.0-alpha.1 is **published and experimental**. Both alpha and the owner-authorized latest alias select this version; next is absent.
 
 ```sh
 npm create @adula/app@alpha my-app
@@ -58,6 +58,6 @@ runtime processes documented in the application README. SMTP, OAuth, S3, product
 hosting and off-site backups need real configuration; no external accounts are
 created. Node.js and Docker themselves are host prerequisites.
 
-Before publication, run the packed CLI with npm exec and `--packages` pointing
+For local archive verification, run the packed CLI with npm exec and `--packages` pointing
 to the directory containing matching `adula-kit-VERSION.tgz` and
 `adula-ui-VERSION.tgz`. `pnpm test:create` exercises this path from an empty folder.

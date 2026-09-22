@@ -2,7 +2,13 @@
 
 Resource-driven business applications on AdonisJS 7, PostgreSQL 17 and React 19/Inertia. MIT.
 
-**Current version: 0.2.0-alpha.1, unreleased. Target: the complete approved 1.0 scope.** The owner has reserved the `@adula` npm scope. The owner authorized an experimental `alpha` release through a reviewed PR and successful CI. `latest` and `next` remain blocked; this is not a completed 1.0. Local Docker staging is the selected runtime acceptance environment.
+**Current version: 0.2.0-alpha.1, published experimental release. Target: the complete approved 1.0 scope.** All three `@adula` packages are published with signed provenance after reviewed PRs and successful CI. The owner subsequently authorized `latest` as an alias of this experimental `alpha`; it does not mean stable or completed 1.0. `next` remains absent. Local Docker staging is the selected runtime acceptance environment.
+
+```sh
+npm create @adula/app@alpha my-app
+```
+
+Requires Node.js 24+ and running Docker with Compose. The initializer installs application dependencies and provisions PostgreSQL/Redis. See the [publication record](docs/evidence/alpha-publication-2026-09-23.json).
 
 ## Documentation
 
