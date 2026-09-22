@@ -3,7 +3,7 @@ import { Progress } from './progress.mjs'
 import { parseArgs } from 'node:util'
 import { createInterface } from 'node:readline/promises'
 import { randomBytes } from 'node:crypto'
-import { readFile } from 'node:fs/promises'
+import { readFile, realpath } from 'node:fs/promises'
 import { resolve, join, delimiter } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import {
@@ -30,7 +30,7 @@ import {
 
 export const help = `Create a new business application with AdonisJS and adula
 
-  npm create @adula/app@latest my-app
+  npm create @adula/app@alpha my-app
 
   --company "Company name"     Company display name (Arabic supported)
   --admin-email email          Administrator email
@@ -319,7 +319,9 @@ export async function main(argv = process.argv.slice(2)) {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href)
+// npm bin entries are symlinks on Linux. Node resolves the imported module URL,
+// but argv retains the link path; compare their real paths before starting.
+if (process.argv[1] && import.meta.url === pathToFileURL(await realpath(process.argv[1])).href)
   main().catch((error) => {
     console.error(
       `\nSetup did not complete: ${error.message}\nCreated files and databases are retained so you can inspect and resume setup.`
