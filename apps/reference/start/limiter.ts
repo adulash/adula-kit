@@ -9,6 +9,7 @@
 |
 */
 
+import env from '#start/env'
 import limiter from '@adonisjs/limiter/services/main'
 import type { HttpContext } from '@adonisjs/core/http'
 
@@ -30,9 +31,18 @@ export const loginThrottle = limiter.define('login', (ctx) =>
     .limitExceeded(withMessage)
 )
 
-/** Login: 30 attempts per minute from one address across all e-mails (password spraying). */
+/**
+ * Login attempts per minute from one address across all e-mails (password spraying).
+ * Offices behind one public address share it, so it stays well above a team's
+ * morning sign-in; per-account lockout below limits guessing independently.
+ */
+export const LOGIN_ADDRESS_LIMIT = env.get('LOGIN_ADDRESS_LIMIT', 100)
 export const loginAddressThrottle = limiter.define('login_address', (ctx) =>
-  limiter.allowRequests(30).every('1 minute').usingKey(ctx.request.ip()).limitExceeded(withMessage)
+  limiter
+    .allowRequests(LOGIN_ADDRESS_LIMIT)
+    .every('1 minute')
+    .usingKey(ctx.request.ip())
+    .limitExceeded(withMessage)
 )
 
 /**
