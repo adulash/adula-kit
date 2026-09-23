@@ -1,5 +1,4 @@
 import { spawn } from 'node:child_process'
-import { holdDockerSession } from './docker-session.mjs'
 
 export function dockerBackend(name) {
   if (name === 'direct') return { command: 'docker', prefix: [], display: 'docker' }
@@ -51,10 +50,13 @@ export async function detectDocker(execute = runCommand, platform = process.plat
 export async function withDockerServices(
   backend,
   action,
-  { execute = runCommand, hold = holdDockerSession } = {}
+  { execute = runCommand, hold = undefined } = {}
 ) {
   // Native Docker never calls the WSL lifecycle helper.
-  const release = backend.command === 'wsl.exe' ? await hold(backend) : () => {}
+  const release =
+    backend.command === 'wsl.exe'
+      ? await (hold ?? (await import('./docker-session.mjs')).holdDockerSession)(backend)
+      : () => {}
   try {
     await execute(backend.command, [
       ...backend.prefix,

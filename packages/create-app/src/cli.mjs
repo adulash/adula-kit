@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { Progress } from './progress.mjs'
-import { holdDockerSession } from './docker-session.mjs'
 import { prepareDocker } from './prerequisites.mjs'
 import { parseArgs } from 'node:util'
 import { createInterface } from 'node:readline/promises'
@@ -198,7 +197,10 @@ export async function main(argv = process.argv.slice(2)) {
   ].join(delimiter)
   let profile
   const progress = new Progress()
-  const releaseDocker = docker?.command === 'wsl.exe' ? await holdDockerSession(docker) : () => {}
+  const releaseDocker =
+    docker?.command === 'wsl.exe'
+      ? await (await import('./docker-session.mjs')).holdDockerSession(docker)
+      : () => {}
   try {
     progress.start('Check services and prepare configuration')
     if (values.services === 'docker') {
@@ -255,7 +257,11 @@ export async function main(argv = process.argv.slice(2)) {
       packageFiles: values.packages,
     })
     if (docker) {
-      for (const file of ['docker-session.mjs', 'docker-runtime.mjs', 'services.mjs'])
+      for (const file of [
+        'docker-runtime.mjs',
+        'services.mjs',
+        ...(docker.command === 'wsl.exe' ? ['docker-session.mjs'] : []),
+      ])
         await writeNew(
           target,
           `scripts/${file}`,

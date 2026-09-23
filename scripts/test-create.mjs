@@ -180,6 +180,8 @@ try {
     const config = JSON.parse(await readFile(join(target, 'scripts/docker-backend.json'), 'utf8'))
     runtime = dockerBackend(config.backend)
     if (runtime.command === 'wsl.exe') releaseDocker = await holdDockerSession(runtime)
+    else
+      await assert.rejects(access(join(target, 'scripts/docker-session.mjs')), { code: 'ENOENT' })
     const manifest = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'))
     assert.equal(manifest.scripts.dev, 'node scripts/services.mjs dev')
     assert.equal(manifest.scripts.test, 'node scripts/services.mjs test')

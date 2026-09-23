@@ -48,6 +48,11 @@ WSL fallback uses the foreground session helper. Isolated creator acceptance
 now crosses the WSL idle window before real PostgreSQL migrations and Redis PING.
 Direct Docker is not installed in this Windows session; direct command routing
 has regression coverage and the Linux CI creator acceptance uses real direct Docker.
+Direct-generated projects do not copy or load the WSL session helper. Local
+build, typecheck, lint, boundaries, release tests and the full PostgreSQL/browser
+suite passed (`.work/alpha3-*.log`). The creator suite passed 35 tests with one
+Unix-only test skipped on Windows. Archive consumer and remote release checks
+remain distinct required publication gates.
 
 ## WSL creator lifetime correction — 2026-09-23 (prior recovery)
 
