@@ -7,7 +7,7 @@ import mail from '@adonisjs/mail/services/main'
 import { SMTPTransport } from '@adonisjs/mail/transports/smtp'
 import limiter from '@adonisjs/limiter/services/main'
 import env from '#start/env'
-import { loginAccountLimiter } from '#start/limiter'
+import { LOGIN_ADDRESS_LIMIT, loginAccountLimiter } from '#start/limiter'
 import User from '#models/user'
 import PasswordResetNotification from '#mails/password_reset_notification'
 import { linkOrCreateSocialUser, socialProviders } from '#services/social_accounts'
@@ -747,7 +747,7 @@ test.group('Authentication lifecycle', (group) => {
   test('one address is limited across e-mails and password changes are limited per user', async ({
     client,
   }) => {
-    for (let index = 0; index < 30; index++) {
+    for (let index = 0; index < LOGIN_ADDRESS_LIMIT; index++) {
       const attempt = await client
         .post('/login')
         .withCsrfToken()

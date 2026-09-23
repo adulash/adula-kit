@@ -31,6 +31,8 @@ const env = await Env.create(new URL('../', import.meta.url), {
   DB_DATABASE: Env.schema.string(),
   // Connections per process; size it with the web concurrency and PostgreSQL max_connections.
   DB_POOL_MAX: Env.schema.number.optional(),
+  // Login attempts per minute from one address (default 100); raise it for large offices behind one NAT.
+  LOGIN_ADDRESS_LIMIT: Env.schema.number.optional(),
   REDIS_HOST: Env.schema.string(),
   REDIS_PORT: Env.schema.number(),
   REDIS_PASSWORD: Env.schema.string.optional(),
