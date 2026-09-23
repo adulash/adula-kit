@@ -2,7 +2,7 @@
 
 Creates a complete, project-owned AdonisJS 7 application with adula, React/Inertia,
 shadcn/ui, authentication, administration and the managed business-design skill.
-Version 0.2.0-alpha.2 is **experimental**, intended for the alpha channel.
+Version 0.2.0-alpha.3 is **experimental**, intended for the alpha channel.
 The owner-authorized latest alias remains on 0.2.0-alpha.1; next is absent.
 
 ```sh
@@ -18,10 +18,20 @@ Use a lowercase directory such as `dental-gate`; the company display name can be
 `Dental-Gate`. The creator checks a supplied directory and Docker before asking
 for company details or creating project files.
 
-On Windows, setup checks native Docker, the standard Docker Desktop location,
-then Docker in the default WSL distribution. When WSL Docker is selected, Node.js
+Setup first checks `docker version` and `docker compose version` directly.
+Only when either fails on Windows does it try Docker in the default WSL
+distribution. When WSL Docker is selected, Node.js
 and application files remain on Windows; Compose runs through `wsl.exe --exec`.
 The generated README records the matching service start/stop command.
+
+The selected backend is saved in `scripts/docker-backend.json`. Installation,
+`npm run dev`, `npm test`, `npm run ace -- migration:run`, `npm run services`, and
+`npm run services:stop` use that backend without switching daemons on failure.
+Development, tests and Ace commands start Compose and wait for healthy services.
+Only the WSL fallback holds a foreground WSL session, since systemd services alone
+do not keep WSL alive. Direct Docker never starts that session. To run raw
+`node ace` commands, keep `npm run services` open in another terminal. Stopping
+services retains the volumes; no global WSL settings are changed.
 
 If Docker is absent, the interactive wizard asks for explicit permission before
 installing Docker Desktop using `winget`. Pressing Enter or answering no never
@@ -30,7 +40,7 @@ may request administrator approval or a restart; complete Docker Desktop setup
 and rerun the same command if needed. No application files/databases are created
 before the service preflight succeeds. `--yes` never authorizes host installation.
 On other operating systems, setup provides installation guidance and the existing
-services alternative. A stopped engine is detected separately and can be retried.
+services alternative. Failed engine or Compose probes allow the Windows fallback.
 Existing PostgreSQL 17 **and Redis** are supported via the connection profile below.
 
 Host installation references: [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/)

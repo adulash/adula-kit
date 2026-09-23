@@ -116,17 +116,7 @@ test('Windows falls back to WSL using argument arrays and verifies its engine', 
     display: 'wsl.exe --exec docker',
   })
   assert.deepEqual(calls.slice(-2), [
+    ['wsl.exe', '--exec', 'docker', 'version'],
     ['wsl.exe', '--exec', 'docker', 'compose', 'version'],
-    ['wsl.exe', '--exec', 'docker', 'info'],
   ])
-})
-
-test('a stopped native engine does not silently switch to a different WSL engine', async () => {
-  await assert.rejects(
-    checkDocker(async (command, args) => {
-      assert.equal(command, 'docker')
-      if (args[0] === 'info') throw new Error('stopped')
-    }, 'win32'),
-    { code: 'DOCKER_STOPPED' }
-  )
 })
