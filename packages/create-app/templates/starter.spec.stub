@@ -7,9 +7,10 @@ import UserInvitationNotification from '#mails/user_invitation_notification'
 
 test('starter has healthy services and protects administration', async ({ client, assert }) => {
   const health = await client.get('/health')
+  // 200 requires reachable PostgreSQL and Redis; the public body carries only the status.
   health.assertStatus(200)
-  assert.equal(health.body().database, 'ok')
-  assert.equal(health.body().redis, 'ok')
+  assert.deepEqual(Object.keys(health.body()), ['status'])
+  assert.oneOf(health.body().status, ['ok', 'degraded'])
   const anonymous = await client.get('/admin/users').redirects(0)
   anonymous.assertStatus(302)
   const password = 'test-only-password-123'
