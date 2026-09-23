@@ -89,7 +89,8 @@ test.group('Generic resource page integration', (group) => {
     const activity = response.body().props.activity
     assert.lengthOf(activity, 1)
     assert.equal(activity[0].action, 'create')
-    assert.equal(activity[0].actorEmail, actor.user.email)
+    assert.equal(activity[0].actorName, actor.user.fullName)
+    assert.isNull(activity[0].actorEmail)
     assert.sameMembers(activity[0].fields, ['name', 'email'])
     assert.match(activity[0].createdAt, /^\d{4}-\d{2}-\d{2}T/)
   })

@@ -1,6 +1,8 @@
 import { readFile, writeFile, readdir } from 'node:fs/promises'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
+import { existsSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 const exec = promisify(execFile)
 const root = new URL('../packages/ui/', import.meta.url)
 const registry = JSON.parse(await readFile(new URL('registry.json', root), 'utf8'))
@@ -28,9 +30,17 @@ for (const filename of await readdir(new URL('registry/ui/', root))) {
   if (filename === 'switch.tsx' && !code.includes('rtl:data-')) code = code.replace('data-[state=checked]:translate-x-[calc(100%-2px)]', 'data-[state=checked]:translate-x-[calc(100%-2px)] rtl:data-[state=checked]:-translate-x-[calc(100%-2px)]')
   await writeFile(path, code)
 }
-const packages = ['cn', 'radix-ui', 'class-variance-authority', 'lucide-react', '@hookform/resolvers', 'zod', 'react-hook-form', 'cmdk', 'react-day-picker', 'date-fns', 'sonner', 'tw-animate-css', '@fontsource/noto-sans-arabic']
+// Refresh exactly the packages already pinned; adding one is a reviewed edit to dependencies.json.
+const packages = Object.keys(JSON.parse(await readFile(new URL('dependencies.json', root), 'utf8')))
 const metadata = {}
-const npm = process.env.NPM_CLI_PATH ?? 'C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js'
+const nodeDirectory = dirname(process.execPath)
+const npm =
+  process.env.NPM_CLI_PATH ??
+  [
+    join(nodeDirectory, 'node_modules/npm/bin/npm-cli.js'),
+    join(nodeDirectory, '../lib/node_modules/npm/bin/npm-cli.js'),
+  ].find((candidate) => existsSync(candidate))
+if (!npm) throw new Error('npm CLI not found next to Node.js; set NPM_CLI_PATH')
 for (let offset = 0; offset < packages.length; offset += 4) {
   await Promise.all(packages.slice(offset, offset + 4).map(async (name) => {
     const { stdout } = await exec(process.execPath, [npm, 'view', name, 'version', 'time.modified', 'peerDependencies', '--json'])

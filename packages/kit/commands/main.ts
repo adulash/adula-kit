@@ -6,6 +6,7 @@ import ModuleAdd from './module_add.js'
 import ModuleRemove from './module_remove.js'
 import Ui from './ui.js'
 import StorageMigrate from './storage_migrate.js'
+import Gaps from './gaps.js'
 const commands = [
   Resource,
   Doctor,
@@ -15,6 +16,7 @@ const commands = [
   ModuleRemove,
   Ui,
   StorageMigrate,
+  Gaps,
 ]
 export async function getMetaData() {
   return commands.map((command) => {

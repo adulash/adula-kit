@@ -37,7 +37,7 @@ export default function Invitation({ token, valid }: { token: string; valid: boo
                 autoComplete="new-password"
                 required
                 minLength={8}
-                maxLength={32}
+                maxLength={64}
                 value={form.data.password}
                 onChange={(e) => form.setData('password', e.target.value)}
                 aria-invalid={Boolean(form.errors.password)}

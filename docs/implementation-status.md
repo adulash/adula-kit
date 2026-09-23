@@ -1,8 +1,24 @@
 # Implementation status — 2026-09-23
 
-The approved v4 plan is preserved as a historical baseline; [ADR 021](decisions/021-optional-oauth.md) records the owner-approved exclusion of OAuth from base release requirements. The kit/UI/creator packages are published as **experimental 0.2.0-alpha.1**, not an accepted 1.0 kit. Publication does not prove an independently upgraded, restored and production-operated release.
+The approved v4 plan is preserved as a historical baseline; [ADR 021](decisions/021-optional-oauth.md) records the owner-approved exclusion of OAuth from base release requirements. The kit/UI/creator packages are published as **experimental 0.2.0-alpha.3** on the `alpha` tag (`latest` still names 0.2.0-alpha.1), not an accepted 1.0 kit. Publication does not prove an independently upgraded, restored and production-operated release.
 
 The repository is public and main is protected by required PRs and passing CI. PRs 1–3 were merged after success. All three npm packages have signed provenance and configured GitHub trusted publishers. Local Docker staging is running. The owner approved retaining `latest` alongside `alpha` for this experimental version; `next` remains absent. See [ADR 024](decisions/024-framework-alpha-and-local-staging.md) and [dated publication evidence](evidence/alpha-publication-2026-09-23.json). No phase acceptance is inferred. The sections below retain the earlier dated implementation history.
+
+## Audit hardening — 2026-09-23
+
+A repository audit (security, plan conformance, bloat) led to the changes listed under
+"Unreleased" in the CHANGELOG. Security findings from that audit that are fixed and
+covered by new tests: account pre-hijacking through unverified self-signup plus OAuth
+e-mail linking, case-sensitive e-mail identity, missing per-account/per-address login
+limits, disabled CSP, raw session ids in pages and activity, validator-added fields
+bypassing field authorization, unrestricted shared saved-view queries, unrestricted and
+never-pruned uploads, impersonated writes attributed only to the target user,
+e-mail exposure in record history and backup details on the public health probe.
+Performance changes (first-page-only estimate, configurable pool) are not a claim that
+the phase 2 budget passes; the k6 budget must be re-measured. Not changed: scrypt cost
+(kept at the framework default pending a login-latency benchmark) and a creator
+lockfile (needs release-pipeline support). Impersonation changes need the human review
+required by the managed AGENTS rule 11.
 
 ## Creator prerequisites — 0.2.0-alpha.2 preparation, 2026-09-23
 
@@ -298,6 +314,8 @@ Phase 2: resolve the measured latency failures and pass the budget on staging, c
 Phases 3–7 remain gated by phase 2 vertical-slice acceptance. Business collaboration, full workflows, reviewer skills, the complete medical-assets consumer, production acceptance and public release are not claimed as implemented.
 
 ## External constraints
+
+Historical, 2026-09-22; publication and repository state are superseded by the top of this file.
 
 Docker is available inside Ubuntu WSL and the isolated operational acceptance passed; verified k6 2.3.0 is available locally and the first load run failed latency thresholds. No staging destination/SSH was supplied. S3 and offsite configuration are present; isolated database, local-attachment and source-S3 attachment recovery exercises passed as recorded above. The owner confirmed @adula reservation; the GitHub repository remains private and npm trusted publishing is not configured/verified. The application Compose services and manually invoked backup/recovery path passed local container acceptance. Caddy/TLS, deployment, natural scheduled backup/restore and staging supervision remain unverified. GitHub pushes remain on hold. No application or package has been published.
 

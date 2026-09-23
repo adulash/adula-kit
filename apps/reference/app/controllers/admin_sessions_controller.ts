@@ -2,7 +2,12 @@ import type { HttpContext } from '@adonisjs/core/http'
 import { Exception } from '@adonisjs/core/exceptions'
 import { buildAbility } from '@adula/kit'
 import { kit } from '#services/kit'
-import { listActiveSessions, revokeSession } from '#services/sessions'
+import {
+  listActiveSessions,
+  resolveSessionHandle,
+  revokeSession,
+  sessionHandle,
+} from '#services/sessions'
 
 /** Every live session across users; only actors who can manage everything. */
 export default class AdminSessionsController {
@@ -10,13 +15,14 @@ export default class AdminSessionsController {
     await this.authorize(ctx)
     return ctx.inertia.render('admin/sessions/index', {
       sessions: await listActiveSessions(),
-      currentSessionId: ctx.session.sessionId,
+      currentSessionId: sessionHandle(ctx.session.sessionId),
     })
   }
 
   async destroy(ctx: HttpContext) {
     const actor = await this.authorize(ctx)
-    const revoked = await revokeSession(String(ctx.params.id), actor.id)
+    const id = await resolveSessionHandle(String(ctx.params.id))
+    const revoked = id ? await revokeSession(id, actor.id) : null
     if (revoked) ctx.session.flash('success', 'أُنهيت الجلسة وسيُطلب من صاحبها الدخول مجدداً.')
     else ctx.session.flash('error', 'الجلسة غير موجودة أو أُنهيت من قبل.')
     return ctx.response.redirect().toRoute('admin_sessions.index')

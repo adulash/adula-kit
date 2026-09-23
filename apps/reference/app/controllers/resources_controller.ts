@@ -4,7 +4,7 @@ import app from '@adonisjs/core/services/app'
 import type { HttpContext } from '@adonisjs/core/http'
 import { createResourceController } from '@adula/kit'
 import type { Actor, ResourceDescription } from '@adula/kit'
-import { kit } from '#services/kit'
+import { kit, requestActor } from '#services/kit'
 import { testFixturesEnabled } from '#start/test_fixtures'
 const fixtureRenderers = testFixturesEnabled ? await import('#tests/fixtures/presentation') : null
 
@@ -44,7 +44,7 @@ export function pageFor(resource: string, mode: Mode) {
 const generic = (page: string) => page as 'resources/page'
 
 async function actorOf(ctx: HttpContext) {
-  return kit().actors.load(ctx.auth.getUserOrFail().id)
+  return requestActor(ctx)
 }
 
 function childDescriptions(description: ResourceDescription, actor: Actor) {
@@ -63,7 +63,7 @@ function childDescriptions(description: ResourceDescription, actor: Actor) {
 export default createResourceController(
   async (ctx) => {
     const runtime = kit()
-    return { ...runtime, actor: await runtime.actors.load(ctx.auth.getUserOrFail().id) }
+    return { ...runtime, actor: await requestActor(ctx) }
   },
   async (ctx, resource, result) => {
     const runtime = kit()

@@ -1,5 +1,6 @@
 import { BaseCommand, args, flags } from '@adonisjs/core/ace'
 import { readFile } from 'node:fs/promises'
+import { gapReport } from '../src/commands/gap_report.js'
 
 /** Collects KIT_GAPS.md for reporting; nothing leaves the machine without explicit confirmation. */
 export default class Gaps extends BaseCommand {
@@ -18,13 +19,9 @@ export default class Gaps extends BaseCommand {
     } catch {
       throw new Error('KIT_GAPS.md does not exist; adula:install creates it')
     }
-    const masked = content
-      .replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, '<email>')
-      .replace(/https?:\/\/[^\s)]+/g, '<url>')
-      .replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, '<ip>')
-    const gaps = masked.match(/^## GAP-\d+.*$/gm) ?? []
-    this.logger.info(`${gaps.length} gap(s) recorded in KIT_GAPS.md`)
-    for (const title of gaps) this.logger.log(`  ${title.replace(/^## /, '')}`)
+    const { masked, titles } = gapReport(content)
+    this.logger.info(`${titles.length} gap(s) recorded in KIT_GAPS.md`)
+    for (const title of titles) this.logger.log(`  ${title}`)
     if (!this.yes) {
       const confirmed = await this.prompt.confirm(
         'Show the full masked report? Nothing is sent anywhere by this command.'

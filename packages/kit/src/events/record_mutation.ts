@@ -10,6 +10,8 @@ export async function recordMutation(
     resource: string
     id: unknown
     actorId: number
+    /** The administrator acting as actorId, when impersonating. */
+    impersonatorId?: number
     action: Action
     fields: string[]
   }
@@ -29,13 +31,17 @@ export async function recordMutation(
     resource: mutation.resource,
     id: mutation.id,
     actorId: mutation.actorId,
+    ...(mutation.impersonatorId ? { impersonatorId: mutation.impersonatorId } : {}),
   }
   await trx('activities').insert({
     resource: mutation.resource,
     record_id: mutation.id,
     actor_id: mutation.actorId,
     action: mutation.action,
-    changes: JSON.stringify({ fields: mutation.fields }),
+    changes: JSON.stringify({
+      fields: mutation.fields,
+      ...(mutation.impersonatorId ? { impersonatedBy: mutation.impersonatorId } : {}),
+    }),
   })
   await trx('outbox').insert({
     id: eventId,

@@ -15,8 +15,10 @@ import { Settings } from '@adula/kit'
 import redis from '@adonisjs/redis/services/main'
 import {
   apiThrottle,
+  loginAddressThrottle,
   loginThrottle,
   oauthThrottle,
+  passwordChangeThrottle,
   passwordThrottle,
   signupThrottle,
 } from '#start/limiter'
@@ -55,15 +57,13 @@ router.get('/health', async ({ response }) => {
     const lastOffsite = await new Settings(db.connection().getWriteClient()).get<string>(
       'backup.lastOffsite'
     )
+    // Public probe: status only. Backup times and dependencies are on the admin jobs screen.
     return {
       status:
         lastOffsite && Date.now() - Date.parse(lastOffsite) < 48 * 3600000 ? 'ok' : 'degraded',
-      database: 'ok',
-      redis: 'ok',
-      backup: { lastOffsite: lastOffsite ?? null },
     }
   } catch {
-    return response.serviceUnavailable({ status: 'unhealthy', dependencies: 'unavailable' })
+    return response.serviceUnavailable({ status: 'unhealthy' })
   }
 })
 
@@ -94,7 +94,7 @@ router
     router.post('signup', [controllers.NewAccount, 'store']).use(signupThrottle)
 
     router.get('login', [controllers.Session, 'create'])
-    router.post('login', [controllers.Session, 'store']).use(loginThrottle)
+    router.post('login', [controllers.Session, 'store']).use([loginAddressThrottle, loginThrottle])
 
     router.get('password/forgot', [PasswordResetController, 'forgot'])
     router.post('password/forgot', [PasswordResetController, 'send']).use(passwordThrottle)
@@ -114,7 +114,7 @@ router
 
     router.get('account/profile', [ProfileController, 'show'])
     router.patch('account/profile', [ProfileController, 'update'])
-    router.post('account/password', [ProfileController, 'password'])
+    router.post('account/password', [ProfileController, 'password']).use(passwordChangeThrottle)
     router.get('account/sessions', [AccountSessionsController, 'index'])
     router.delete('account/sessions', [AccountSessionsController, 'purge'])
     router.delete('account/sessions/:id', [AccountSessionsController, 'destroy'])

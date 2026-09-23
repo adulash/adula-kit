@@ -439,6 +439,38 @@ test.group('Core administration screens', (group) => {
     )
   })
 
+  test('administrators cannot impersonate administrators; impersonated writes name the administrator', async ({
+    client,
+    assert,
+  }) => {
+    const other = await User.create({
+      fullName: 'مسؤول آخر',
+      email: `other-admin-${randomUUID()}@example.test`,
+      password: 'a-long-test-password-123',
+    })
+    await knex()('user_roles').insert({ user_id: other.id, role_id: adminRoleId })
+    const refused = await asJson(client.post(`/admin/users/${other.id}/impersonate`).loginAs(admin))
+    refused.assertStatus(403)
+    assert.equal(refused.body().error.code, 'E_IMPERSONATE_ADMIN')
+
+    // A write made during impersonation keeps the administrator next to the effective user.
+    const created = await client
+      .post('/resources/customers')
+      .loginAs(other)
+      .withSession({ impersonator_id: admin.id })
+      .withCsrfToken()
+      .header('Accept', 'application/json')
+      .json({ name: `عميل منتحل ${randomUUID()}` })
+    created.assertStatus(201)
+    const [activity] = await knex()('activities').where({
+      resource: 'customers',
+      record_id: created.body().data.id,
+      action: 'create',
+    })
+    assert.equal(activity.actor_id, other.id)
+    assert.equal(activity.changes.impersonatedBy, admin.id)
+  })
+
   test('notifications page, shared bell count and read flow', async ({ client, assert }) => {
     const [first, second] = await knex()('notifications')
       .insert([

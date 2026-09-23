@@ -203,8 +203,8 @@ export function ResourceShow({
                   <span className="font-medium">
                     {activityLabels[entry.action] ?? entry.action}
                   </span>
-                  <span className="text-xs text-muted-foreground" dir="ltr">
-                    {entry.actorEmail ?? `#${entry.actorId}`}
+                  <span className="text-xs text-muted-foreground">
+                    {entry.actorName ?? `مستخدم #${entry.actorId}`}
                   </span>
                   <time
                     dateTime={entry.createdAt}

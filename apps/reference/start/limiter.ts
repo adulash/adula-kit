@@ -30,6 +30,30 @@ export const loginThrottle = limiter.define('login', (ctx) =>
     .limitExceeded(withMessage)
 )
 
+/** Login: 30 attempts per minute from one address across all e-mails (password spraying). */
+export const loginAddressThrottle = limiter.define('login_address', (ctx) =>
+  limiter.allowRequests(30).every('1 minute').usingKey(ctx.request.ip()).limitExceeded(withMessage)
+)
+
+/**
+ * Login: failed attempts per account from any address. Only failures count and a
+ * success clears the counter; the controller applies it with `penalize`.
+ */
+export const loginAccountLimiter = limiter.use({
+  requests: 10,
+  duration: '15 minutes',
+  blockDuration: '15 minutes',
+})
+
+/** Password change: 5 attempts per minute per signed-in user. */
+export const passwordChangeThrottle = limiter.define('password_change', (ctx) =>
+  limiter
+    .allowRequests(5)
+    .every('1 minute')
+    .usingKey(`user:${ctx.auth.user?.id ?? ctx.request.ip()}`)
+    .limitExceeded(withMessage)
+)
+
 /** Signup: 3 accounts per minute per address. */
 export const signupThrottle = limiter.define('signup', (ctx) =>
   limiter.allowRequests(3).every('1 minute').usingKey(ctx.request.ip()).limitExceeded(withMessage)

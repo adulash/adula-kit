@@ -1,6 +1,6 @@
 # Kit gaps
 
-Updated 2026-09-22. Resolved items are recorded in docs/implementation-status.md. This file lists remaining work only.
+Updated 2026-09-23. Resolved items are recorded in docs/implementation-status.md. This file lists remaining work only.
 
 The [2026-09-22 npm acceptance review](docs/npm-acceptance-review-2026-09-22.md)
 records the current operational/phase 2 audit and the concrete acceptance sequence.
@@ -42,10 +42,11 @@ successful initial signup/install/doctor and startup offsite backup. An empty-co
 manual restore passed; it is not new bound-file or natural-monthly evidence. See
 docs/evidence/local-staging-2026-09-22.json. The owner separately attests testing
 operations. No external host is required for the selected environment.
-Remaining: PR CI success and merge, effective branch protection and npm first
-publication/trusted publishing. GitHub's current private-repository plan rejects
-branch protection; public visibility and npm CLI authentication await the owner.
-No external production-capacity or public TLS claim is made.
+Resolved 2026-09-23: the repository is public, main requires passing CI through PRs,
+and the three packages are published on npm with signed provenance through trusted
+publishing (docs/evidence/alpha-publication-2026-09-23.json).
+Remaining: natural scheduled backup/restore evidence on staging. No external
+production-capacity or public TLS claim is made.
 
 ## GAP-004 — Phase 2 performance budget and the vertical slice
 
@@ -61,7 +62,7 @@ Needed by: the plan's 1.0 completion criterion.
 Remaining: phases 3–7 business features, the XState engine, the five reviewer skills, independent framework-consumer integration/runtime acceptance and public release (ADR 024 removes a permanent medical product).
 Scope: the owner explicitly selected full 1.0 acceptance. Deleted educational modules must stay out of normal operation; isolated fixtures or independent applications provide feature consumers. See docs/acceptance-1.0.md and docs/release-readiness.json.
 Constraint: the plan explicitly forbids phase 3 before the independently upgraded and restored phase 2 slice passes.
-Next: follow the framework gates in order under ADR 024. The owner authorized 0.2.0-alpha.1 only; latest/next remain blocked.
+Next: follow the framework gates in order under ADR 024. The owner authorized the experimental alpha channel (currently 0.2.0-alpha.3); latest remains on 0.2.0-alpha.1 by the ADR 024 amendment and next remains absent.
 
 ## Schedule follow-up — 2026-09-22
 

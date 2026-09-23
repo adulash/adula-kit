@@ -7,6 +7,7 @@ import db from '@adonisjs/lucid/services/db'
 import drive from '@adonisjs/drive/services/main'
 import type { ApiClient } from '@japa/api-client'
 import User from '#models/user'
+import { PENDING_UPLOAD_LIMIT, UNBOUND_UPLOAD_TTL_MS } from '@adula/kit'
 
 type UploadedFile = { id: number; name: string; size: number; mimeType: string; url: string }
 
@@ -338,4 +339,72 @@ test.group('Attachment upload, download and storage migration', (group) => {
     assert.equal(back.code, 0, back.output)
     assert.equal(await diskOf(file.id), 'local')
   }).timeout(180000)
+
+  test('uploads accept only allowed file types and a bounded number of unbound files', async ({
+    client,
+    assert,
+  }) => {
+    const executable = await upload(writer, 'setup.exe')(client)
+    executable.assertStatus(422)
+    assert.equal(executable.body().error.code, 'E_FILE_INVALID')
+    const [{ count: before }] = await knex()('attachments')
+      .where('uploaded_by', outsider.id)
+      .count('* as count')
+    assert.equal(Number(before), 0)
+
+    const suffix = randomUUID()
+    await knex()('attachments').insert(
+      Array.from({ length: PENDING_UPLOAD_LIMIT }, (_, index) => ({
+        disk: 'local',
+        path: `resources/orders/contract/pending-${suffix}-${index}.txt`,
+        name: `pending-${suffix}-${index}.txt`,
+        original_name: 'pending.txt',
+        size: 1,
+        mime_type: 'text/plain',
+        extname: 'txt',
+        data: '{}',
+        uploaded_by: outsider.id,
+        resource: 'orders',
+        field: 'contract',
+      }))
+    )
+    const capped = await upload(outsider)(client)
+    capped.assertStatus(429)
+    assert.equal(capped.body().error.code, 'E_UPLOAD_LIMIT')
+    await knex()('attachments').where('uploaded_by', outsider.id).delete()
+  })
+
+  test('pruning removes stale unbound uploads and their files but keeps bound ones', async ({
+    client,
+    assert,
+  }) => {
+    const stale = await upload(writer)(client)
+    stale.assertStatus(201)
+    const fresh = await upload(writer)(client)
+    fresh.assertStatus(201)
+    const bound = await upload(writer)(client)
+    bound.assertStatus(201)
+    const order = await client
+      .post('/resources/orders')
+      .loginAs(writer)
+      .withCsrfToken()
+      .header('Accept', 'application/json')
+      .json({ orgUnitId, contract: bound.body().data.id })
+    order.assertStatus(201)
+    const old = new Date(Date.now() - UNBOUND_UPLOAD_TTL_MS - 60_000)
+    await knex()('attachments')
+      .whereIn('id', [stale.body().data.id, bound.body().data.id])
+      .update({ created_at: old })
+    const staleRow = await knex()('attachments').where('id', stale.body().data.id).first()
+    const stalePath = staleRow.path
+
+    const result = await ace(['adula:uploads:prune'])
+    assert.equal(result.code, 0, result.output)
+    assert.notExists(await knex()('attachments').where('id', stale.body().data.id).first())
+    assert.isFalse(await drive.use('local').exists(stalePath))
+    assert.exists(await knex()('attachments').where('id', fresh.body().data.id).first())
+    assert.exists(await knex()('attachments').where('id', bound.body().data.id).first())
+    const download = await client.get(bound.body().data.url).loginAs(writer)
+    download.assertStatus(200)
+  }).timeout(120000)
 })

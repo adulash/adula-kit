@@ -118,4 +118,26 @@ test.group('Saved views', (group) => {
     )
     assert.equal(error.code, 'E_VIEW_QUERY')
   })
+
+  test('a view cannot query fields its author may not query', async ({ assert }) => {
+    const sorted = await failure(() =>
+      views().save('orders', reader, { name: 'حسب الإجمالي', query: { sort: 'total' } })
+    )
+    assert.equal(sorted.status, 403)
+    assert.equal(sorted.code, 'E_FIELD_FORBIDDEN')
+    assert.lengthOf(await db('saved_views'), 0)
+  })
+
+  test("own views are listed before colleagues' shared views", async ({ assert }) => {
+    await views().save('orders', admin, { name: 'أ مشترك', query: {}, shared: true })
+    await views().save('orders', reader, { name: 'ي خاص', query: {} })
+    const listed = await views().list('orders', reader)
+    assert.deepEqual(
+      listed.map((view) => [view.name, view.own]),
+      [
+        ['ي خاص', true],
+        ['أ مشترك', false],
+      ]
+    )
+  })
 })

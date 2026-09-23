@@ -25,7 +25,7 @@ export default class OauthController {
     const driver = ally.use(provider)
     const fail = (message: string) => {
       session.flash('error', message)
-      return response.redirect().toRoute('session.create')
+      return response.redirect().clearQs().toRoute('session.create')
     }
     if (driver.accessDenied()) return fail('ألغيت تسجيل الدخول قبل منح الإذن.')
     if (driver.stateMisMatch()) return fail('انتهت صلاحية طلب تسجيل الدخول. حاول مجدداً.')
@@ -34,12 +34,17 @@ export default class OauthController {
     const profile = await driver.user()
     if (!profile.email || profile.emailVerificationState !== 'verified')
       return fail('يتطلب الدخول بريداً إلكترونياً موثقاً لدى المزوّد.')
-    const { user, created } = await linkOrCreateSocialUser({
+    const resolved = await linkOrCreateSocialUser({
       provider,
       providerId: String(profile.id),
       email: profile.email,
       name: profile.name || profile.nickName || null,
     })
+    if (resolved.unverified)
+      return fail(
+        'يوجد حساب بهذا البريد لم يُثبت امتلاكه بعد. سجّل الدخول بكلمة المرور، أو استعد كلمة المرور من رابط البريد ثم أعد المحاولة.'
+      )
+    const { user, created } = resolved
     if (user.disabledAt) return fail('هذا الحساب معطّل. تواصل مع مدير النظام.')
 
     await auth.use('web').login(user)
@@ -53,6 +58,6 @@ export default class OauthController {
       action: 'oauth_login',
       changes: { ...requestContext(ctx), provider, created },
     })
-    return response.redirect().toRoute('home')
+    return response.redirect().clearQs().toRoute('home')
   }
 }

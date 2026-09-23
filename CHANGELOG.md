@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased — security, hygiene and performance hardening
+
+* Security: e-mail is a case-insensitive identity (additive migration with a unique
+  `lower(email)` index); OAuth links only to accounts whose e-mail ownership was proven
+  (invitation, mailed recovery or a verified provider); a pending invitation reserves
+  its address against self-signup; per-account lockout of failed logins (cleared by
+  recovery), a per-address login limit and a password-change limit; nonce-based CSP;
+  no-referrer/no-store on recovery pages; OAuth redirects drop the query string; pages
+  and activity records carry opaque session handles instead of session ids; passwords
+  up to 64 characters; minimal public `/health`.
+* Kit: validator-added fields are authorized like submitted ones; saved views may only
+  query fields their author may query, list the user's own views first and cap shared
+  views; attachment fields accept `accept`/`maxSize` with a default document/image
+  allowlist, unbound uploads are capped per user and pruned daily
+  (`adula:uploads:prune`); impersonated writes record the administrator and
+  administrators cannot impersonate administrators; record history shows display names,
+  not e-mails; `adula:gaps report` is registered.
+* Performance: only the first list page runs the planner estimate; the database pool
+  size is configurable with `DB_POOL_MAX` (default 20).
+* Supply chain and hygiene: GitHub Actions pinned by commit SHA with Dependabot, npm
+  pinned in the publish job, generated `.env.example` without local hosts, users or
+  addresses; removed unused dependencies (zod, @hookform/resolvers, @casl/react,
+  @casl/ability in the reference app, @ucast/sql), the obsolete probe and PowerShell
+  wrapper; reconciled stale publication statements in the docs.
+
 ## 0.2.0-alpha.3 — 2026-09-23
 
 * Prefer successful direct `docker version` and `docker compose version` probes;

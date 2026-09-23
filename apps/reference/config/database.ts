@@ -14,7 +14,7 @@ export default defineConfig({
         password: env.get('DB_PASSWORD'),
         database: env.get('DB_DATABASE'),
       },
-      pool: { min: 0, max: 10 },
+      pool: { min: 0, max: env.get('DB_POOL_MAX', 20) },
       migrations: {
         naturalSort: true,
         paths: [

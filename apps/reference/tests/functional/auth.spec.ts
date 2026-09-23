@@ -1,4 +1,5 @@
 import { test } from '@japa/runner'
+import { DateTime } from 'luxon'
 import { createHash, randomUUID } from 'node:crypto'
 import type { ApiRequest } from '@japa/api-client'
 import db from '@adonisjs/lucid/services/db'
@@ -6,10 +7,11 @@ import mail from '@adonisjs/mail/services/main'
 import { SMTPTransport } from '@adonisjs/mail/transports/smtp'
 import limiter from '@adonisjs/limiter/services/main'
 import env from '#start/env'
+import { loginAccountLimiter } from '#start/limiter'
 import User from '#models/user'
 import PasswordResetNotification from '#mails/password_reset_notification'
 import { linkOrCreateSocialUser, socialProviders } from '#services/social_accounts'
-import { listUserSessions } from '#services/sessions'
+import { listUserSessions, sessionHandle as h } from '#services/sessions'
 
 const PASSWORD = 'test-only-password-123'
 const knex = () => db.connection().getWriteClient()
@@ -115,6 +117,10 @@ test.group('Authentication lifecycle', (group) => {
       page.assertStatus(200)
       assert.equal(page.body().component, 'auth/reset')
       assert.isTrue(page.body().props.valid)
+      page.assertHeader('referrer-policy', 'no-referrer')
+      page.assertHeader('cache-control', 'no-store')
+      const beforeReset = await User.findOrFail(user.id)
+      assert.isNull(beforeReset.emailVerifiedAt)
 
       const reset = await client
         .post(`/password/reset/${token}`)
@@ -125,6 +131,8 @@ test.group('Authentication lifecycle', (group) => {
       reset.assertHeader('location', '/login')
       await user.refresh()
       assert.isTrue(await user.verifyPassword('new-password-456'))
+      // Completing mailed recovery proves ownership of the address.
+      assert.isNotNull(user.emailVerifiedAt)
       assert.lengthOf(await listUserSessions(user.id), 0)
       assert.lengthOf(await activities(user.id, 'password_reset'), 1)
       assert.lengthOf(await activities(user.id, 'session_revoked'), 1)
@@ -278,15 +286,21 @@ test.group('Authentication lifecycle', (group) => {
     const first = await device(a)
     first.assertStatus(200)
     assert.equal(first.body().component, 'account/sessions')
-    assert.equal(first.body().props.currentSessionId, a)
-    assert.deepEqual(ids(first), [a])
+    assert.equal(first.body().props.currentSessionId, h(a))
+    assert.deepEqual(ids(first), [h(a)])
+    // Pages receive opaque handles, never the live session-store id.
+    assert.notInclude(JSON.stringify(first.body().props), a)
     const second = await device(b)
-    assert.sameMembers(ids(second), [a, b])
+    assert.sameMembers(ids(second), [h(a), h(b)])
 
     // Revoke B from A.
     const revoked = await from(
       a,
-      client.delete(`/account/sessions/${b}`).loginAs(user).withCsrfToken().redirects(0)
+      client
+        .delete(`/account/sessions/${h(b)}`)
+        .loginAs(user)
+        .withCsrfToken()
+        .redirects(0)
     )
     revoked.assertStatus(302)
     revoked.assertHeader('location', '/account/sessions')
@@ -302,7 +316,7 @@ test.group('Authentication lifecycle', (group) => {
     const forbidden = await from(
       a,
       client
-        .delete(`/account/sessions/${c}`)
+        .delete(`/account/sessions/${h(c)}`)
         .loginAs(user)
         .withCsrfToken()
         .header('Accept', 'application/json')
@@ -321,11 +335,15 @@ test.group('Authentication lifecycle', (group) => {
     const remaining = await listUserSessions(user.id)
     assert.deepEqual(
       remaining.map((entry) => entry.id),
-      [a]
+      [h(a)]
     )
     const self = await from(
       a,
-      client.delete(`/account/sessions/${a}`).loginAs(user).withCsrfToken().redirects(0)
+      client
+        .delete(`/account/sessions/${h(a)}`)
+        .loginAs(user)
+        .withCsrfToken()
+        .redirects(0)
     )
     self.assertStatus(302)
     self.assertHeader('location', '/login')
@@ -337,7 +355,7 @@ test.group('Authentication lifecycle', (group) => {
     assert.lengthOf(revocations, 3)
     assert.sameDeepMembers(
       revocations.map((row) => row.changes.sessionIds),
-      [[b], [d], [a]]
+      [[h(b)], [h(d)], [h(a)]]
     )
   })
 
@@ -376,12 +394,12 @@ test.group('Authentication lifecycle', (group) => {
     listing.assertStatus(200)
     assert.equal(listing.body().component, 'admin/sessions/index')
     const rows = listing.body().props.sessions as { id: string; email: string }[]
-    const target = rows.find((row) => row.id === memberSession)
+    const target = rows.find((row) => row.id === h(memberSession))
     assert.exists(target)
     assert.equal(target!.email, member.email)
 
     const revoke = await client
-      .delete(`/admin/sessions/${memberSession}`)
+      .delete(`/admin/sessions/${h(memberSession)}`)
       .loginAs(admin)
       .withCsrfToken()
       .redirects(0)
@@ -395,7 +413,7 @@ test.group('Authentication lifecycle', (group) => {
     after.assertHeader('location', '/login')
     const [activity] = await activities(member.id, 'session_revoked')
     assert.equal(activity.actor_id, admin.id)
-    assert.deepEqual(activity.changes.sessionIds, [memberSession])
+    assert.deepEqual(activity.changes.sessionIds, [h(memberSession)])
   })
 
   test('profile updates the name; changing the password verifies the current one and ends other sessions', async ({
@@ -454,7 +472,7 @@ test.group('Authentication lifecycle', (group) => {
     const remaining = await listUserSessions(user.id)
     assert.deepEqual(
       remaining.map((entry) => entry.id),
-      [a]
+      [h(a)]
     )
     assert.lengthOf(await activities(user.id, 'password_changed'), 1)
   })
@@ -482,7 +500,7 @@ test.group('Authentication lifecycle', (group) => {
     }
   })
 
-  test('an OAuth identity links to the user with the same e-mail or creates one, exactly once', async ({
+  test('an OAuth identity links to the user with the same verified e-mail or creates one, exactly once', async ({
     assert,
   }) => {
     const unique = randomUUID()
@@ -495,10 +513,11 @@ test.group('Authentication lifecycle', (group) => {
     })
     assert.isTrue(created.created)
     assert.isFalse(created.linked)
-    assert.equal(created.user.email, email)
-    assert.equal(created.user.fullName, 'مستخدم GitHub')
-    assert.isFalse(await created.user.verifyPassword(''))
-    assert.lengthOf(await knex()('social_accounts').where({ user_id: created.user.id }), 1)
+    assert.equal(created.user!.email, email)
+    assert.equal(created.user!.fullName, 'مستخدم GitHub')
+    assert.isNotNull(created.user!.emailVerifiedAt)
+    assert.isFalse(await created.user!.verifyPassword(''))
+    assert.lengthOf(await knex()('social_accounts').where({ user_id: created.user!.id }), 1)
 
     const again = await linkOrCreateSocialUser({
       provider: 'github',
@@ -507,10 +526,22 @@ test.group('Authentication lifecycle', (group) => {
       name: null,
     })
     assert.isFalse(again.created)
-    assert.equal(again.user.id, created.user.id)
-    assert.lengthOf(await knex()('social_accounts').where({ user_id: created.user.id }), 1)
+    assert.equal(again.user!.id, created.user!.id)
+    assert.lengthOf(await knex()('social_accounts').where({ user_id: created.user!.id }), 1)
 
+    // A self-registered address was never proven: the provider identity is not attached to it.
     const existing = await makeUser('link')
+    const refused = await linkOrCreateSocialUser({
+      provider: 'google',
+      providerId: `gg-${unique}`,
+      email: existing.email.toUpperCase(),
+      name: null,
+    })
+    assert.isTrue(refused.unverified)
+    assert.lengthOf(await knex()('social_accounts').where({ user_id: existing.id }), 0)
+
+    existing.emailVerifiedAt = DateTime.now()
+    await existing.save()
     const linked = await linkOrCreateSocialUser({
       provider: 'google',
       providerId: `gg-${unique}`,
@@ -519,7 +550,7 @@ test.group('Authentication lifecycle', (group) => {
     })
     assert.isFalse(linked.created)
     assert.isTrue(linked.linked)
-    assert.equal(linked.user.id, existing.id)
+    assert.equal(linked.user!.id, existing.id)
     assert.deepEqual(
       await knex()('social_accounts')
         .where({ user_id: existing.id })
@@ -593,5 +624,156 @@ test.group('Authentication lifecycle', (group) => {
     }
     const oauthBlocked = await client.get('/oauth/unknown/redirect').redirects(0)
     oauthBlocked.assertStatus(429)
+  })
+
+  test('e-mail is a case-insensitive identity for signup, storage and login', async ({
+    client,
+    assert,
+  }) => {
+    const local = `Mixed-${randomUUID()}`
+    const signup = (email: string) =>
+      client
+        .post('/signup')
+        .withCsrfToken()
+        .redirects(0)
+        .header('Accept', 'application/json')
+        .form({
+          fullName: 'حالة الأحرف',
+          email,
+          password: PASSWORD,
+          passwordConfirmation: PASSWORD,
+        })
+    const created = await signup(`${local}@Example.Test`)
+    created.assertStatus(302)
+    const [row] = await knex()('users').whereRaw('lower(email) = ?', [
+      `${local}@example.test`.toLowerCase(),
+    ])
+    assert.equal(row.email, `${local}@example.test`.toLowerCase())
+    assert.isNull(row.email_verified_at)
+
+    await limiter.clear(['memory'])
+    const duplicate = await signup(`${local.toUpperCase()}@EXAMPLE.TEST`)
+    duplicate.assertStatus(422)
+    assert.lengthOf(
+      await knex()('users').whereRaw('lower(email) = ?', [`${local}@example.test`.toLowerCase()]),
+      1
+    )
+    // The database refuses a case variant even when application validation is bypassed.
+    await assert.rejects(() =>
+      knex()('users').insert({
+        email: `${local}@example.test`,
+        password: 'x',
+        created_at: new Date(),
+      })
+    )
+
+    const login = await client
+      .post('/login')
+      .withCsrfToken()
+      .redirects(0)
+      .form({ email: `${local.toUpperCase()}@example.test`, password: PASSWORD })
+    login.assertStatus(302)
+    login.assertHeader('location', '/')
+  })
+
+  test('a pending invitation reserves its address against self-signup', async ({
+    client,
+    assert,
+  }) => {
+    const email = `invited-${randomUUID()}@example.test`
+    await knex()('user_invitations').insert({
+      email,
+      full_name: 'مدعو',
+      token_hash: createHash('sha256').update(randomUUID()).digest('hex'),
+      expires_at: new Date(Date.now() + 3600_000),
+    })
+    const response = await client
+      .post('/signup')
+      .withCsrfToken()
+      .redirects(0)
+      .header('Accept', 'application/json')
+      .form({ fullName: 'منتحل', email, password: PASSWORD, passwordConfirmation: PASSWORD })
+    response.assertStatus(422)
+    assert.lengthOf(await knex()('users').where({ email }), 0)
+  })
+
+  test('failed logins lock an account from any address until recovery proves ownership', async ({
+    client,
+    assert,
+  }) => {
+    const { mails } = mail.fake()
+    try {
+      const user = await makeUser('lockout')
+      // Ten failures recorded from elsewhere (the per-address limiter would stop one client first).
+      for (let index = 0; index < 10; index++)
+        await loginAccountLimiter
+          .penalize(`login_account:${user.email}`, async () => {
+            throw new Error('wrong password')
+          })
+          .catch(() => {})
+      const locked = await client
+        .post('/login')
+        .withCsrfToken()
+        .redirects(0)
+        .header('Accept', 'application/json')
+        .form({ email: user.email, password: PASSWORD })
+      locked.assertStatus(401)
+      assert.include(locked.body().errors[0].message, 'تجاوزت محاولات الدخول الفاشلة')
+      const [refused] = await activities(user.id, 'login_failed')
+      assert.equal(refused.changes.reason, 'locked')
+
+      await client.post('/password/forgot').withCsrfToken().redirects(0).form({ email: user.email })
+      const [sent] = mails.sent(
+        (entry) => entry instanceof PasswordResetNotification
+      ) as PasswordResetNotification[]
+      const token = sent.resetUrl.split('/').pop()!
+      const reset = await client
+        .post(`/password/reset/${token}`)
+        .withCsrfToken()
+        .redirects(0)
+        .form({ password: 'recovered-password-1', passwordConfirmation: 'recovered-password-1' })
+      reset.assertHeader('location', '/login')
+      const unlocked = await client
+        .post('/login')
+        .withCsrfToken()
+        .redirects(0)
+        .form({ email: user.email, password: 'recovered-password-1' })
+      unlocked.assertHeader('location', '/')
+    } finally {
+      mail.restore()
+    }
+  })
+
+  test('one address is limited across e-mails and password changes are limited per user', async ({
+    client,
+  }) => {
+    for (let index = 0; index < 30; index++) {
+      const attempt = await client
+        .post('/login')
+        .withCsrfToken()
+        .header('Accept', 'application/json')
+        .form({ email: `spray-${randomUUID()}@example.test`, password: 'wrong-password-1' })
+      attempt.assertStatus(401)
+    }
+    const sprayed = await client
+      .post('/login')
+      .withCsrfToken()
+      .header('Accept', 'application/json')
+      .form({ email: `spray-${randomUUID()}@example.test`, password: 'wrong-password-1' })
+    sprayed.assertStatus(429)
+
+    const user = await makeUser('change-limit')
+    const change = () =>
+      client.post('/account/password').loginAs(user).withCsrfToken().redirects(0).form({
+        currentPassword: 'not-the-password',
+        password: 'changed-password-1',
+        passwordConfirmation: 'changed-password-1',
+      })
+    for (let index = 0; index < 5; index++) {
+      const allowed = await change()
+      allowed.assertStatus(302)
+    }
+    const limited = await change()
+    limited.assertStatus(429)
   })
 })

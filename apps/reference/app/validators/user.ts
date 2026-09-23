@@ -3,8 +3,8 @@ import vine, { SimpleMessagesProvider } from '@vinejs/vine'
 /**
  * Shared rules for email and password.
  */
-const email = () => vine.string().email().maxLength(254)
-const password = () => vine.string().minLength(8).maxLength(32)
+const email = () => vine.string().trim().toLowerCase().email().maxLength(254)
+const password = () => vine.string().minLength(8).maxLength(64)
 export const invitationValidator = vine.create({
   fullName: vine.string().trim().minLength(1).maxLength(120),
   email: vine.string().trim().email().maxLength(254),

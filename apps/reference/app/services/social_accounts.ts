@@ -2,6 +2,7 @@ import env from '#start/env'
 import User from '#models/user'
 import db from '@adonisjs/lucid/services/db'
 import { randomBytes } from 'node:crypto'
+import { DateTime } from 'luxon'
 import type { SocialProviders } from '@adonisjs/ally/types'
 
 export type SocialProvider = keyof SocialProviders
@@ -48,10 +49,18 @@ export type SocialProfile = {
 
 /**
  * Resolves the local user for an OAuth identity: an existing link wins, then a
- * user with the same e-mail is linked, otherwise a user is created with an
- * unguessable password. Runs in one transaction against PostgreSQL.
+ * user with the same verified e-mail is linked, otherwise a user is created with
+ * an unguessable password. An existing account whose e-mail ownership was never
+ * proven is not linked: otherwise whoever self-registered the address first
+ * would receive the provider identity (account pre-hijacking). Runs in one
+ * transaction against PostgreSQL.
  */
-export async function linkOrCreateSocialUser(profile: SocialProfile) {
+export async function linkOrCreateSocialUser(
+  profile: SocialProfile
+): Promise<
+  | { user: User; created: boolean; linked: boolean; unverified?: never }
+  | { user?: never; created?: never; linked?: never; unverified: true }
+> {
   return await db.transaction(async (trx) => {
     const link = await trx
       .from('social_accounts')
@@ -63,14 +72,17 @@ export async function linkOrCreateSocialUser(profile: SocialProfile) {
     }
     let user = await User.query({ client: trx })
       .whereRaw('lower(email) = lower(?)', [profile.email])
+      .forUpdate()
       .first()
     let created = false
+    if (user && !user.emailVerifiedAt) return { unverified: true as const }
     if (!user) {
       user = await User.create(
         {
           email: profile.email,
           fullName: profile.name,
           password: randomBytes(32).toString('base64url'),
+          emailVerifiedAt: DateTime.now(),
         },
         { client: trx }
       )

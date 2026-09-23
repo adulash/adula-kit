@@ -160,6 +160,8 @@ test.group('Core user invitations', (group) => {
       assert.deepEqual(responses.map((response) => response.status()).sort(), [200, 422])
       const user = await User.findByOrFail('email', address)
       assert.equal(user.fullName, 'مستخدم مدعو')
+      // Receiving the invitation link proves ownership of the address.
+      assert.isNotNull(user.emailVerifiedAt)
       assert.lengthOf(await knex()('user_roles').where('user_id', user.id), 0)
       const authenticated = await User.verifyCredentials(address, password)
       assert.equal(authenticated.id, user.id)

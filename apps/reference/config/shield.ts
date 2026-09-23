@@ -1,3 +1,4 @@
+import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/shield'
 
 const shieldConfig = defineConfig({
@@ -9,12 +10,26 @@ const shieldConfig = defineConfig({
     /**
      * Enable the Content-Security-Policy header.
      */
-    enabled: false,
+    enabled: true,
 
     /**
-     * Per-resource CSP directives.
+     * Scripts load only from this origin, and inline scripts need the per-request
+     * nonce (inertia_layout.edge passes it to Vite). Style attributes and injected
+     * component styles remain allowed. Attachments are served by this origin.
      */
-    directives: {},
+    directives: {
+      defaultSrc: [`'self'`],
+      scriptSrc: [`'self'`, '@nonce'],
+      styleSrc: [`'self'`, `'unsafe-inline'`],
+      imgSrc: [`'self'`, 'data:', 'blob:'],
+      fontSrc: [`'self'`, 'data:'],
+      // Development and tests also open the Vite HMR socket.
+      connectSrc: app.inProduction ? [`'self'`] : [`'self'`, 'ws:', 'wss:'],
+      objectSrc: [`'none'`],
+      baseUri: [`'self'`],
+      formAction: [`'self'`],
+      frameAncestors: [`'none'`],
+    },
 
     /**
      * Report violations without blocking resources.

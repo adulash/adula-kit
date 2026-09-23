@@ -80,7 +80,9 @@ test.group('Generic resource browser acceptance', (group) => {
     await page.assertVisible(page.getByText(name, { exact: true }))
     const activity = page.getByRole('region', { name: 'سجل النشاط' })
     await activity.getByText('إنشاء السجل', { exact: true }).waitFor()
-    await page.assertVisible(activity.getByText(admin.user.email))
+    // History shows who acted by display name; account e-mails stay private.
+    await page.assertVisible(activity.getByText('مدير الواجهة'))
+    assert.equal(await activity.getByText(admin.user.email).count(), 0)
     const saved = await knex()('customers').where({ name }).first()
     assert.exists(saved)
     await page.getByRole('link', { name: 'تعديل السجل', exact: true }).click()

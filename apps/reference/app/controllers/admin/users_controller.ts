@@ -3,7 +3,7 @@ import { KitError, OrgUnitsAdmin, RolesAdmin, UsersAdmin, logActivity } from '@a
 import User from '#models/user'
 import { kit } from '#services/kit'
 import { revokeUserSessions } from '#services/sessions'
-import { IMPERSONATOR_KEY } from '#middleware/admin_middleware'
+import { IMPERSONATOR_KEY, isAdministrator } from '#middleware/admin_middleware'
 import { actorId, knex, mutate, optionalId, positiveId, text, wantsJson } from './support.js'
 
 const service = () => new UsersAdmin(knex())
@@ -136,6 +136,9 @@ export default class UsersController {
         const target = await service().get(id)
         if (target.disabledAt)
           throw new KitError(422, 'E_USER_DISABLED', 'لا يمكن انتحال حساب معطّل')
+        // Acting as another administrator would hide one administrator behind another.
+        if (await isAdministrator(id))
+          throw new KitError(403, 'E_IMPERSONATE_ADMIN', 'لا يمكن انتحال حساب مسؤول آخر')
         const user = await User.findOrFail(id)
         await logActivity(knex(), {
           resource: RESOURCE,
