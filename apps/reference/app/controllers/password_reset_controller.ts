@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto'
+import { DateTime } from 'luxon'
 import env from '#start/env'
 import User from '#models/user'
 import db from '@adonisjs/lucid/services/db'
@@ -8,6 +9,7 @@ import PasswordResetNotification from '#mails/password_reset_notification'
 import { forgotPasswordValidator, resetPasswordValidator } from '#validators/user'
 import { logAuthActivity, requestContext } from '#services/auth_activity'
 import { revokeUserSessions } from '#services/sessions'
+import { loginAccountLimiter } from '#start/limiter'
 
 /** Recovery links expire after one hour and can be used once. */
 const TOKEN_TTL_MS = 60 * 60 * 1000
@@ -70,8 +72,10 @@ export default class PasswordResetController {
     return response.redirect().toRoute('password_reset.forgot')
   }
 
-  async reset({ inertia, params }: HttpContext) {
+  async reset({ inertia, params, response }: HttpContext) {
     const token = String(params.token)
+    // The bearer token is in the path: keep it out of Referer headers and caches.
+    response.header('Referrer-Policy', 'no-referrer').header('Cache-Control', 'no-store')
     return inertia.render('auth/reset', { token, valid: Boolean(await pendingToken(token)) })
   }
 
@@ -93,8 +97,12 @@ export default class PasswordResetController {
     }
 
     user.password = password
+    // Completing mailed recovery proves ownership of the address.
+    user.emailVerifiedAt ??= DateTime.now()
     await user.save()
     await revokeUserSessions(user.id, user.id)
+    // Proven ownership lifts a lockout caused by someone else's failed guesses.
+    await loginAccountLimiter.delete(`login_account:${user.email}`)
     await logAuthActivity({
       userId: user.id,
       action: 'password_reset',

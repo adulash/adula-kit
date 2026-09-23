@@ -51,7 +51,6 @@
     "@jrmc/adonis-mcp": "2.0.0",
     "@poppinss/ts-exec": "1.4.4",
     "@types/node": "26.2.0",
-    "@ucast/sql": "0.2.0",
     "eslint": "10.9.0",
     "pg": "8.16.3",
     "typescript": "6.0.3"
@@ -77,15 +76,6 @@
   "publishConfig": {
     "access": "public",
     "provenance": true
-  },
-  "c8": {
-    "reporter": [
-      "text",
-      "html"
-    ],
-    "exclude": [
-      "tests/**"
-    ]
   },
   "prettier": "@adonisjs/prettier-config",
   "dependencies": {

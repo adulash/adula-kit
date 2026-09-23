@@ -5,7 +5,16 @@ import drive from '@adonisjs/drive/services/main'
 import db from '@adonisjs/lucid/services/db'
 import env from '#start/env'
 import { kit } from '#services/kit'
-import { KitError, attachmentUrl, buildAbility, findAttachment, registerUpload } from '@adula/kit'
+import {
+  KitError,
+  PENDING_UPLOAD_LIMIT,
+  attachmentPolicy,
+  attachmentUrl,
+  buildAbility,
+  findAttachment,
+  pendingUploadCount,
+  registerUpload,
+} from '@adula/kit'
 import type { Actor, AttachmentRecord } from '@adula/kit'
 
 const notFound = () => new KitError(404, 'E_NOT_FOUND', 'المرفق غير موجود')
@@ -46,7 +55,15 @@ export default class AttachmentsController {
           ability.can(action, resource.name, fieldName)
       )
     if (!allowed) throw new KitError(403, 'E_FORBIDDEN', 'ليس لديك صلاحية لرفع مرفق لهذا الحقل')
-    const file = request.file('file', { size: '20mb' })
+    const knex = db.connection().getWriteClient()
+    // Unbound uploads are pruned after a day; cap them so one user cannot fill the disk.
+    if ((await pendingUploadCount(knex, actor.id)) >= PENDING_UPLOAD_LIMIT)
+      throw new KitError(
+        429,
+        'E_UPLOAD_LIMIT',
+        'لديك ملفات مرفوعة كثيرة لم تُحفظ في سجل. احفظ السجلات المفتوحة أو انتظر حتى تُنظَّف.'
+      )
+    const file = request.file('file', attachmentPolicy(field))
     if (!file) throw new KitError(422, 'E_FILE_REQUIRED', 'اختر ملفاً للرفع')
     if (!file.isValid)
       throw new KitError(
@@ -65,7 +82,7 @@ export default class AttachmentsController {
     await attachmentManager.write(attachment)
     const path = (attachment.path ?? '').replaceAll('\\', '/')
     try {
-      const row = await registerUpload(db.connection().getWriteClient(), {
+      const row = await registerUpload(knex, {
         disk,
         path,
         name: attachment.name,

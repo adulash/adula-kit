@@ -1,7 +1,7 @@
 import type { Knex } from 'knex'
 import { KitError } from '../admin/errors.js'
 import { identifier } from '../resource/define_resource.js'
-import type { JsonValue } from '../resource/types.js'
+import type { Field, JsonValue } from '../resource/types.js'
 
 export type AttachmentSummary = {
   id: number
@@ -55,6 +55,73 @@ export type ClaimInput = {
 
 const MAX_ID = 2147483647
 const REJECTED = 'المرفق غير موجود أو لا يخصك'
+
+/** Business documents, images and archives; a field widens or narrows it with `accept`. */
+export const DEFAULT_ATTACHMENT_EXTENSIONS = Object.freeze([
+  'pdf',
+  'png',
+  'jpg',
+  'jpeg',
+  'gif',
+  'webp',
+  'txt',
+  'csv',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'ppt',
+  'pptx',
+  'odt',
+  'ods',
+  'odp',
+  'rtf',
+  'zip',
+])
+/** Unbound uploads one user may hold at once; each is removed by pruning after a day. */
+export const PENDING_UPLOAD_LIMIT = 50
+/** Uploads never bound to a record are removed after this age. */
+export const UNBOUND_UPLOAD_TTL_MS = 24 * 60 * 60 * 1000
+
+/** Upload constraints of an attachment field: accepted extensions (undefined = any) and size. */
+export function attachmentPolicy(field: Field): { extnames?: string[]; size: string } {
+  if (field.type !== 'attachment')
+    throw new KitError(422, 'E_FIELD_INVALID', 'الحقل ليس حقل مرفقات')
+  const accept = field.accept ?? DEFAULT_ATTACHMENT_EXTENSIONS
+  return {
+    extnames:
+      accept === 'any'
+        ? undefined
+        : accept.map((extname) => extname.toLowerCase().replace(/^\./, '')),
+    size: field.maxSize ?? '20mb',
+  }
+}
+
+/** Unbound uploads of one user; hosts refuse new uploads beyond PENDING_UPLOAD_LIMIT. */
+export async function pendingUploadCount(db: Knex, userId: number) {
+  const [{ count }] = await db('attachments')
+    .where('uploaded_by', userId)
+    .whereNull('record_id')
+    .whereNull('deleted_at')
+    .count<{ count: string }[]>('* as count')
+  return Number(count)
+}
+
+/** Uploads that were never bound to a record and are older than the cutoff. */
+export async function staleUploads(db: Knex, olderThan: Date, limit = 500) {
+  const rows = await db('attachments')
+    .whereNull('record_id')
+    .where('created_at', '<', olderThan)
+    .orderBy('id')
+    .limit(limit)
+  return rows.map(fromRow)
+}
+
+/** Deletes the row of an upload that is still unbound; the host removes the file first. */
+export async function forgetUpload(db: Knex, id: number) {
+  if (!isAttachmentId(id)) return false
+  return (await db('attachments').where('id', id).whereNull('record_id').delete()) > 0
+}
 
 export function attachmentUrl(id: number) {
   return `/attachments/${id}`

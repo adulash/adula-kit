@@ -38,6 +38,13 @@ export {
   attachmentUrl,
   isAttachmentId,
   isRelativeDiskPath,
+  attachmentPolicy,
+  pendingUploadCount,
+  staleUploads,
+  forgetUpload,
+  DEFAULT_ATTACHMENT_EXTENSIONS,
+  PENDING_UPLOAD_LIMIT,
+  UNBOUND_UPLOAD_TTL_MS,
 } from './src/attachments/attachment_service.js'
 export type {
   AttachmentRecord,

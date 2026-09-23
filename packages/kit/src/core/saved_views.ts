@@ -1,8 +1,9 @@
 import type { Knex } from 'knex'
 import type { ResourceRegistry } from '../resource/registry.js'
 import type { Resource } from '../resource/types.js'
-import { buildAbility, type Actor } from '../auth/ability.js'
+import { buildAbility, type Actor, type KitAbility } from '../auth/ability.js'
 import { KitError } from '../admin/errors.js'
+import { canQueryField } from '../admin/resource_service.js'
 
 export type SavedViewQuery = {
   search?: string
@@ -20,6 +21,8 @@ export type SavedView = {
 
 const NAME_LIMIT = 60
 const VIEW_LIMIT = 50
+/** Shared views are visible to every viewer of a resource; cap them per resource. */
+const SHARED_LIMIT = 100
 
 /**
  * A saved view is stored user input that later drives a list query, so every key
@@ -34,12 +37,14 @@ export class SavedViews {
   ) {}
 
   async list(name: string, actor: Actor): Promise<SavedView[]> {
-    const resource = this.authorize(name, actor)
+    const { resource } = this.authorize(name, actor)
+    // Own views first, so colleagues' shared views can never crowd them out.
     const rows = await this.db('saved_views')
       .where('resource', resource.name)
       .where((where) => where.where('user_id', actor.id).orWhere('shared', true))
+      .orderByRaw('(user_id = ?) DESC', [actor.id])
       .orderBy('name')
-      .limit(VIEW_LIMIT * 2)
+      .limit(VIEW_LIMIT + SHARED_LIMIT)
     return rows.flatMap((row) => {
       const query = this.sanitize(resource, row.query)
       return query
@@ -61,15 +66,35 @@ export class SavedViews {
     actor: Actor,
     input: { name: string; query: unknown; shared?: boolean }
   ): Promise<SavedView> {
-    const resource = this.authorize(name, actor)
+    const { resource, ability } = this.authorize(name, actor)
     const label = typeof input.name === 'string' ? input.name.trim() : ''
     if (!label || label.length > NAME_LIMIT)
       throw new KitError(422, 'E_VIEW_NAME', 'اسم العرض مطلوب ولا يتجاوز 60 حرفاً')
     const query = this.sanitize(resource, input.query, true)!
+    // A view may only query what its author may query; stored filters must not probe hidden fields.
+    const queried = [
+      ...(query.sort ? [query.sort] : []),
+      ...Object.keys(query.filters ?? {}),
+      ...(query.search
+        ? Object.entries(resource.fields)
+            .filter(([, field]) => field.searchable)
+            .map(([key]) => key)
+        : []),
+    ]
+    for (const key of queried)
+      if (!canQueryField(resource, actor, ability, key))
+        throw new KitError(403, 'E_FIELD_FORBIDDEN', `لا يمكنك الاستعلام بهذا الحقل: ${key}`)
     const shared = input.shared === true
     const existing = await this.db('saved_views')
       .where({ user_id: actor.id, resource: resource.name, name: label })
-      .first('id')
+      .first('id', 'shared')
+    if (shared && !existing?.shared) {
+      const [{ count }] = await this.db('saved_views')
+        .where({ resource: resource.name, shared: true })
+        .count<{ count: string }[]>('* as count')
+      if (Number(count) >= SHARED_LIMIT)
+        throw new KitError(422, 'E_VIEW_LIMIT', 'بلغ هذا الكيان الحد الأقصى للعروض المشتركة')
+    }
     if (!existing) {
       const [{ count }] = await this.db('saved_views')
         .where({ user_id: actor.id, resource: resource.name })
@@ -92,19 +117,19 @@ export class SavedViews {
   }
 
   async remove(name: string, actor: Actor, id: number) {
-    const resource = this.authorize(name, actor)
+    const { resource } = this.authorize(name, actor)
     const removed = await this.db('saved_views')
       .where({ id, resource: resource.name, user_id: actor.id })
       .del()
     if (!removed) throw new KitError(404, 'E_VIEW_NOT_FOUND', 'العرض المحفوظ غير موجود')
   }
 
-  private authorize(name: string, actor: Actor): Resource {
+  private authorize(name: string, actor: Actor): { resource: Resource; ability: KitAbility } {
     const resource = this.registry.get(name)
     const ability = buildAbility(actor.rules, this.registry.all())
     if (!resource.actions.includes('view') || !ability.can('view', resource.name))
       throw new KitError(403, 'E_FORBIDDEN', 'ليس لديك صلاحية لهذا الكيان')
-    return resource
+    return { resource, ability }
   }
 
   /** Returns null for a stored view the resource no longer supports; throws on user input. */

@@ -5,6 +5,7 @@ import { errors as authErrors } from '@adonisjs/auth'
 import { logAuthActivity, requestContext } from '#services/auth_activity'
 import { endSession, recordSession } from '#services/sessions'
 import { socialProviders } from '#services/social_accounts'
+import { loginAccountLimiter } from '#start/limiter'
 
 export default class SessionController {
   async create({ inertia }: HttpContext) {
@@ -16,7 +17,23 @@ export default class SessionController {
     const { email, password } = await request.validateUsing(loginValidator)
     let user: User
     try {
-      user = await User.verifyCredentials(email, password)
+      const [blocked, verified] = await loginAccountLimiter.penalize(`login_account:${email}`, () =>
+        User.verifyCredentials(email, password)
+      )
+      if (blocked) {
+        const known = await User.findBy('email', email)
+        if (known)
+          await logAuthActivity({
+            userId: known.id,
+            action: 'login_failed',
+            changes: { ...requestContext(ctx), reason: 'locked' },
+          })
+        return this.refuse(
+          ctx,
+          'تجاوزت محاولات الدخول الفاشلة لهذا الحساب. انتظر ربع ساعة أو استعد كلمة المرور.'
+        )
+      }
+      user = verified as User
     } catch (error) {
       if (!(error instanceof authErrors.E_INVALID_CREDENTIALS)) throw error
       // Unknown e-mails cannot be logged (activities reference users); the limiter counts them.

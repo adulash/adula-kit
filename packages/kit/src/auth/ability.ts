@@ -10,7 +10,14 @@ export type Rule = {
   fields?: string[]
   inverted?: boolean
 }
-export type Actor = { id: number; orgPaths: string[]; permissionLevel: number; rules: Rule[] }
+export type Actor = {
+  id: number
+  orgPaths: string[]
+  permissionLevel: number
+  rules: Rule[]
+  /** Set while an administrator acts as this user; recorded with every mutation. */
+  impersonatorId?: number
+}
 export type KitAbility = Ability<[string, any], Conditions>
 export const abilitySchemas = new WeakMap<
   KitAbility,

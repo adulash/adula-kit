@@ -54,6 +54,8 @@ export default class UserInvitationsController {
       const data = await service().accept(String(ctx.params.token), password, (value) =>
         hash.make(value)
       )
+      // Receiving the invitation link proves ownership of the invited address.
+      await db.from('users').where('id', data.id).update({ email_verified_at: new Date() })
       if (ctx.request.accepts(['html', 'json']) === 'json') return { data }
       ctx.session.flash(
         'success',

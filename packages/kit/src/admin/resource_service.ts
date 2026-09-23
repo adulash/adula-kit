@@ -39,6 +39,28 @@ export type ListOptions = {
   estimate?: boolean
 }
 
+/**
+ * Whether an actor may sort, filter or search by a field. Querying reveals values
+ * indirectly, so it needs unconditional view access at the field's level.
+ */
+export function canQueryField(resource: Resource, actor: Actor, ability: KitAbility, key: string) {
+  const level = Math.max(
+    resource.fields[key].permissionLevel ?? 0,
+    resource.hidden?.includes(key) ? 1 : 0
+  )
+  // Conditional field rules cannot safely authorize a global sort/search.
+  return (
+    actor.permissionLevel >= level &&
+    ability.can('view', resource.name, key) &&
+    !ability.rules.some(
+      (rule) =>
+        rule.conditions &&
+        (!rule.fields || rule.fields.includes(key)) &&
+        (rule.subject === resource.name || rule.subject === 'all')
+    )
+  )
+}
+
 export class ResourceService {
   constructor(
     private db: Knex,
@@ -252,8 +274,9 @@ export class ResourceService {
       query.where(`r.${resource.fields[key].column ?? columnName(key)}`, value as string)
     }
     // Estimate the authorized, filtered query, never the deployment-wide table cardinality.
+    // Only the first page pays for the extra planner round trip; later pages keep its figure.
     let estimatedTotal: number | undefined
-    if (options.estimate !== false) {
+    if (options.estimate !== false && !options.cursor) {
       const compiled = query.clone().clearSelect().select('r.id').toSQL()
       const estimate = await this.db.raw(`EXPLAIN (FORMAT JSON) ${compiled.sql}`, [
         ...compiled.bindings,
@@ -323,21 +346,7 @@ export class ResourceService {
     }
   }
   private canQueryField(resource: Resource, actor: Actor, ability: KitAbility, key: string) {
-    const level = Math.max(
-      resource.fields[key].permissionLevel ?? 0,
-      resource.hidden?.includes(key) ? 1 : 0
-    )
-    // Conditional field rules cannot safely authorize a global sort/search.
-    return (
-      actor.permissionLevel >= level &&
-      ability.can('view', resource.name, key) &&
-      !ability.rules.some(
-        (rule) =>
-          rule.conditions &&
-          (!rule.fields || rule.fields.includes(key)) &&
-          (rule.subject === resource.name || rule.subject === 'all')
-      )
-    )
+    return canQueryField(resource, actor, ability, key)
   }
   private async preload(resource: Resource, records: RecordData[], actor: Actor) {
     const related: Record<string, SerializedRecord[]> = {}
@@ -479,14 +488,15 @@ export class ResourceService {
         'a.changes',
         'a.actor_id',
         'a.created_at',
-        'u.email as actor_email'
+        'u.full_name as actor_name'
       )
     return rows.map((row) => ({
       id: Number(row.id),
       action: String(row.action) as Action,
       fields: Array.isArray(row.changes?.fields) ? (row.changes.fields as string[]) : [],
       actorId: Number(row.actor_id),
-      actorEmail: row.actor_email === null ? null : String(row.actor_email),
+      // A display name only: record viewers need not be able to read account e-mails.
+      actorName: row.actor_name ? String(row.actor_name) : null,
       createdAt: new Date(row.created_at).toISOString(),
     }))
   }
@@ -697,7 +707,12 @@ export class ResourceService {
         candidate.orgPath = unit?.path
       }
       this.requireRecord(ability, actor, resource, action, candidate)
-      for (const key of Object.keys(form)) {
+      // Validators may add fields (defaults, transforms); those are written too, so check them.
+      const written = new Set([
+        ...Object.keys(form),
+        ...Object.keys(validated).filter((key) => key in resource.fields),
+      ])
+      for (const key of written) {
         const field = resource.fields[key]
         if (
           !ability.can(action, subject(name, candidate), key) ||
@@ -985,6 +1000,7 @@ export class ResourceService {
       resource: resource.name,
       id: record.id,
       actorId: actor.id,
+      impersonatorId: actor.impersonatorId,
       action,
       fields,
     })

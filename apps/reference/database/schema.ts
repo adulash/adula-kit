@@ -376,6 +376,36 @@ export class RoleSchema extends BaseModel {
   declare permissionLevel: number
 }
 
+export class SavedViewSchema extends BaseModel {
+  static $columns = [
+    'createdAt',
+    'id',
+    'name',
+    'query',
+    'resource',
+    'shared',
+    'updatedAt',
+    'userId',
+  ] as const
+  $columns = SavedViewSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare name: string
+  @column()
+  declare query: any
+  @column()
+  declare resource: string
+  @column()
+  declare shared: boolean
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime
+  @column()
+  declare userId: number
+}
+
 export class SequenceSchema extends BaseModel {
   static $columns = ['key', 'value'] as const
   $columns = SequenceSchema.$columns
@@ -465,6 +495,36 @@ export class TaskSchema extends BaseModel {
   declare updatedBy: number
 }
 
+export class UserInvitationSchema extends BaseModel {
+  static $columns = [
+    'acceptedAt',
+    'createdAt',
+    'email',
+    'expiresAt',
+    'fullName',
+    'id',
+    'invitedBy',
+    'tokenHash',
+  ] as const
+  $columns = UserInvitationSchema.$columns
+  @column.dateTime()
+  declare acceptedAt: DateTime | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare email: string
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column()
+  declare fullName: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare invitedBy: number | null
+  @column()
+  declare tokenHash: string
+}
+
 export class UserOrgUnitSchema extends BaseModel {
   static $columns = ['id', 'orgUnitId', 'userId'] as const
   $columns = UserOrgUnitSchema.$columns
@@ -521,6 +581,7 @@ export class UserSchema extends BaseModel {
     'createdAt',
     'disabledAt',
     'email',
+    'emailVerifiedAt',
     'fullName',
     'id',
     'password',
@@ -533,6 +594,8 @@ export class UserSchema extends BaseModel {
   declare disabledAt: DateTime | null
   @column()
   declare email: string
+  @column.dateTime()
+  declare emailVerifiedAt: DateTime | null
   @column()
   declare fullName: string | null
   @column({ isPrimary: true })

@@ -20,16 +20,17 @@ export type Field = {
   sequence?: string
 } & (
   | {
-      type:
-        | 'string'
-        | 'text'
-        | 'integer'
-        | 'money'
-        | 'boolean'
-        | 'date'
-        | 'datetime'
-        | 'json'
-        | 'attachment'
+      type: 'string' | 'text' | 'integer' | 'money' | 'boolean' | 'date' | 'datetime' | 'json'
+    }
+  | {
+      type: 'attachment'
+      /**
+       * Lower-case file extensions accepted for upload, or 'any'. Defaults to
+       * DEFAULT_ATTACHMENT_EXTENSIONS (documents, images and archives).
+       */
+      accept?: string[] | 'any'
+      /** Upload size limit such as '5mb'. Defaults to '20mb'. */
+      maxSize?: string
     }
   | { type: 'belongsTo'; resource: string }
   | { type: 'hasMany'; resource: string; foreignKey: string; inline?: boolean }

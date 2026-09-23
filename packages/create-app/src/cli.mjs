@@ -14,6 +14,7 @@ import {
   writeNew,
   dotenv,
   prepareEnvironment,
+  exampleEnvironment,
   composeFile,
   readIdentity,
   readJson,
@@ -301,12 +302,7 @@ export async function main(argv = process.argv.slice(2)) {
     await writeNew(
       target,
       '.env.example',
-      dotenv({
-        ...encodedEnv,
-        APP_KEY: '',
-        DB_PASSWORD: '',
-        ...(profile.redis.password ? { REDIS_PASSWORD: '' } : {}),
-      })
+      dotenv(exampleEnvironment(encodedEnv, name))
     )
     const password = randomBytes(24).toString('base64url')
     await writeNew(

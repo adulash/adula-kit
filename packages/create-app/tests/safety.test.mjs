@@ -14,6 +14,7 @@ import {
   projectName,
   dotenv,
   prepareEnvironment,
+  exampleEnvironment,
   readIdentity,
   readJson,
   brandCss,
@@ -223,4 +224,44 @@ test('a closed Redis connection fails instead of silently abandoning setup', asy
   } finally {
     await new Promise((resolve) => server.close(resolve))
   }
+})
+
+test('the committed environment example keeps variables but no local secrets or identities', () => {
+  const example = exampleEnvironment(
+    {
+      APP_KEY: 'secret-key',
+      DB_HOST: 'db.internal.example',
+      DB_USER: 'company_admin',
+      DB_PASSWORD: 'file:./tmp/env/DB_PASSWORD',
+      DB_DATABASE: 'acme_4f2a',
+      REDIS_HOST: '10.0.0.5',
+      REDIS_PASSWORD: 'redis-secret',
+      MAIL_FROM_ADDRESS: 'owner@acme.example',
+      PORT: 3333,
+    },
+    'acme'
+  )
+  assert.deepEqual(Object.keys(example).sort(), [
+    'APP_KEY',
+    'DB_DATABASE',
+    'DB_HOST',
+    'DB_PASSWORD',
+    'DB_USER',
+    'MAIL_FROM_ADDRESS',
+    'PORT',
+    'REDIS_HOST',
+    'REDIS_PASSWORD',
+  ])
+  const text = dotenv(example)
+  for (const value of [
+    'secret-key',
+    'db.internal.example',
+    'company_admin',
+    'tmp/env',
+    'acme_4f2a',
+    '10.0.0.5',
+    'redis-secret',
+    'owner@acme.example',
+  ])
+    assert.ok(!text.includes(value), value)
 })

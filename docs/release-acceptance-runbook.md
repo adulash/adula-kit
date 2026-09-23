@@ -3,7 +3,8 @@
 Prepared 2026-09-22; updated by [ADR 024](decisions/024-framework-alpha-and-local-staging.md).
 The owner now authorizes local Docker staging, a GitHub PR merged after successful
 CI, and npm `0.2.0-alpha.1` on `alpha`. No phase or human visual acceptance follows
-from that authorization. `latest` and `next` remain blocked.
+from that authorization. `next` remains blocked; `latest` points to 0.2.0-alpha.1 only by
+the owner's ADR 024 amendment, and a stable `latest` keeps every 1.0 gate.
 
 Run `pnpm release:status` (or `pnpm release:status --json`) to see both channel guards
 and every remaining phase. Exit 1 means at least one channel is blocked. This is a

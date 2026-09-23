@@ -126,8 +126,8 @@ export class UserInvitations {
     hashPassword: (password: string) => Promise<string>
   ) {
     if (!(await this.valid(token))) throw invalid()
-    if (typeof password !== 'string' || password.length < 8 || password.length > 32)
-      throw new KitError(422, 'E_PASSWORD', 'كلمة المرور من 8 إلى 32 حرفًا')
+    if (typeof password !== 'string' || password.length < 8 || password.length > 64)
+      throw new KitError(422, 'E_PASSWORD', 'كلمة المرور من 8 إلى 64 حرفًا')
     const passwordHash = await hashPassword(password)
     return this.db.transaction(async (trx) => {
       const pending = await trx('user_invitations').where('token_hash', digest(token)).first()

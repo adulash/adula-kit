@@ -1,9 +1,12 @@
+import { createHmac } from 'node:crypto'
+import env from '#start/env'
 import db from '@adonisjs/lucid/services/db'
 import type { HttpContext } from '@adonisjs/core/http'
 import { logAuthActivity, requestContext } from '#services/auth_activity'
 
 /** A signed-in browser session as shown to users and administrators. */
 export type UserSession = {
+  /** Opaque handle; the session-store id itself never leaves the server. */
   id: string
   userId: number
   ip: string | null
@@ -18,10 +21,20 @@ export type ActiveSession = UserSession & { email: string; fullName: string | nu
 const PRESENCE_WINDOW_MS = 5 * 60 * 1000
 
 const knex = () => db.connection().getWriteClient()
+/**
+ * Stable per-deployment handle for a session id. Pages, route parameters and
+ * activity records use it so that no script or log reader learns a live id.
+ */
+export function sessionHandle(sessionId: string) {
+  return createHmac('sha256', env.get('APP_KEY').release())
+    .update(`user-session:${sessionId}`)
+    .digest('base64url')
+    .slice(0, 32)
+}
 const iso = (value: unknown) => (value instanceof Date ? value.toISOString() : String(value))
 function toSession(row: Record<string, unknown>): UserSession {
   return {
-    id: String(row.id),
+    id: sessionHandle(String(row.id)),
     userId: Number(row.user_id),
     ip: (row.ip as string | null) ?? null,
     userAgent: (row.user_agent as string | null) ?? null,
@@ -116,6 +129,14 @@ export async function listActiveSessions(): Promise<ActiveSession[]> {
   }))
 }
 
+/** Resolves a handle among live sessions, optionally only those of one user. */
+export async function resolveSessionHandle(handle: string, userId?: number) {
+  const query = knex()('user_sessions').whereNull('revoked_at').select('id')
+  if (userId !== undefined) query.where({ user_id: userId })
+  const rows: { id: string }[] = await query
+  return rows.find((row) => sessionHandle(String(row.id)) === handle)?.id ?? null
+}
+
 /**
  * Revokes one session: marks the row, deletes the session-store row so the
  * guard drops it on the next request, and records the activity for the owner.
@@ -135,7 +156,11 @@ export async function revokeSession(sessionId: string, actorId: number) {
         userId: row.user_id,
         actorId,
         action: 'session_revoked',
-        changes: { sessionIds: [sessionId], ip: row.ip, userAgent: row.user_agent },
+        changes: {
+          sessionIds: [sessionHandle(sessionId)],
+          ip: row.ip,
+          userAgent: row.user_agent,
+        },
       },
       trx
     )
@@ -157,7 +182,12 @@ export async function revokeUserSessions(
     const ids = rows.map((row) => String(row.id))
     await trx('sessions').whereIn('id', ids).delete()
     await logAuthActivity(
-      { userId, actorId, action: 'session_revoked', changes: { sessionIds: ids } },
+      {
+        userId,
+        actorId,
+        action: 'session_revoked',
+        changes: { sessionIds: ids.map(sessionHandle) },
+      },
       trx
     )
     return rows.length

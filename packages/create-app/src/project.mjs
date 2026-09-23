@@ -64,6 +64,21 @@ export function dotenv(values) {
   )
 }
 
+/** The committed .env.example: every variable, but none of this machine's secrets, hosts, users or addresses. */
+export function exampleEnvironment(values, name) {
+  return {
+    ...values,
+    APP_KEY: '',
+    DB_HOST: '127.0.0.1',
+    DB_USER: 'postgres',
+    DB_PASSWORD: '',
+    DB_DATABASE: name,
+    REDIS_HOST: '127.0.0.1',
+    ...('REDIS_PASSWORD' in values ? { REDIS_PASSWORD: '' } : {}),
+    MAIL_FROM_ADDRESS: 'no-reply@example.com',
+  }
+}
+
 export async function prepareEnvironment(target, values) {
   const encoded = { ...values }
   for (const [key, value] of Object.entries(values)) {

@@ -1,7 +1,17 @@
 import { test } from '@japa/runner'
 import { randomUUID } from 'node:crypto'
 import { ResourceService, consumeEvent, publishOutbox, KitError } from '../index.js'
-import { db, setup, registry, admin, reader, order } from './helpers.js'
+import type { RecordData } from '../index.js'
+import {
+  db,
+  setup,
+  registry,
+  admin,
+  reader,
+  order,
+  line,
+  customer as customerResource,
+} from './helpers.js'
 
 test.group('Transactional resource service', (group) => {
   group.setup(setup)
@@ -97,6 +107,31 @@ test.group('Transactional resource service', (group) => {
     await assert.rejects(
       () => service.save('orders', reader, { orgUnitId: 3, notes: 'x' }),
       /السجل غير موجود/
+    )
+  })
+  test('fields added by a validator are authorized like submitted fields', async ({ assert }) => {
+    const defaulting = {
+      ...order,
+      validator: { validate: async (data: RecordData) => ({ total: 999, ...data }) },
+    }
+    const { ResourceRegistry } = await import('../index.js')
+    const variant = new ResourceRegistry().register([
+      {
+        name: 'customers',
+        label: customerResource.label,
+        dependsOn: [],
+        resources: [customerResource],
+      },
+      {
+        name: 'orders',
+        label: order.label,
+        dependsOn: ['customers'],
+        resources: [defaulting, line],
+      },
+    ])
+    await assert.rejects(
+      () => new ResourceService(db, variant).save('orders', reader, { orgUnitId: 2, notes: 'x' }),
+      /Field is forbidden: total/
     )
   })
   test('optimistic lock allows exactly one concurrent writer', async ({ assert }) => {
@@ -258,11 +293,16 @@ test.group('Transactional resource service', (group) => {
   test('keyset pages have no duplicates, accept null values and cap at 100', async ({ assert }) => {
     let cursor: string | undefined
     const ids: unknown[] = []
+    const estimates: (number | undefined)[] = []
     do {
       const page = await service.list('orders', admin, { limit: 2, cursor, sort: 'notes' })
       ids.push(...page.data.map((r) => r.id))
+      estimates.push(page.meta.estimatedTotal)
       cursor = page.meta.nextCursor ?? undefined
     } while (cursor)
+    // Only the first page runs the planner estimate.
+    assert.isNumber(estimates[0])
+    assert.isTrue(estimates.slice(1).every((estimate) => estimate === undefined))
     assert.equal(new Set(ids).size, ids.length)
     assert.equal(
       ids.length,

@@ -2,9 +2,9 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import db from '@adonisjs/lucid/services/db'
 import { NotificationsAdmin, UserInvitations, buildAbility, isBackupStale } from '@adula/kit'
-import { kit } from '#services/kit'
+import { IMPERSONATOR_KEY, kit } from '#services/kit'
 
-export const IMPERSONATOR_KEY = 'impersonator_id'
+export { IMPERSONATOR_KEY }
 
 export async function isAdministrator(userId: number) {
   const runtime = kit()
