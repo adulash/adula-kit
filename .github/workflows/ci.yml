@@ -48,13 +48,13 @@ jobs:
       REDIS_PORT: 6379
       DRIVE_DISK: local
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.ref || github.sha }}
           persist-credentials: false
       # The revision is recorded in the original cached GitHub archive's pax comment.
       - name: Check out the official consumer fixture
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: adonisjs/starter-kits
           ref: 7e1c7930ec260ea38c3eb394eb192e05c12d3f7b
