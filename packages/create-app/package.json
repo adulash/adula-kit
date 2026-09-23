@@ -1,6 +1,6 @@
 {
   "name": "@adula/create-app",
-  "version": "0.2.0-alpha.2",
+  "version": "0.2.0-alpha.3",
   "description": "Create a complete AdonisJS business application with adula",
   "type": "module",
   "license": "MIT",

@@ -36,6 +36,53 @@ Playwright; the first run selected Windows BSD tar and could not launch the
 browser in the sandbox. PostgreSQL 17 used the dedicated test database. Logs:
 `.work/creator-preflight-*.log`. No archive or publication acceptance is claimed.
 
+## Direct Docker priority — 0.2.0-alpha.3, 2026-09-23
+
+The owner requested publication of the creator fix and explicitly excluded the
+existing Dental Gate application from this release's verification. Discovery now
+requires successful direct `docker version` and `docker compose version` probes,
+then tries WSL only on Windows after direct failure. The selected backend is
+persisted in generated projects and reused for development, tests, Ace commands,
+service startup and shutdown. Later errors never select another daemon. Only the
+WSL fallback uses the foreground session helper. Isolated creator acceptance
+now crosses the WSL idle window before real PostgreSQL migrations and Redis PING.
+Direct Docker is not installed in this Windows session; direct command routing
+has regression coverage and the Linux CI creator acceptance uses real direct Docker.
+Direct-generated projects do not copy or load the WSL session helper. Local
+build, typecheck, lint, boundaries, release tests and the full PostgreSQL/browser
+suite passed (`.work/alpha3-*.log`). The creator suite passed 35 tests with one
+Unix-only test skipped on Windows. Archive consumer and remote release checks
+remain distinct required publication gates.
+
+## WSL creator lifetime correction — 2026-09-23 (prior recovery)
+
+The Dental Gate alpha.2 installation reached database creation, then lost both
+PostgreSQL and Redis before migrations. The default WSL distribution was exiting
+after its last foreground command; both project containers were found stopped.
+The creator now owns a foreground WSL session through an stdin pipe for its
+entire installation and releases it in `finally`. Parent exit also closes the
+pipe. Native Docker and existing-services installations do not start this helper.
+
+Generated WSL consumers receive project-owned development scripts: `npm run dev`
+starts healthy Compose services and holds WSL while Adonis runs; `npm run services`
+keeps services attached for standalone commands/tests. No global WSL setting or
+installed kit internals are modified. Microsoft documents that systemd services
+do not keep WSL alive: https://learn.microsoft.com/en-us/windows/wsl/systemd.
+
+The existing Dental Gate consumer was recovered with its original volumes and
+credentials. Migrations, administrator/UI setup, doctor, typecheck, both starter
+tests and production build passed. Its generated development command served the
+login page with HTTP 200 after the idle window. Regression tests cover native
+no-op behavior, WSL startup failure, session survival across child commands and
+EOF cleanup. This source correction has not been published to npm and accepts no
+additional release or phase gate.
+
+Repository validation passed: `pnpm build`, `pnpm typecheck`, `pnpm test`,
+`pnpm lint`, and `pnpm check:boundaries` (`.work/wsl-fix-*.log`). Tests used
+PostgreSQL 17 and the dedicated test database; the initial run failed while that
+local cluster was stopped, then passed after it was started. The creator suite
+passed 28 tests with its existing Unix-only test skipped on Windows.
+
 ## Historical checkpoint — 2026-09-21
 
 The [confirmed-achievements ledger](confirmed-achievements.md) separates demonstrated component outcomes from the still-open phase gates. The 2026-09-21 [source review](evidence/implementation-review-2026-09-21.json) reran all six local validation commands: 282 tests and five release guards passed on PostgreSQL 17.6.

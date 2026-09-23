@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0-alpha.3 — 2026-09-23
+
+* Prefer successful direct `docker version` and `docker compose version` probes;
+  use default-distribution WSL Docker only after direct Docker fails on Windows.
+* Pin the chosen backend through installation and generated development, tests,
+  Ace, service start and service stop commands; never switch daemons on failure.
+* Keep WSL alive only on its fallback path, including migrations and tests.
+  Direct Docker never starts a WSL session.
+* Preserve matching kit/UI/creator versions on alpha without claiming stable acceptance.
+
 ## 0.2.0-alpha.2 — 2026-09-23
 
 * Validate the supplied project directory before collecting company details.

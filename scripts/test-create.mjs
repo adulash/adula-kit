@@ -6,7 +6,14 @@ import { dirname, join, resolve, delimiter } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseEnv } from 'node:util'
 import { setTimeout as delay } from 'node:timers/promises'
-import { childEnvironment, createDatabases, npmEntry, checkDocker } from '../packages/create-app/src/system.mjs'
+import {
+  childEnvironment,
+  createDatabases,
+  npmEntry,
+  pingRedis,
+} from '../packages/create-app/src/system.mjs'
+import { dockerBackend } from '../packages/create-app/src/docker-runtime.mjs'
+import { holdDockerSession } from '../packages/create-app/src/docker-session.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const work = join(root, '.work')
@@ -128,6 +135,8 @@ for (const directory of env[pathKey].split(delimiter)) {
 }
 // This uses npm exec's installed bin, not source imports. It also exercises the
 // npm -> pinned pnpm bootstrap, with neither Adonis nor kit present beforehand.
+let runtime
+let releaseDocker = () => {}
 try {
   await step(
     'from-zero',
@@ -167,6 +176,27 @@ try {
   await access(join(target, 'tmp/install.log'))
   const appEnv = parseEnv(await readFile(join(target, '.env'), 'utf8'))
   const testEnv = parseEnv(await readFile(join(target, '.env.test'), 'utf8'))
+  if (docker) {
+    const config = JSON.parse(await readFile(join(target, 'scripts/docker-backend.json'), 'utf8'))
+    runtime = dockerBackend(config.backend)
+    if (runtime.command === 'wsl.exe') releaseDocker = await holdDockerSession(runtime)
+    else
+      await assert.rejects(access(join(target, 'scripts/docker-session.mjs')), { code: 'ENOENT' })
+    const manifest = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'))
+    assert.equal(manifest.scripts.dev, 'node scripts/services.mjs dev')
+    assert.equal(manifest.scripts.test, 'node scripts/services.mjs test')
+    // Cross the WSL idle interval, then exercise real migrations and Redis.
+    await delay(20000)
+    await step(
+      'backend-migrations',
+      process.execPath,
+      ['scripts/services.mjs', 'ace', 'migration:run', '--force'],
+      target,
+      env
+    )
+    await pingRedis({ host: appEnv.REDIS_HOST, port: Number(appEnv.REDIS_PORT) })
+    console.log(`PASS pinned ${config.backend} backend retains PostgreSQL/Redis through migrations`)
+  }
   assert.notEqual(appEnv.DB_DATABASE, connection.database)
   assert(
     appEnv.DB_DATABASE.endsWith('_test'),
@@ -303,7 +333,10 @@ try {
     )
     const response = await page.goto(`${appEnv.APP_URL}/admin/users`)
     assert.equal(response.status(), 200)
-    await page.getByRole('table').getByText('owner@example.test', { exact: true }).waitFor({ state: 'visible' })
+    await page
+      .getByRole('table')
+      .getByText('owner@example.test', { exact: true })
+      .waitFor({ state: 'visible' })
     assert((await page.locator('body').innerText()).includes('owner@example.test'))
     await page.screenshot({
       path: join(work, 'create-app-admin.png'),
@@ -358,10 +391,20 @@ try {
   if (docker) {
     try {
       await readFile(join(target, 'compose.yaml'))
-      const runtime = await checkDocker()
-      await step('docker-stop', runtime.command, [...runtime.prefix, 'compose', 'stop'], target, env)
+      runtime ??= dockerBackend(
+        JSON.parse(await readFile(join(target, 'scripts/docker-backend.json'), 'utf8')).backend
+      )
+      await step(
+        'docker-stop',
+        runtime.command,
+        [...runtime.prefix, 'compose', 'stop'],
+        target,
+        env
+      )
     } catch (error) {
       if (error.code !== 'ENOENT') throw error
+    } finally {
+      releaseDocker()
     }
   }
 }

@@ -39,8 +39,8 @@ test('Docker preflight distinguishes missing Compose from an unavailable engine'
     calls.push([command, ...args])
   })
   assert.deepEqual(calls, [
+    ['docker', 'version'],
     ['docker', 'compose', 'version'],
-    ['docker', 'info'],
   ])
   await assert.rejects(
     checkDocker(async () => {
@@ -50,9 +50,9 @@ test('Docker preflight distinguishes missing Compose from an unavailable engine'
   )
   await assert.rejects(
     checkDocker(async (_command, args) => {
-      if (args[0] === 'info') throw new Error('stopped')
-    }),
-    /engine is not reachable.*docker info/
+      if (args[0] === 'version') throw new Error('stopped')
+    }, 'linux'),
+    /Docker with Compose is unavailable.*docker version/
   )
 })
 

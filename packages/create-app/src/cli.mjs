@@ -4,7 +4,7 @@ import { prepareDocker } from './prerequisites.mjs'
 import { parseArgs } from 'node:util'
 import { createInterface } from 'node:readline/promises'
 import { randomBytes } from 'node:crypto'
-import { readFile, realpath } from 'node:fs/promises'
+import { readFile, realpath, writeFile } from 'node:fs/promises'
 import { resolve, join, delimiter } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import {
@@ -197,6 +197,10 @@ export async function main(argv = process.argv.slice(2)) {
   ].join(delimiter)
   let profile
   const progress = new Progress()
+  const releaseDocker =
+    docker?.command === 'wsl.exe'
+      ? await (await import('./docker-session.mjs')).holdDockerSession(docker)
+      : () => {}
   try {
     progress.start('Check services and prepare configuration')
     if (values.services === 'docker') {
@@ -252,6 +256,33 @@ export async function main(argv = process.argv.slice(2)) {
       identity,
       packageFiles: values.packages,
     })
+    if (docker) {
+      for (const file of [
+        'docker-runtime.mjs',
+        'services.mjs',
+        ...(docker.command === 'wsl.exe' ? ['docker-session.mjs'] : []),
+      ])
+        await writeNew(
+          target,
+          `scripts/${file}`,
+          await readFile(new URL(`./${file}`, import.meta.url), 'utf8')
+        )
+      await writeNew(
+        target,
+        'scripts/docker-backend.json',
+        JSON.stringify({ backend: docker.command === 'docker' ? 'direct' : 'wsl' }, null, 2) + '\n'
+      )
+      const manifestPath = join(target, 'package.json')
+      const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
+      manifest.scripts['dev:app'] = manifest.scripts.dev
+      manifest.scripts['test:app'] = manifest.scripts.test
+      manifest.scripts.dev = 'node scripts/services.mjs dev'
+      manifest.scripts.test = 'node scripts/services.mjs test'
+      manifest.scripts.ace = 'node scripts/services.mjs ace'
+      manifest.scripts.services = 'node scripts/services.mjs up'
+      manifest.scripts['services:stop'] = 'node scripts/services.mjs stop'
+      await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n')
+    }
     const encodedEnv = await prepareEnvironment(target, appEnv)
     await writeNew(target, '.env', dotenv(encodedEnv), true)
     await writeNew(
@@ -287,7 +318,7 @@ export async function main(argv = process.argv.slice(2)) {
     await writeNew(
       target,
       'README.md',
-      `# ${name}\n\nCreated with @adula/create-app ${template.version}. Node.js 24+ is required.\n\n## Local development\n\n\`\`\`sh\nnpm run dev\n\`\`\`\n\nOpen ${appEnv.APP_URL}. Administrator credentials are in ignored tmp/dev-admin.txt. After signing in, open /admin/setup and follow docs/initial-setup.md to review identity and verify service readiness.\nRun workers separately with node ace adula:worker, the outbox dispatcher with node ace adula:outbox, and the scheduler with node ace scheduler:run.\n\n${values.services === 'docker' ? `PostgreSQL 17 and Redis 7 run in Docker. Start them with ${docker.display} compose up -d --wait; stop with ${docker.display} compose stop. Named volumes retain data; never use down -v unless deliberately deleting the local databases.` : 'PostgreSQL 17 and Redis use your existing services. Installation created fresh databases; keep .env and .env.test private.'}\n\n## Verification\n\nRun npm run typecheck, npm test, npm run lint and npm run build. Tests use the separate *_test database and a distinct Redis namespace.\n\n## Company identity\n\nRead docs/design-identity.md and the managed design skill before changing UI. Source files and shadcn components belong to this application.\n\n## External services and production\n\nLocal file storage is enabled. SMTP (including a local relay), OAuth provider credentials, S3, off-site backups, and production deployment need actual destination configuration. The creator does not enable unconfigured external services. Production requires backup variables validated in start/env.ts.\n\n## Incomplete installation\n\nReview the reported failing step; files and databases are retained. After resolving it, use npm exec --yes --package=pnpm@11.19.0 -- pnpm install, node ace migration:run, and node ace adula:setup. Setup reads tmp/dev-admin.txt; it refuses to promote an existing account with a different password. Then run node ace adula:doctor and npm run build. Never recreate over a nonempty directory.\n`
+      `# ${name}\n\nCreated with @adula/create-app ${template.version}. Node.js 24+ is required.\n\n## Local development\n\n\`\`\`sh\nnpm run dev\n\`\`\`\n\nOpen ${appEnv.APP_URL}. Administrator credentials are in ignored tmp/dev-admin.txt. After signing in, open /admin/setup and follow docs/initial-setup.md to review identity and verify service readiness.\nRun workers separately with node ace adula:worker, the outbox dispatcher with node ace adula:outbox, and the scheduler with node ace scheduler:run.\n\n${values.services === 'docker' ? `PostgreSQL 17 and Redis 7 run in Docker. Start them with ${docker.display} compose up -d --wait; stop with ${docker.display} compose stop. The selected backend is saved in scripts/docker-backend.json. npm run dev, npm test and npm run ace -- migration:run start services through that same backend. npm run services attaches to services; npm run services:stop stops them. Only the WSL fallback keeps a WSL session open. Named volumes retain data; never use down -v unless deliberately deleting the local databases.` : 'PostgreSQL 17 and Redis use your existing services. Installation created fresh databases; keep .env and .env.test private.'}\n\n## Verification\n\nRun npm run typecheck, npm test, npm run lint and npm run build. Tests use the separate *_test database and a distinct Redis namespace.\n\n## Company identity\n\nRead docs/design-identity.md and the managed design skill before changing UI. Source files and shadcn components belong to this application.\n\n## External services and production\n\nLocal file storage is enabled. SMTP (including a local relay), OAuth provider credentials, S3, off-site backups, and production deployment need actual destination configuration. The creator does not enable unconfigured external services. Production requires backup variables validated in start/env.ts.\n\n## Incomplete installation\n\nReview the reported failing step; files and databases are retained. After resolving it, use npm exec --yes --package=pnpm@11.19.0 -- pnpm install, node ace migration:run, and node ace adula:setup. Setup reads tmp/dev-admin.txt; it refuses to promote an existing account with a different password. Then run node ace adula:doctor and npm run build. Never recreate over a nonempty directory.\n`
     )
     await writeNew(target, 'tmp/install.log', '', true)
     const options = {
@@ -358,6 +389,8 @@ export async function main(argv = process.argv.slice(2)) {
   } catch (error) {
     progress.finish(true)
     throw error
+  } finally {
+    releaseDocker()
   }
 }
 
