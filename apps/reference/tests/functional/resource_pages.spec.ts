@@ -90,7 +90,7 @@ test.group('Generic resource page integration', (group) => {
     assert.lengthOf(activity, 1)
     assert.equal(activity[0].action, 'create')
     assert.equal(activity[0].actorName, actor.user.fullName)
-    assert.notProperty(activity[0], 'actorEmail')
+    assert.isNull(activity[0].actorEmail)
     assert.sameMembers(activity[0].fields, ['name', 'email'])
     assert.match(activity[0].createdAt, /^\d{4}-\d{2}-\d{2}T/)
   })

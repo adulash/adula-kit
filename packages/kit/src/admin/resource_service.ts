@@ -497,6 +497,11 @@ export class ResourceService {
       actorId: Number(row.actor_id),
       // A display name only: record viewers need not be able to read account e-mails.
       actorName: row.actor_name ? String(row.actor_name) : null,
+      /**
+       * @deprecated Always null. Kept so project-owned copies of resource-show from
+       * earlier releases still compile; they fall back to the actor id.
+       */
+      actorEmail: null as string | null,
       createdAt: new Date(row.created_at).toISOString(),
     }))
   }
