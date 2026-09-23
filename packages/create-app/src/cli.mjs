@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Progress } from './progress.mjs'
+import { prepareDocker } from './prerequisites.mjs'
 import { parseArgs } from 'node:util'
 import { createInterface } from 'node:readline/promises'
 import { randomBytes } from 'node:crypto'
@@ -117,6 +118,15 @@ export async function main(argv = process.argv.slice(2)) {
   let email = values['admin-email']
   let identityFile = values.identity
   const interactive = process.stdin.isTTY && !values.yes
+  // Reject a supplied destination before collecting company details.
+  if (directory) {
+    projectName(resolve(directory))
+    await assertEmpty(resolve(directory))
+  }
+  if (!interactive && (!directory || !company || !email))
+    throw new Error('Provide a directory, --company and --admin-email, or run interactively.')
+  // Host prerequisites must pass before prompts, package setup or project writes.
+  let docker
   if (interactive) {
     const prompt = createInterface({
       input: process.stdin,
@@ -124,6 +134,28 @@ export async function main(argv = process.argv.slice(2)) {
     })
     try {
       directory ||= await prompt.question('Application directory: ')
+      projectName(resolve(directory))
+      await assertEmpty(resolve(directory))
+      if (values.services === 'docker') {
+        const services = await prepareDocker({
+          question: (message) => prompt.question(message),
+          execute: async (command, args) => {
+            prompt.pause()
+            try {
+              await run(command, args)
+            } finally {
+              prompt.resume()
+            }
+          },
+        })
+        if (services.connection) {
+          values.services = 'existing'
+          values.connection = services.connection
+        } else {
+          docker = services.docker
+          console.log(`Docker is ready (${docker.display}). Continuing setup.`)
+        }
+      }
       company ||= await prompt.question('Company name as it should appear in the application: ')
       email ||= await prompt.question('Administrator email: ')
       identityFile ||= await prompt.question(
@@ -132,6 +164,8 @@ export async function main(argv = process.argv.slice(2)) {
     } finally {
       prompt.close()
     }
+  } else if (values.services === 'docker') {
+    docker = (await prepareDocker()).docker
   }
   if (!directory || !company || !email)
     throw new Error('Provide a directory, --company and --admin-email, or run interactively.')
@@ -166,8 +200,6 @@ export async function main(argv = process.argv.slice(2)) {
   try {
     progress.start('Check services and prepare configuration')
     if (values.services === 'docker') {
-      await run('docker', ['compose', 'version'], { env, quiet: true })
-      await run('docker', ['info'], { env, quiet: true })
       profile = {
         postgres: {
           host: '127.0.0.1',
@@ -255,7 +287,7 @@ export async function main(argv = process.argv.slice(2)) {
     await writeNew(
       target,
       'README.md',
-      `# ${name}\n\nCreated with @adula/create-app ${template.version}. Node.js 24+ is required.\n\n## Local development\n\n\`\`\`sh\nnpm run dev\n\`\`\`\n\nOpen ${appEnv.APP_URL}. Administrator credentials are in ignored tmp/dev-admin.txt. After signing in, open /admin/setup and follow docs/initial-setup.md to review identity and verify service readiness.\nRun workers separately with node ace adula:worker, the outbox dispatcher with node ace adula:outbox, and the scheduler with node ace scheduler:run.\n\n${values.services === 'docker' ? 'PostgreSQL 17 and Redis 7 run in Docker. Start them with docker compose up -d --wait; stop with docker compose stop. Named volumes retain data; never use down -v unless deliberately deleting the local databases.' : 'PostgreSQL 17 and Redis use your existing services. Installation created fresh databases; keep .env and .env.test private.'}\n\n## Verification\n\nRun npm run typecheck, npm test, npm run lint and npm run build. Tests use the separate *_test database and a distinct Redis namespace.\n\n## Company identity\n\nRead docs/design-identity.md and the managed design skill before changing UI. Source files and shadcn components belong to this application.\n\n## External services and production\n\nLocal file storage is enabled. SMTP (including a local relay), OAuth provider credentials, S3, off-site backups, and production deployment need actual destination configuration. The creator does not enable unconfigured external services. Production requires backup variables validated in start/env.ts.\n\n## Incomplete installation\n\nReview the reported failing step; files and databases are retained. After resolving it, use npm exec --yes --package=pnpm@11.19.0 -- pnpm install, node ace migration:run, and node ace adula:setup. Setup reads tmp/dev-admin.txt; it refuses to promote an existing account with a different password. Then run node ace adula:doctor and npm run build. Never recreate over a nonempty directory.\n`
+      `# ${name}\n\nCreated with @adula/create-app ${template.version}. Node.js 24+ is required.\n\n## Local development\n\n\`\`\`sh\nnpm run dev\n\`\`\`\n\nOpen ${appEnv.APP_URL}. Administrator credentials are in ignored tmp/dev-admin.txt. After signing in, open /admin/setup and follow docs/initial-setup.md to review identity and verify service readiness.\nRun workers separately with node ace adula:worker, the outbox dispatcher with node ace adula:outbox, and the scheduler with node ace scheduler:run.\n\n${values.services === 'docker' ? `PostgreSQL 17 and Redis 7 run in Docker. Start them with ${docker.display} compose up -d --wait; stop with ${docker.display} compose stop. Named volumes retain data; never use down -v unless deliberately deleting the local databases.` : 'PostgreSQL 17 and Redis use your existing services. Installation created fresh databases; keep .env and .env.test private.'}\n\n## Verification\n\nRun npm run typecheck, npm test, npm run lint and npm run build. Tests use the separate *_test database and a distinct Redis namespace.\n\n## Company identity\n\nRead docs/design-identity.md and the managed design skill before changing UI. Source files and shadcn components belong to this application.\n\n## External services and production\n\nLocal file storage is enabled. SMTP (including a local relay), OAuth provider credentials, S3, off-site backups, and production deployment need actual destination configuration. The creator does not enable unconfigured external services. Production requires backup variables validated in start/env.ts.\n\n## Incomplete installation\n\nReview the reported failing step; files and databases are retained. After resolving it, use npm exec --yes --package=pnpm@11.19.0 -- pnpm install, node ace migration:run, and node ace adula:setup. Setup reads tmp/dev-admin.txt; it refuses to promote an existing account with a different password. Then run node ace adula:doctor and npm run build. Never recreate over a nonempty directory.\n`
     )
     await writeNew(target, 'tmp/install.log', '', true)
     const options = {
@@ -269,8 +301,18 @@ export async function main(argv = process.argv.slice(2)) {
     if (values.services === 'docker') {
       await writeNew(target, 'compose.yaml', composeFile())
       await run(
-        'docker',
-        ['compose', '--env-file', '.env', 'up', '-d', '--wait', '--wait-timeout', '120'],
+        docker.command,
+        [
+          ...docker.prefix,
+          'compose',
+          '--env-file',
+          '.env',
+          'up',
+          '-d',
+          '--wait',
+          '--wait-timeout',
+          '120',
+        ],
         options
       )
       await pingRedis(profile.redis)
@@ -324,7 +366,7 @@ export async function main(argv = process.argv.slice(2)) {
 if (process.argv[1] && import.meta.url === pathToFileURL(await realpath(process.argv[1])).href)
   main().catch((error) => {
     console.error(
-      `\nSetup did not complete: ${error.message}\nCreated files and databases are retained so you can inspect and resume setup.`
+      `\nSetup did not complete: ${error.message}\nIf setup created files or databases, they have been retained for inspection. See the generated README for recovery steps.`
     )
     process.exitCode = 1
   })

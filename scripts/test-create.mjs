@@ -6,7 +6,7 @@ import { dirname, join, resolve, delimiter } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseEnv } from 'node:util'
 import { setTimeout as delay } from 'node:timers/promises'
-import { childEnvironment, createDatabases, npmEntry } from '../packages/create-app/src/system.mjs'
+import { childEnvironment, createDatabases, npmEntry, checkDocker } from '../packages/create-app/src/system.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const work = join(root, '.work')
@@ -358,7 +358,8 @@ try {
   if (docker) {
     try {
       await readFile(join(target, 'compose.yaml'))
-      await step('docker-stop', 'docker', ['compose', 'stop'], target, env)
+      const runtime = await checkDocker()
+      await step('docker-stop', runtime.command, [...runtime.prefix, 'compose', 'stop'], target, env)
     } catch (error) {
       if (error.code !== 'ENOENT') throw error
     }

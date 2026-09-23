@@ -167,7 +167,7 @@ await ace('tests', ['test'], { env: { ...consumerEnv, NODE_ENV: 'test' } })
 await ace('install', ['adula:install'])
 const capabilities = await ace('capabilities', ['adula:capabilities'])
 assert(
-  capabilities.includes(`Version ${kit.version}, unreleased`),
+  capabilities.includes(`Version ${kit.version}, experimental alpha`),
   'Packed capability catalog has a stale version'
 )
 assert(

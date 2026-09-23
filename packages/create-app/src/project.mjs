@@ -5,7 +5,7 @@ export function projectName(target) {
   const name = basename(resolve(target))
   if (!/^[a-z][a-z0-9-]{0,49}$/.test(name))
     throw new Error(
-      'Project directory name must start with a lowercase letter and use lowercase letters, digits or hyphens (up to 50 characters).'
+      'Project directory name must start with a lowercase letter and use lowercase letters, digits or hyphens (up to 50 characters). For example, use dental-gate for the directory; the company display name can still be Dental-Gate.'
     )
   return name
 }
