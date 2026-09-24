@@ -30,12 +30,15 @@
     },
     {
       "id": 2,
-      "status": "pending",
+      "status": "accepted",
       "evidence": [
         "docs/evidence/medical-consumer-2026-09-22.json",
-        "docs/evidence/medical-consumer-2026-09-24.json"
+        "docs/evidence/medical-consumer-2026-09-24.json",
+        "docs/evidence/phase2-owner-acceptance-2026-09-24.json"
       ],
-      "remaining": "Local disposable medical consumer and bound-attachment restore passed. k6 list/save latency budgets failed (p95 504.83/463.00ms on 2026-09-22; 1140/1060ms on 2026-09-24); staging performance, human RTL review including localized date order, genuine published minor upgrade and council 1 remain pending."
+      "remaining": "Accepted by owner attestation (ADR 025). Open deviation: k6 list/save p95 budgets failed and move to the phase 5 k6 run; genuine published-predecessor upgrade remains a 1.0 requirement.",
+      "reviewedBy": "repository owner (conversation)",
+      "reviewedAt": "2026-09-24"
     },
     {
       "id": 3,
@@ -71,7 +74,8 @@
   "updatedAt": "2026-09-24",
   "scopeAmendments": [
     "docs/decisions/021-optional-oauth.md",
-    "docs/decisions/024-framework-alpha-and-local-staging.md"
+    "docs/decisions/024-framework-alpha-and-local-staging.md",
+    "docs/decisions/025-phase-2-owner-acceptance.md"
   ],
   "optionalIntegrations": {
     "oauth": {
