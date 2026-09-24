@@ -2,7 +2,7 @@
 
 Creates a complete, project-owned AdonisJS 7 application with adula, React/Inertia,
 shadcn/ui, authentication, administration and the managed business-design skill.
-Version 0.2.0-alpha.3 is **experimental**, intended for the alpha channel.
+Version 0.2.0-alpha.4 is **experimental**, intended for the alpha channel.
 The owner-authorized latest alias remains on 0.2.0-alpha.1; next is absent.
 
 ```sh

@@ -62,7 +62,7 @@ Needed by: the plan's 1.0 completion criterion.
 Remaining: phases 3–7 business features, the XState engine, the five reviewer skills, independent framework-consumer integration/runtime acceptance and public release (ADR 024 removes a permanent medical product).
 Scope: the owner explicitly selected full 1.0 acceptance. Deleted educational modules must stay out of normal operation; isolated fixtures or independent applications provide feature consumers. See docs/acceptance-1.0.md and docs/release-readiness.json.
 Constraint: the plan explicitly forbids phase 3 before the independently upgraded and restored phase 2 slice passes.
-Next: follow the framework gates in order under ADR 024. The owner authorized the experimental alpha channel (currently 0.2.0-alpha.3); latest remains on 0.2.0-alpha.1 by the ADR 024 amendment and next remains absent.
+Next: follow the framework gates in order under ADR 024. The owner authorized the experimental alpha channel (currently 0.2.0-alpha.4); latest remains on 0.2.0-alpha.1 by the ADR 024 amendment and next remains absent.
 
 ## Schedule follow-up — 2026-09-22
 
