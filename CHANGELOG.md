@@ -1,7 +1,15 @@
 # Changelog
 
-## Unreleased — security, hygiene and performance hardening
+## 0.2.0-alpha.4 — 2026-09-24
 
+* Login: the per-address limit is 100 attempts per minute (configurable with
+  `LOGIN_ADDRESS_LIMIT`) so offices behind one address can sign in together;
+  per-account lockout is unchanged.
+* CI: checkout v7, setup-node v7 (no package cache in release jobs),
+  upload-artifact v7, download-artifact v8 (digest mismatches fail),
+  pnpm/action-setup v6, all pinned by commit SHA.
+* Local k6 budgets still fail (list p95 1140 ms, save p95 1060 ms); this alpha
+  accepts no phase.
 * Security: e-mail is a case-insensitive identity (additive migration with a unique
   `lower(email)` index); OAuth links only to accounts whose e-mail ownership was proven
   (invitation, mailed recovery or a verified provider); a pending invitation reserves
