@@ -19,6 +19,7 @@
       "evidence": [
         "docs/evidence/backup-monitor-repair-2026-09-22.json",
         "docs/evidence/docker-backup-2026-09-22.json",
+        "docs/evidence/docker-staging-2026-09-25.json",
         "docs/evidence/external-mail-runtime-2026-09-21.json",
         "docs/evidence/impersonation-security-2026-09-25.json",
         "docs/evidence/local-staging-2026-09-22.json",
