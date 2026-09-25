@@ -20,6 +20,8 @@ const env = await Env.create(new URL('../', import.meta.url), {
 
   // App
   APP_KEY: Env.schema.secret(),
+  /** Optional Gotenberg service for PDF printing (docker-compose.pdf.yml). */
+  GOTENBERG_URL: Env.schema.string.optional({ format: 'url', tld: false }),
   APP_URL: Env.schema.string({ format: 'url', tld: false }),
 
   // Session

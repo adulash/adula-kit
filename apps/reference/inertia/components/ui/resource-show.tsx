@@ -1,6 +1,6 @@
 import { Deferred, router } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
-import { History, Pencil } from 'lucide-react'
+import { History, Pencil, Printer } from 'lucide-react'
 import type {
   ResourceActivity,
   ResourceChildren as Children,
@@ -70,6 +70,12 @@ export function ResourceShow({
             </Link>
           </Button>
         </Can>
+        <Button variant="outline" asChild>
+          <a href={`${base}/print`} target="_blank" rel="noopener">
+            <Printer size={15} />
+            طباعة
+          </a>
+        </Button>
         <ResourceActions
           resource={resource.name}
           id={result.data.id as number}

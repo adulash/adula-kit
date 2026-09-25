@@ -127,7 +127,7 @@
       "component": "resource-field"
     },
     "inertia/components/ui/resource-show.tsx": {
-      "hash": "a1f932a92221df1b1a2a361b7a61bdb2d0d62655d3d403a479102c4724ef473b",
+      "hash": "2d6ecb703815fb250e54d9a978ac5cbc0ea8ec63e076be84bcf55ec45363ff0f",
       "component": "resource-show"
     },
     "inertia/components/ui/resource-actions.tsx": {

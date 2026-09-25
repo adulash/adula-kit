@@ -1,0 +1,18 @@
+# Optional PDF printing. Chromium needs memory: plan for 8 GB hosts when enabled.
+#   docker compose -f docker-compose.prod.yml -f docker-compose.pdf.yml up -d
+# and set GOTENBERG_URL=http://gotenberg:3000 in .env.
+services:
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    restart: unless-stopped
+    command:
+      - gotenberg
+      - --chromium-deny-list=^(?!http://web:3333/).*
+      - --api-timeout=30s
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/health"]
+      interval: 10s
+      retries: 5
+  web:
+    depends_on:
+      gotenberg: { condition: service_healthy }

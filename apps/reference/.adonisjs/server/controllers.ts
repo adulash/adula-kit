@@ -26,6 +26,7 @@ export const controllers = {
   Oauth: () => import('#controllers/oauth_controller'),
   Openapi: () => import('#controllers/openapi_controller'),
   PasswordReset: () => import('#controllers/password_reset_controller'),
+  Print: () => import('#controllers/print_controller'),
   Profile: () => import('#controllers/profile_controller'),
   RecordCollaboration: () => import('#controllers/record_collaboration_controller'),
   Resources: () => import('#controllers/resources_controller'),

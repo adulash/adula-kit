@@ -33,6 +33,8 @@ export {
   createWebhooksSchema,
 } from './src/database/schema.js'
 export { openApiDocument } from './src/integrations/openapi.js'
+export { renderPrintHtml, htmlToPdf } from './src/integrations/print.js'
+export type { PrintIdentity, PrintInput } from './src/integrations/print.js'
 export { Webhooks, signWebhook, WEBHOOK_MAX_ATTEMPTS } from './src/integrations/webhooks.js'
 export type {
   SecretBox,
