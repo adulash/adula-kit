@@ -54,8 +54,9 @@ test.group('TOTP two-factor authentication', (group) => {
     await service().confirm(1, code(secret, -1))
     // The confirming step (previous) cannot be replayed; the current step still works once.
     assert.isFalse(await service().verify(1, code(secret, -1)))
-    assert.equal(await service().verify(1, code(secret)), 'totp')
-    assert.isFalse(await service().verify(1, code(secret)))
+    const current = code(secret)
+    assert.equal(await service().verify(1, current), 'totp')
+    assert.isFalse(await service().verify(1, current))
     assert.isFalse(await service().verify(1, code(secret, -5)))
     assert.isFalse(await service().verify(1, 'abcdef'))
     assert.isFalse(await service().verify(1, '1'.repeat(64)))

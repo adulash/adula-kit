@@ -87,12 +87,14 @@ test.group('Two-factor authentication over HTTP', (group) => {
       .redirects(0)
       .form({ code: '000000' })
     assert.equal(wrong.header('location'), '/login/two-factor')
+    // One code string for both attempts: replay means resending the exact same code.
+    const current = code(secret)
     const ok = await client
       .post('/login/two-factor')
       .withCsrfToken()
       .withSession(login.session())
       .redirects(0)
-      .form({ code: code(secret) })
+      .form({ code: current })
     ok.assertStatus(302)
     assert.equal(ok.header('location'), '/')
     const replay = await client
@@ -105,7 +107,7 @@ test.group('Two-factor authentication over HTTP', (group) => {
       .withCsrfToken()
       .withSession(replay.session())
       .redirects(0)
-      .form({ code: code(secret) })
+      .form({ code: current })
     assert.equal(replayed.header('location'), '/login/two-factor')
   })
 
