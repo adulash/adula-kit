@@ -17,6 +17,7 @@ export const controllers = {
     Support: () => import('#controllers/admin/support'),
     Users: () => import('#controllers/admin/users_controller'),
   },
+  Assignments: () => import('#controllers/assignments_controller'),
   Attachments: () => import('#controllers/attachments_controller'),
   NewAccount: () => import('#controllers/new_account_controller'),
   Oauth: () => import('#controllers/oauth_controller'),

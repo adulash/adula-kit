@@ -318,3 +318,28 @@ export async function createCollaborationSchema(db: Knex) {
     t.index(['resource', 'record_id', 'id'])
   })
 }
+
+/** Work assigned to a user on a record; approval steps of workflows reuse it (phase 4). */
+export async function createAssignmentsSchema(db: Knex) {
+  await db.schema.createTable('assignments', (t) => {
+    t.bigIncrements('id')
+    t.string('resource').notNullable()
+    t.integer('record_id').notNullable()
+    t.integer('assignee_id').notNullable().references('id').inTable('users').onDelete('RESTRICT')
+    t.integer('assigned_by').references('id').inTable('users').onDelete('RESTRICT')
+    t.string('kind', 20).notNullable().defaultTo('task')
+    t.string('title', 200).notNullable()
+    t.text('note')
+    t.date('due_on')
+    t.string('status', 20).notNullable().defaultTo('open')
+    t.uuid('workflow_run_id')
+    t.string('workflow_step', 100)
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('completed_at', { useTz: true })
+    t.integer('completed_by').references('id').inTable('users').onDelete('RESTRICT')
+    t.string('outcome', 20)
+    t.index(['assignee_id', 'status', 'id'])
+    t.index(['resource', 'record_id'])
+    t.index(['workflow_run_id'])
+  })
+}

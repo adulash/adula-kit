@@ -16,6 +16,7 @@ import { Skeleton } from '~/components/ui/skeleton'
 import { ResourceActions } from '~/components/ui/resource-actions'
 import { ResourceValue, formatDatetime, type LookupOptions } from '~/components/ui/resource-value'
 import { RecordCollaboration } from '~/components/ui/record-collaboration'
+import { RecordAssignments } from '~/components/ui/record-assignments'
 
 export type ResourceChildren = Children
 const meta = new Set(['id', 'version', 'docStatus', 'orgUnitId'])
@@ -185,6 +186,11 @@ export function ResourceShow({
           </div>
         </Deferred>
       )}
+      <RecordAssignments
+        resource={resource.name}
+        id={result.data.id as number}
+        canAssign={Boolean(result.permissions.update)}
+      />
       <RecordCollaboration resource={resource} id={result.data.id as number} />
       <Deferred data="activity" fallback={<SectionSkeleton title="سجل النشاط" rows={4} />}>
         <section aria-label="سجل النشاط" className="rounded-xl border bg-white">

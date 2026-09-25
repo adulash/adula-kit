@@ -67,4 +67,37 @@ test.group('Record collaboration browser acceptance', (group) => {
     assert.lengthOf(inbox.comments, 1)
     assert.deepEqual(inbox.tags, ['عاجل', 'مراجعة'])
   })
+
+  test('assign a task in a dialog and complete it from my tasks', async ({
+    browserContext,
+    visit,
+    assert,
+  }) => {
+    await browserContext.loginAs(owner.user)
+    const page = await visit(`/resources/ui_samples/${id}`)
+    const section = page.getByRole('region', { name: 'المهام المسندة' })
+    await section.getByRole('button', { name: 'إسناد مهمة' }).click()
+    const dialog = page.getByRole('dialog', { name: 'إسناد مهمة' })
+    await dialog.getByRole('combobox', { name: 'المكلف' }).click()
+    await page.getByRole('option', { name: 'فهد المراجع' }).click()
+    await dialog.getByLabel('عنوان المهمة').fill('تدقيق العينة')
+    await dialog.getByRole('button', { name: 'إسناد', exact: true }).click()
+    await dialog.waitFor({ state: 'hidden' })
+    await section.getByText('تدقيق العينة').waitFor()
+
+    await browserContext.clearCookies()
+    await browserContext.loginAs(colleague.user)
+    const tasks = await visit('/my-tasks')
+    await tasks.getByRole('heading', { name: 'مهامي' }).waitFor()
+    await tasks.getByText('تدقيق العينة').waitFor()
+    await tasks.screenshot({ path: join(await screenshotDir(), 'my-tasks.png') })
+    await tasks.getByRole('button', { name: 'تم الإنجاز' }).click()
+    await tasks.getByText('لا مهام في هذا العرض.').waitFor()
+    const [row] = await kit().assignments.forRecord(
+      'ui_samples',
+      id,
+      await kit().actors.load(owner.user.id)
+    )
+    assert.equal(row.status, 'done')
+  })
 })

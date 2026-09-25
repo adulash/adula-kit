@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { usePage } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
-import { ClipboardList, LayoutDashboard, ArrowUpLeft } from 'lucide-react'
+import { ClipboardList, LayoutDashboard, ArrowUpLeft, ListChecks } from 'lucide-react'
 import type { ResourceNavigation } from '@adula/kit'
 import { Toaster } from '~/components/ui/sonner'
 import { AccountMenu } from '~/components/account-menu'
@@ -20,6 +20,7 @@ export default function Workspace({ children }: { children: ReactNode }) {
   }>()
   const navigation = [
     { href: '/', label: 'نظرة عامة', icon: LayoutDashboard },
+    { href: '/my-tasks', label: 'مهامي', icon: ListChecks },
     ...(page.props.canInviteUsers
       ? [{ href: '/users/invite', label: 'دعوة مستخدم', icon: ClipboardList }]
       : []),

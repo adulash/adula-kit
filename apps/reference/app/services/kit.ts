@@ -1,5 +1,11 @@
 import db from '@adonisjs/lucid/services/db'
-import { ActorStore, RecordCollaboration, ResourceService, SavedViews } from '@adula/kit'
+import {
+  ActorStore,
+  Assignments,
+  RecordCollaboration,
+  ResourceService,
+  SavedViews,
+} from '@adula/kit'
 import { registry } from '#start/modules'
 import cache from '@adonisjs/cache/services/main'
 import type { Actor } from '@adula/kit'
@@ -23,6 +29,7 @@ export function kit() {
     savedViews: new SavedViews(knex, registry),
     actors,
     collaboration: new RecordCollaboration(knex, resources, actors),
+    assignments: new Assignments(knex, resources, actors),
   }
 }
 

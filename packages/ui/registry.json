@@ -528,6 +528,29 @@
       ]
     },
     {
+      "name": "record-assignments",
+      "type": "registry:ui",
+      "registryDependencies": [
+        "badge",
+        "button",
+        "input",
+        "label",
+        "textarea",
+        "dialog",
+        "select"
+      ],
+      "dependencies": [
+        "lucide-react@1.47.0",
+        "axios@1.19.0"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/record-assignments.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
       "name": "resource-show",
       "type": "registry:ui",
       "registryDependencies": [
@@ -538,7 +561,8 @@
         "resource-actions",
         "resource-value",
         "ui-preferences",
-        "record-collaboration"
+        "record-collaboration",
+        "record-assignments"
       ],
       "dependencies": [
         "lucide-react@1.47.0"

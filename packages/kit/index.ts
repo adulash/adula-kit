@@ -28,7 +28,14 @@ export {
   createAttachmentsSchema,
   createSavedViewsSchema,
   createCollaborationSchema,
+  createAssignmentsSchema,
 } from './src/database/schema.js'
+export { Assignments } from './src/collaboration/assignments.js'
+export type {
+  Assignment,
+  AssignmentPage,
+  AssignmentStatus,
+} from './src/collaboration/assignments.js'
 export { RecordCollaboration, followerListeners } from './src/collaboration/record_collaboration.js'
 export type {
   ActorLoader,
