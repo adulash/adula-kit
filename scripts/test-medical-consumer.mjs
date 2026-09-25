@@ -116,10 +116,13 @@ await stage('seed', () => ace('seed', ['medical:seed']))
 const appEnv = parseEnv(await readFile(join(target, '.env'), 'utf8'))
 assert.equal(appEnv.DB_DATABASE, `adula_medical_${stamp}_test`)
 const fixture = JSON.parse(await readFile(join(target, 'tmp/performance-fixture.json'), 'utf8'))
-async function startServer(name, overrides = {}) {
+async function startServer(name, overrides = {}, { compiled = false } = {}) {
   const file = await open(join(directory, `${name}.log`), 'w')
   const env = { ...environment, ...appEnv, ...overrides }
-  const server = spawn(process.execPath, ['--import=@poppinss/ts-exec', 'bin/server.ts'], { cwd: target, env, windowsHide: true, stdio: ['ignore', file.fd, file.fd] })
+  // Performance uses the compiled build (as deployed); functional stages use sources.
+  const server = compiled
+    ? spawn(process.execPath, ['bin/server.js'], { cwd: join(target, 'build'), env, windowsHide: true, stdio: ['ignore', file.fd, file.fd] })
+    : spawn(process.execPath, ['--import=@poppinss/ts-exec', 'bin/server.ts'], { cwd: target, env, windowsHide: true, stdio: ['ignore', file.fd, file.fd] })
   const stop = async () => {
     if (server.exitCode === null) {
       const exited = new Promise((done) => server.once('exit', done))
@@ -200,7 +203,7 @@ await stage('http', async () => {
   try { await httpExercise('source', server) } finally { await server.stop() }
 })
 if (process.env.K6_BINARY) await stage('performance', async () => {
-  const server = await startServer('performance-server')
+  const server = await startServer('performance-server', { LOG_LEVEL: 'warn' }, { compiled: true })
   try {
     const workloadFixture = join(directory, 'performance-fixture.json')
     await writeFile(workloadFixture, JSON.stringify({ ...fixture, runId: `medical-${Date.now()}` }), { mode: 0o600 })
@@ -209,7 +212,7 @@ if (process.env.K6_BINARY) await stage('performance', async () => {
       '-e', `PERF_FIXTURE=${workloadFixture}`,
       '-e', 'VUS=50', '-e', 'DURATION=3m', `--summary-export=${join(directory, 'k6-summary.json')}`,
       join(root, 'apps/reference/tests/perf/k6-workload.js')], { expected: [0, 99] })
-    state.performance = { exitCode: code, thresholdsPassed: code === 0, environment: 'local development consumer; not staging' }
+    state.performance = { exitCode: code, thresholdsPassed: code === 0, environment: `compiled build, NODE_ENV=${appEnv.NODE_ENV}, LOG_LEVEL=warn, one web process on ${process.platform}; not staging` }
   } finally { await server.stop() }
 })
 const snapshot = join(directory, 'snapshot')
