@@ -15,6 +15,7 @@ declare module '@adonisjs/inertia/types' {
     'account/profile': ExtractProps<(typeof import('../../inertia/pages/account/profile.tsx'))['default']>
     'account/sessions': ExtractProps<(typeof import('../../inertia/pages/account/sessions.tsx'))['default']>
     'account/tokens': ExtractProps<(typeof import('../../inertia/pages/account/tokens.tsx'))['default']>
+    'account/two_factor': ExtractProps<(typeof import('../../inertia/pages/account/two_factor.tsx'))['default']>
     'admin/activity/index': ExtractProps<(typeof import('../../inertia/pages/admin/activity/index.tsx'))['default']>
     'admin/forbidden': ExtractProps<(typeof import('../../inertia/pages/admin/forbidden.tsx'))['default']>
     'admin/jobs/index': ExtractProps<(typeof import('../../inertia/pages/admin/jobs/index.tsx'))['default']>
@@ -34,6 +35,7 @@ declare module '@adonisjs/inertia/types' {
     'auth/login': ExtractProps<(typeof import('../../inertia/pages/auth/login.tsx'))['default']>
     'auth/reset': ExtractProps<(typeof import('../../inertia/pages/auth/reset.tsx'))['default']>
     'auth/signup': ExtractProps<(typeof import('../../inertia/pages/auth/signup.tsx'))['default']>
+    'auth/two_factor': ExtractProps<(typeof import('../../inertia/pages/auth/two_factor.tsx'))['default']>
     'errors/not_found': ExtractProps<(typeof import('../../inertia/pages/errors/not_found.tsx'))['default']>
     'errors/server_error': ExtractProps<(typeof import('../../inertia/pages/errors/server_error.tsx'))['default']>
     'home': ExtractProps<(typeof import('../../inertia/pages/home.tsx'))['default']>

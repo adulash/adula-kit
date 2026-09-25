@@ -32,7 +32,10 @@ export {
   createMessagingSchema,
   createWebhooksSchema,
   createImportsSchema,
+  createTwoFactorSchema,
 } from './src/database/schema.js'
+export { TwoFactor } from './src/core/two_factor.js'
+export type { TwoFactorStatus, TwoFactorEnrollment } from './src/core/two_factor.js'
 export { ImportBatches, importCell, IMPORT_ROW_LIMIT } from './src/integrations/imports.js'
 export type {
   ImportBatch,

@@ -6,6 +6,7 @@ import { recordSession } from '#services/sessions'
 import { Settings } from '@adula/kit'
 import db from '@adonisjs/lucid/services/db'
 import { oauthFingerprint } from '#services/initial_setup'
+import { beginChallenge, twoFactor } from '#services/two_factor'
 
 /** Unknown or unconfigured providers behave like a missing route. */
 const notFound = () =>
@@ -47,6 +48,11 @@ export default class OauthController {
     const { user, created } = resolved
     if (user.disabledAt) return fail('هذا الحساب معطّل. تواصل مع مدير النظام.')
 
+    const service = await twoFactor()
+    if (await service.enabled(user.id)) {
+      beginChallenge(ctx, user.id, 'oauth')
+      return ctx.response.redirect().toPath('/login/two-factor')
+    }
     await auth.use('web').login(user)
     await recordSession(ctx, user.id)
     await new Settings(db.connection().getWriteClient()).set(`setup.oauth.${provider}`, {

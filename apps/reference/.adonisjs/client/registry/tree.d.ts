@@ -3,6 +3,9 @@ import type { routes } from './index.ts'
 
 export interface ApiDefinition {
   home: typeof routes['home']
+  eventStream: typeof routes['event_stream']
+  subscribe: typeof routes['subscribe']
+  unsubscribe: typeof routes['unsubscribe']
   mcp: {
     post: typeof routes['mcp.post']
   }
@@ -18,6 +21,30 @@ export interface ApiDefinition {
     submit: typeof routes['resources.submit']
     cancel: typeof routes['resources.cancel']
   }
+  imports: {
+    store: typeof routes['imports.store']
+    index: typeof routes['imports.index']
+    show: typeof routes['imports.show']
+    start: typeof routes['imports.start']
+  }
+  recordCollaboration: {
+    tagOptions: typeof routes['record_collaboration.tag_options']
+    show: typeof routes['record_collaboration.show']
+    mentions: typeof routes['record_collaboration.mentions']
+    comment: typeof routes['record_collaboration.comment']
+    editComment: typeof routes['record_collaboration.edit_comment']
+    deleteComment: typeof routes['record_collaboration.delete_comment']
+    follow: typeof routes['record_collaboration.follow']
+    tags: typeof routes['record_collaboration.tags']
+  }
+  print: typeof routes['print']
+  assignments: {
+    forRecord: typeof routes['assignments.for_record']
+    store: typeof routes['assignments.store']
+    mine: typeof routes['assignments.mine']
+    complete: typeof routes['assignments.complete']
+    cancel: typeof routes['assignments.cancel']
+  }
   savedViews: {
     store: typeof routes['saved_views.store']
     destroy: typeof routes['saved_views.destroy']
@@ -25,6 +52,18 @@ export interface ApiDefinition {
   attachments: {
     store: typeof routes['attachments.store']
     show: typeof routes['attachments.show']
+  }
+  api: {
+    openApi: typeof routes['api.open_api']
+    resources: {
+      index: typeof routes['api.resources.index']
+      show: typeof routes['api.resources.show']
+      store: typeof routes['api.resources.store']
+      update: typeof routes['api.resources.update']
+      destroy: typeof routes['api.resources.destroy']
+      submit: typeof routes['api.resources.submit']
+      cancel: typeof routes['api.resources.cancel']
+    }
   }
   newAccount: {
     create: typeof routes['new_account.create']
@@ -41,6 +80,10 @@ export interface ApiDefinition {
     store: typeof routes['session.store']
     destroy: typeof routes['session.destroy']
   }
+  twoFactorChallenge: {
+    create: typeof routes['two_factor_challenge.create']
+    store: typeof routes['two_factor_challenge.store']
+  }
   passwordReset: {
     forgot: typeof routes['password_reset.forgot']
     send: typeof routes['password_reset.send']
@@ -55,6 +98,18 @@ export interface ApiDefinition {
     show: typeof routes['profile.show']
     update: typeof routes['profile.update']
     password: typeof routes['profile.password']
+  }
+  twoFactor: {
+    show: typeof routes['two_factor.show']
+    begin: typeof routes['two_factor.begin']
+    confirm: typeof routes['two_factor.confirm']
+    recovery: typeof routes['two_factor.recovery']
+    disable: typeof routes['two_factor.disable']
+  }
+  apiTokens: {
+    index: typeof routes['api_tokens.index']
+    store: typeof routes['api_tokens.store']
+    destroy: typeof routes['api_tokens.destroy']
   }
   accountSessions: {
     index: typeof routes['account_sessions.index']
@@ -112,6 +167,19 @@ export interface ApiDefinition {
     confirmMail: typeof routes['admin_settings.confirm_mail']
     upsert: typeof routes['admin_settings.upsert']
     destroy: typeof routes['admin_settings.destroy']
+  }
+  adminTemplates: {
+    index: typeof routes['admin_templates.index']
+    update: typeof routes['admin_templates.update']
+    reset: typeof routes['admin_templates.reset']
+  }
+  adminWebhooks: {
+    index: typeof routes['admin_webhooks.index']
+    store: typeof routes['admin_webhooks.store']
+    update: typeof routes['admin_webhooks.update']
+    destroy: typeof routes['admin_webhooks.destroy']
+    deliveries: typeof routes['admin_webhooks.deliveries']
+    retry: typeof routes['admin_webhooks.retry']
   }
   setup: {
     index: typeof routes['setup.index']

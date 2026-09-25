@@ -31,6 +31,8 @@ const ApiTokensController = () => import('#controllers/api_tokens_controller')
 const OpenApiController = () => import('#controllers/openapi_controller')
 const PrintController = () => import('#controllers/print_controller')
 const ImportsController = () => import('#controllers/imports_controller')
+const TwoFactorController = () => import('#controllers/two_factor_controller')
+const TwoFactorChallengeController = () => import('#controllers/two_factor_challenge_controller')
 const RecordCollaborationController = () => import('#controllers/record_collaboration_controller')
 const PasswordResetController = () => import('#controllers/password_reset_controller')
 const UserInvitationsController = () => import('#controllers/user_invitations_controller')
@@ -163,6 +165,13 @@ router
 
     router.get('login', [controllers.Session, 'create'])
     router.post('login', [controllers.Session, 'store']).use([loginAddressThrottle, loginThrottle])
+    router
+      .get('login/two-factor', [TwoFactorChallengeController, 'create'])
+      .as('two_factor_challenge.create')
+    router
+      .post('login/two-factor', [TwoFactorChallengeController, 'store'])
+      .as('two_factor_challenge.store')
+      .use(loginAddressThrottle)
 
     router.get('password/forgot', [PasswordResetController, 'forgot'])
     router.post('password/forgot', [PasswordResetController, 'send']).use(passwordThrottle)
@@ -183,6 +192,17 @@ router
     router.get('account/profile', [ProfileController, 'show'])
     router.patch('account/profile', [ProfileController, 'update'])
     router.post('account/password', [ProfileController, 'password']).use(passwordChangeThrottle)
+    router.get('account/two-factor', [TwoFactorController, 'show'])
+    router.post('account/two-factor', [TwoFactorController, 'begin']).use(passwordChangeThrottle)
+    router
+      .post('account/two-factor/confirm', [TwoFactorController, 'confirm'])
+      .use(passwordChangeThrottle)
+    router
+      .post('account/two-factor/recovery-codes', [TwoFactorController, 'recovery'])
+      .use(passwordChangeThrottle)
+    router
+      .post('account/two-factor/disable', [TwoFactorController, 'disable'])
+      .use(passwordChangeThrottle)
     router.get('account/tokens', [ApiTokensController, 'index'])
     router.post('account/tokens', [ApiTokensController, 'store']).use(apiThrottle)
     router.delete('account/tokens/:id', [ApiTokensController, 'destroy'])

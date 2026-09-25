@@ -82,6 +82,7 @@
   "dependencies": {
     "@casl/ability": "7.0.1",
     "knex": "3.3.0",
+    "otpauth": "9.5.2",
     "papaparse": "5.7.0"
   },
   "repository": {
