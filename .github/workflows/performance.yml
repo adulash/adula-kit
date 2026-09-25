@@ -89,6 +89,9 @@ jobs:
           mkdir -p perf-summary
           cp "$latest/k6-summary.json" perf-summary/ 2>/dev/null || true
           node -e "const s=JSON.parse(require('fs').readFileSync('$latest/state.json','utf8'));console.log(JSON.stringify({completed:s.completed,performance:s.performance,ability:s.ability??null},null,2))" > perf-summary/state-summary.json || true
+          # The measured values are evidence; print them so the job log carries them too.
+          node -e "const m=JSON.parse(require('fs').readFileSync('perf-summary/k6-summary.json','utf8')).metrics;for(const k of ['list_with_relations','form_save','http_req_duration','successful_lists','successful_saves','checks','http_reqs'])if(m[k])console.log('k6',k,JSON.stringify(m[k]))" || true
+          cat perf-summary/state-summary.json || true
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
