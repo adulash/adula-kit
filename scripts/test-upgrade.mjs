@@ -246,9 +246,18 @@ try {
   assert.match(protection, /customized/i, 'Reinstalling UI must refuse to overwrite a customization')
   assert.equal(await digest(buttonPath), customized.button, 'A refused install still wrote the file')
 
-  // Doctor keeps failing until the registry review is finished; that is the gate.
-  const blocked = await ace('doctor-before-review', ['adula:doctor'], { failure: true })
-  assert.match(blocked, /ui\.compatibility/, 'Doctor must demand the UI compatibility review')
+  // UI compatibility is tracked per minor version. Across a minor change doctor keeps
+  // failing until the registry review is finished; within one minor the registry stays
+  // compatible and doctor still names the customized files that need a review.
+  const minor = (version) => version.split('.').slice(0, 2).join('.')
+  if (minor(previous) !== minor(released)) {
+    const blocked = await ace('doctor-before-review', ['adula:doctor'], { failure: true })
+    assert.match(blocked, /ui\.compatibility/, 'Doctor must demand the UI compatibility review')
+  } else {
+    const sameMinor = await ace('doctor-before-review', ['adula:doctor'])
+    assert.match(sameMinor, /PASS ui\.compatibility/, 'Same-minor registries stay compatible')
+    assert.match(sameMinor, /ui\.pages: UI review required/, 'Doctor must list pages to review')
+  }
 
   await ace('ui-preview', ['adula:ui', 'add', 'all', '--preview'])
   assert.equal(await digest(buttonPath), customized.button, 'A preview modified project files')
