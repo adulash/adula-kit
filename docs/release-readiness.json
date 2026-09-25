@@ -6,27 +6,30 @@
       "id": 0,
       "status": "pending",
       "evidence": [
-        "docs/evidence/s3-setup-2026-09-21.json",
         "docs/evidence/docker-backup-2026-09-22.json",
-        "docs/evidence/local-staging-2026-09-22.json"
+        "docs/evidence/feasibility-exercise-2026-09-25.json",
+        "docs/evidence/local-staging-2026-09-22.json",
+        "docs/evidence/s3-setup-2026-09-21.json"
       ],
-      "remaining": "Timed feasibility exercise and remaining creator/deployment container paths. Branch protection on main is confirmed (2026-09-25, ADR 027 amendment; GitHub API reports main protected). Local application/backup Docker services and real S3 recovery passed. The @adula scope is reserved by the owner."
+      "remaining": "The timed feasibility exercise ran on 2026-09-25: the agent built the customers entity without the kit in about 10 minutes (target under 2 hours); the owner's 20-minute review of tests/feasibility-exercise is pending. Branch protection on main is confirmed. Remaining creator/deployment container paths. The @adula scope is reserved by the owner."
     },
     {
       "id": 1,
       "status": "pending",
       "evidence": [
-        "docs/evidence/external-mail-runtime-2026-09-21.json",
-        "docs/evidence/offsite-database-restore-2026-09-21.json",
-        "docs/evidence/offsite-attachment-restore-2026-09-21.json",
-        "docs/evidence/source-s3-acceptance-2026-09-21.json",
-        "docs/evidence/operational-backup-2026-09-22.json",
-        "docs/evidence/docker-backup-2026-09-22.json",
-        "docs/evidence/scheduled-backup-2026-09-22.json",
         "docs/evidence/backup-monitor-repair-2026-09-22.json",
-        "docs/evidence/local-staging-2026-09-22.json"
+        "docs/evidence/docker-backup-2026-09-22.json",
+        "docs/evidence/external-mail-runtime-2026-09-21.json",
+        "docs/evidence/impersonation-security-2026-09-25.json",
+        "docs/evidence/local-staging-2026-09-22.json",
+        "docs/evidence/local-staging-check-2026-09-25.json",
+        "docs/evidence/offsite-attachment-restore-2026-09-21.json",
+        "docs/evidence/offsite-database-restore-2026-09-21.json",
+        "docs/evidence/operational-backup-2026-09-22.json",
+        "docs/evidence/scheduled-backup-2026-09-22.json",
+        "docs/evidence/source-s3-acceptance-2026-09-21.json"
       ],
-      "remaining": "Staging deployment and natural daily scheduled execution. The natural monthly restore-test observation is deferred to 2.0 (ADR 027). Source-S3 recovery, COMPLETE ordering and scheduler volume permissions passed direct command and local Docker acceptance; accelerated timer dispatch/recovery passed. Production supervision is the user's after 1.0 (ADR 027)."
+      "remaining": "Local staging rerun 2026-09-25: the Docker image could not be built in the agent container (Alpine packages blocked by its network policy); the compiled production build passed backup, verification, restore, reconcile, byte-exact download and denials. Docker staging on the owner's machine (ADR 024) needs the owner's attestation. Natural daily runs are open; the monthly observation is deferred to 2.0 (ADR 027). Impersonation was hardened after an adversarial test (41bb4fd) and awaits the human review of managed rule 11."
     },
     {
       "id": 2,

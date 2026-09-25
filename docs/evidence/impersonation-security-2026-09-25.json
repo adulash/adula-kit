@@ -1,0 +1,30 @@
+{
+  "date": "2026-09-25",
+  "kind": "adversarial impersonation test (agent), evidence for the human review of managed rule 11",
+  "tests": "apps/reference/tests/functional/impersonation_security.spec.ts (12 HTTP tests, PostgreSQL 17)",
+  "foundBeforeFix": [
+    {
+      "severity": "critical",
+      "finding": "impersonation marker survived logout and session revocation; the next user signing in on that browser could call /impersonation/stop and become the administrator"
+    },
+    {
+      "severity": "high",
+      "finding": "an impersonating administrator could mint a personal API token for the target that outlives the session"
+    },
+    {
+      "severity": "medium",
+      "finding": "profile changes and session revocations while impersonating were attributed to the target only"
+    },
+    {
+      "severity": "low",
+      "finding": "superseded user_sessions rows stayed listed as live"
+    }
+  ],
+  "fix": "commit 41bb4fd: marker bound to {adminId,targetId} and honored only for the target; cleared on every sign-out path; disabled administrators do not regain a session; session rows closed on start and stop; self-service activity records the administrator; token minting refused while impersonating",
+  "afterFix": "12 of 12 pass; admin.spec.ts 13 of 13",
+  "notFixed": [
+    "user invitations sent while impersonating do not record the administrator (code reading only)",
+    "impersonation has no time limit beyond the normal session"
+  ],
+  "humanReview": "pending (managed rule 11)"
+}
