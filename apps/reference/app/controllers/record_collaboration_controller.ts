@@ -46,12 +46,7 @@ export default class RecordCollaborationController {
 
   async deleteComment(ctx: HttpContext) {
     return this.#run(ctx, async (actor, resource, id) => {
-      await kit().collaboration.deleteComment(
-        resource,
-        id,
-        ctx.params.comment,
-        actor
-      )
+      await kit().collaboration.deleteComment(resource, id, ctx.params.comment, actor)
       return { data: true }
     })
   }
