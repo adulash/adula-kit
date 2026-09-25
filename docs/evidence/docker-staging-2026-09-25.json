@@ -14,10 +14,24 @@
     ]
   },
   "defectsFound": [
-    {"defect": "documented Dockerfile could not build: the application deployment omitted the kit's own dependencies (@casl/ability, knex, papaparse, xstate)", "fix": "45a7701"},
-    {"defect": "make deploy runs doctor before migrations and cannot set up an empty database", "fix": "45a7701 adds make setup and documents the first deployment"},
-    {"defect": "make restore reopens traffic right after reconcile although restore.sh advises an acceptance check first", "fix": "open (KIT_GAPS)"},
-    {"defect": "restored files are owned by root:root (0644); readable, but directories created during restore into an empty volume may be root-owned (not tested)", "fix": "open (KIT_GAPS)"}
+    {
+      "defect": "documented Dockerfile could not build: the application deployment omitted the kit's own dependencies (@casl/ability, knex, papaparse, xstate)",
+      "fix": "45a7701",
+      "verifiedInDocker": true
+    },
+    {
+      "defect": "make deploy runs doctor before migrations and cannot set up an empty database",
+      "fix": "45a7701 adds make setup and documents the first deployment",
+      "verifiedInDocker": true
+    },
+    {
+      "defect": "make restore reopens traffic right after reconcile although restore.sh advises an acceptance check first",
+      "fix": "open (KIT_GAPS)"
+    },
+    {
+      "defect": "restored files are owned by root:root (0644); readable, but directories created during restore into an empty volume may be root-owned (not tested)",
+      "fix": "open (KIT_GAPS)"
+    }
   ],
   "images": {
     "derived": "sha256:64e7e360d1f4…",
@@ -27,7 +41,14 @@
     "caddy:2-alpine": "sha256:6aeddd44c307…",
     "seaweedfs (offsite stand-in)": "sha256:ce9e796f1fe6…"
   },
-  "versions": {"node": "24.16.0", "postgresServer": "17.11", "pgClient": "17.10", "redis": "7.4.11", "caddy": "2.11.4", "awsCli": "1.46.1 (deviation)"},
+  "versions": {
+    "node": "24.16.0",
+    "postgresServer": "17.11",
+    "pgClient": "17.10",
+    "redis": "7.4.11",
+    "caddy": "2.11.4",
+    "awsCli": "1.46.1 (deviation)"
+  },
   "results": {
     "composeConfig": "passed (prod and prod+restore)",
     "stackHealthy": "passed; /health 200 through Caddy",
@@ -42,5 +63,30 @@
     "restartPersistence": "passed; volumes and ownership persisted",
     "supervision": "worker killed with SIGKILL restarted and became healthy"
   },
-  "notProven": ["the documented image built as written in this container", "natural daily or monthly scheduling", "TLS or an external host", "real offsite storage", "aws-cli v2 behaviour"]
+  "notProven": [
+    "the documented image built as written in this container",
+    "natural daily or monthly scheduling",
+    "TLS or an external host",
+    "real offsite storage",
+    "aws-cli v2 behaviour"
+  ],
+  "fixVerification": {
+    "source": "45a7701",
+    "image": "sha256:6b1a55aa5cac2d5bcdff8454872d53e68a21f32fbe2b3da40e8e9ab6e6f064ba",
+    "derivedOnly": "the three apk tools (pg client 17.10, aws-cli 1.46.1, bash 5.2) and the egress CA as a BuildKit secret; no dependency workaround",
+    "results": {
+      "buildTimeKitImport": "passed",
+      "composeConfig": "passed",
+      "makeSetupOnEmptyDatabase": "passed (docker build run directly for the CA secret, then migration:run, up, wait-healthy)",
+      "health": "200 through Caddy",
+      "oneScheduler": "passed",
+      "signupAndInstall": "passed",
+      "uploadAndRecord": "201/201 on a scratch image built from 45a7701 plus a scratch resource",
+      "downloadAndDenials": "byte-exact; 401/404/403",
+      "backupAndVerify": "passed",
+      "restoreTest": "passed",
+      "doctor": "0 FAIL"
+    },
+    "reviewer": "independent automated agent"
+  }
 }
