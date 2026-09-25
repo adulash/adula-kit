@@ -26,7 +26,7 @@
         "docs/evidence/backup-monitor-repair-2026-09-22.json",
         "docs/evidence/local-staging-2026-09-22.json"
       ],
-      "remaining": "Staging deployment, natural daily/monthly scheduled execution and resource contract gaps. Source-S3 recovery, COMPLETE ordering and scheduler volume permissions passed direct command and local Docker acceptance. No production supervision acceptance. Accelerated timer dispatch/recovery passed; offsite monitor prefix isolation and COMPLETE checks were repaired and tested."
+      "remaining": "Staging deployment and natural daily scheduled execution. The natural monthly restore-test observation is deferred to 2.0 (ADR 027). Source-S3 recovery, COMPLETE ordering and scheduler volume permissions passed direct command and local Docker acceptance; accelerated timer dispatch/recovery passed. Production supervision is the user's after 1.0 (ADR 027)."
     },
     {
       "id": 2,
@@ -46,7 +46,7 @@
       "evidence": [
         "docs/evidence/phase3-implementation-2026-09-25.json"
       ],
-      "remaining": "All phase 3 features are implemented with consumers and PostgreSQL tests; GitHub CI is green (run 36085232225). Acceptance waits on the written human ASVS review of 2FA (or the owner's written waiver) and owner acceptance. XLSX import is GAP-006."
+      "remaining": "All phase 3 features are implemented with consumers and PostgreSQL tests; GitHub CI is green (run 36085232225). The 2FA human ASVS review is deferred to 2.0 by the owner (ADR 027); 2FA ships marked as not independently reviewed. Waits on owner acceptance. XLSX import is GAP-006."
     },
     {
       "id": 4,
@@ -71,20 +71,21 @@
       "evidence": [
         "docs/evidence/phase6-integration-2026-09-25.json"
       ],
-      "remaining": "API contract check, disposable consumer, creator with Docker, customization/data preservation and the genuine upgrade from npm 0.2.0-alpha.1 pass in CI. Council 2 is proposed in ADR 026. Waits on owner acceptance."
+      "remaining": "API contract check, disposable consumer, creator with Docker, customization/data preservation and the genuine upgrade from npm 0.2.0-alpha.1 pass in CI. Council 2 is proposed in ADR 026; the production-consumer question is answered by ADR 027. Waits on owner acceptance."
     },
     {
       "id": 7,
       "status": "pending",
       "evidence": [],
-      "remaining": "All framework 1.0 criteria accepted, independent consumer acceptance, public MIT repository and gap reporting; authorized release and verified npm publishing."
+      "remaining": "An operated production consumer is not a 1.0 condition (ADR 027). Public MIT repository, GAP issue form, docs and release workflow exist. Waits on owner acceptance of all phases, the 1.0.0 version change, a merged PR and authorized npm publishing."
     }
   ],
   "updatedAt": "2026-09-25",
   "scopeAmendments": [
     "docs/decisions/021-optional-oauth.md",
     "docs/decisions/024-framework-alpha-and-local-staging.md",
-    "docs/decisions/025-phase-2-owner-acceptance.md"
+    "docs/decisions/025-phase-2-owner-acceptance.md",
+    "docs/decisions/027-owner-scope-decisions-for-1-0.md"
   ],
   "optionalIntegrations": {
     "oauth": {

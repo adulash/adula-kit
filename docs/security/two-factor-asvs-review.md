@@ -1,6 +1,6 @@
 # Two-factor authentication — ASVS review record
 
-Status: **implementation self-assessed; human review pending.** The plan (phase 3) and
+Status: **implementation self-assessed; human review deferred to 2.0 by the owner (ADR 027).** 2FA ships in 1.0 without an independent human security review. The plan (phase 3) and
 the managed AGENTS rule 11 require a written human review of 2FA before acceptance.
 This file is the checklist for that review. It does not claim the review happened.
 

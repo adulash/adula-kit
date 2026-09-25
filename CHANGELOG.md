@@ -21,8 +21,9 @@ All new kit tables arrive through additive migrations (`kit_collaboration`,
 * CSV import batches with column mapping, processed by the worker with per-row
   errors (XLSX is GAP-006).
 * Generic RTL record printing with optional Gotenberg PDF conversion.
-* TOTP two-factor authentication with single-use recovery codes (human ASVS review
-  pending, see docs/security/two-factor-asvs-review.md).
+* TOTP two-factor authentication with single-use recovery codes. It has not had an
+  independent human security review; the owner deferred it to 2.0 (ADR 027, see
+  docs/security/two-factor-asvs-review.md).
 * Document lifecycle: amend-by-copy for cancelled documents.
 * Workflows: versioned `defineWorkflow` definitions compiled to XState 5, a durable
   engine with row locks, six step types, bounded retries, an approvals inbox, a

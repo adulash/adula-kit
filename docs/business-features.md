@@ -76,8 +76,9 @@ may see. Set `GOTENBERG_URL` (see `docker-compose.pdf.yml`) to add `?format=pdf`
 
 Users enable TOTP from their account menu and keep ten single-use recovery codes.
 Password and OAuth sign-in then require the second factor. See
-[the ASVS review record](security/two-factor-asvs-review.md); a human review is
-required before relying on it (managed AGENTS rule 11).
+[the ASVS review record](security/two-factor-asvs-review.md). It has **not** had an
+independent human security review; the owner deferred that review to 2.0
+(ADR 027). Changes to it still need a human review (managed AGENTS rule 11).
 
 ## Documents and workflows
 

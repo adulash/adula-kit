@@ -65,3 +65,9 @@ decides), and performance measured on CI rather than staging hardware.
 - Accept phases 3 to 6 (and the open items of phases 0 and 1).
 - Decide whether 1.0 requires a production consumer or follows ADR 024.
 - Authorize publishing `1.0.0` and the public MIT repository.
+
+## Owner answers, 2026-09-25
+
+ADR 027 answers two limits above: 1.0 needs no operated production consumer
+(users run production after 1.0), and the 2FA human review moves to 2.0. Acceptance
+of this council record itself remains open.

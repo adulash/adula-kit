@@ -18,16 +18,20 @@ accepted with a reviewer, a date and evidence.
 | Consumers, creator, Docker | CI steps `test:consumer`, `test:create`, `test:create --docker`, `check:release --artifacts=.work` |
 | Repository | public, MIT, default branch `main`, GAP issue form |
 
-## Owner decisions (cannot be produced by an agent)
+## Owner decisions
 
-1. **2FA ASVS review:** complete `docs/security/two-factor-asvs-review.md` or
-   waive it in writing for 1.0 (managed AGENTS rule 11).
-2. **Phases 0 and 1 open items:** natural daily/monthly scheduling, staging and
-   production supervision. ADR 024 already selected local Docker staging; the owner
-   either attests these as for phase 2 (ADR 025) or keeps them open.
+Decided 2026-09-25 (ADR 027): no operated production consumer is required for
+1.0; the 2FA human review and the natural monthly restore-test observation move
+to 2.0.
+
+Still open:
+
+1. **Phase 0:** branch protection on `main` (configured by the owner in GitHub
+   settings) and the timed feasibility exercise, or a written deferral.
+2. **Phase 1:** local Docker staging (ADR 024) and two natural daily backup runs,
+   attested by the owner or deferred.
 3. **Phases 3, 4, 5 and 6:** accept on the recorded evidence, or name what to fix.
-4. **Council 2:** accept or amend ADR 026, including whether 1.0 needs an operated
-   production consumer (plan phase 7) or follows ADR 024.
+4. **Council 2:** accept ADR 026 as amended by ADR 027.
 5. **Phase 7 and publication:** authorize `1.0.0` on `latest`.
 
 ## Steps after the decisions
