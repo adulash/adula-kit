@@ -334,21 +334,29 @@ export class RecordCollaboration {
   ): Promise<MentionCandidate[]> {
     await this.resources.access(name, id, actor)
     const term = String(search).trim().slice(0, 60)
-    const query = this.db('users')
-      .whereNot('id', actor.id)
-      .whereNull('disabled_at')
-      .orderBy('full_name')
-      .limit(60)
-      .select('id', 'full_name')
-    if (term)
-      query.where((where) =>
-        where.whereILike('full_name', `%${term}%`).orWhereILike('email', `${term}%`)
-      )
     const result: MentionCandidate[] = []
-    for (const user of await query) {
-      if (result.length >= 10) break
-      if (await this.canView(name, id, Number(user.id)))
-        result.push({ id: Number(user.id), name: String(user.full_name ?? `#${user.id}`) })
+    // Readers are filtered per user, so page through candidates until ten readers
+    // are found; a bounded scan keeps a large directory from turning into a sweep.
+    const page = 100
+    for (let offset = 0; result.length < 10 && offset < 2000; offset += page) {
+      const query = this.db('users')
+        .whereNot('id', actor.id)
+        .whereNull('disabled_at')
+        .orderBy([{ column: 'full_name' }, { column: 'id' }])
+        .offset(offset)
+        .limit(page)
+        .select('id', 'full_name')
+      if (term)
+        query.where((where) =>
+          where.whereILike('full_name', `%${term}%`).orWhereILike('email', `${term}%`)
+        )
+      const users = await query
+      for (const user of users) {
+        if (result.length >= 10) break
+        if (await this.canView(name, id, Number(user.id)))
+          result.push({ id: Number(user.id), name: String(user.full_name ?? `#${user.id}`) })
+      }
+      if (users.length < page) break
     }
     return result
   }

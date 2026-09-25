@@ -109,6 +109,24 @@ test.group('Record collaboration', (group) => {
     )
   })
 
+  test('mention candidates are found beyond the first page of a large directory', async ({
+    assert,
+  }) => {
+    // 150 active users who cannot read the record sort before every reader.
+    const ids = Array.from({ length: 150 }, (_, index) => 1000 + index)
+    await db('users').insert(
+      ids.map((id) => ({ id, email: `crowd-${id}@example.test`, full_name: `أ ${id}` }))
+    )
+    for (const id of ids) actors.set(id, { ...outsider, id })
+    try {
+      const candidates = await collaboration().mentionCandidates('orders', orderId, admin)
+      assert.deepEqual(candidates.map((user) => user.id).sort(), [2, 4])
+    } finally {
+      await db('users').whereIn('id', ids).del()
+      for (const id of ids) actors.delete(id)
+    }
+  })
+
   test('out-of-scope users cannot read, comment on or follow the record', async ({ assert }) => {
     for (const run of [
       () => collaboration().state('orders', orderId, outsider),
