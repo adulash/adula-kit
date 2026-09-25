@@ -32,6 +32,7 @@ export {
   createMessagingSchema,
   createWebhooksSchema,
 } from './src/database/schema.js'
+export { openApiDocument } from './src/integrations/openapi.js'
 export { Webhooks, signWebhook, WEBHOOK_MAX_ATTEMPTS } from './src/integrations/webhooks.js'
 export type {
   SecretBox,
@@ -171,3 +172,4 @@ export type {
 } from './src/core/health.js'
 export { MailDeliveryTest, MAIL_TEST_KEY, type MailTestState } from './src/core/mail_test.js'
 export { InitialSetup, type SetupCheck } from './src/core/setup.js'
+export { KIT_VERSION } from './src/version.js'

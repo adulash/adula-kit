@@ -27,6 +27,8 @@ const ResourcesController = () => import('#controllers/resources_controller')
 const AttachmentsController = () => import('#controllers/attachments_controller')
 const SavedViewsController = () => import('#controllers/saved_views_controller')
 const AssignmentsController = () => import('#controllers/assignments_controller')
+const ApiTokensController = () => import('#controllers/api_tokens_controller')
+const OpenApiController = () => import('#controllers/openapi_controller')
 const RecordCollaborationController = () => import('#controllers/record_collaboration_controller')
 const PasswordResetController = () => import('#controllers/password_reset_controller')
 const UserInvitationsController = () => import('#controllers/user_invitations_controller')
@@ -129,6 +131,22 @@ router
   })
   .use([middleware.auth(), apiThrottle])
 
+// Bearer-token resource API: the same ResourceService authorization as the UI.
+router
+  .group(() => {
+    router.get('openapi.json', [OpenApiController])
+    router.get('resources/:resource', [ResourcesController, 'index'])
+    router.get('resources/:resource/:id', [ResourcesController, 'show'])
+    router.post('resources/:resource', [ResourcesController, 'store'])
+    router.patch('resources/:resource/:id', [ResourcesController, 'update'])
+    router.delete('resources/:resource/:id', [ResourcesController, 'destroy'])
+    router.post('resources/:resource/:id/submit', [ResourcesController, 'submit'])
+    router.post('resources/:resource/:id/cancel', [ResourcesController, 'cancel'])
+  })
+  .prefix('api/v1')
+  .as('api')
+  .use([middleware.apiAuth(), apiThrottle])
+
 router
   .group(() => {
     router.get('signup', [controllers.NewAccount, 'create'])
@@ -158,6 +176,9 @@ router
     router.get('account/profile', [ProfileController, 'show'])
     router.patch('account/profile', [ProfileController, 'update'])
     router.post('account/password', [ProfileController, 'password']).use(passwordChangeThrottle)
+    router.get('account/tokens', [ApiTokensController, 'index'])
+    router.post('account/tokens', [ApiTokensController, 'store']).use(apiThrottle)
+    router.delete('account/tokens/:id', [ApiTokensController, 'destroy'])
     router.get('account/sessions', [AccountSessionsController, 'index'])
     router.delete('account/sessions', [AccountSessionsController, 'purge'])
     router.delete('account/sessions/:id', [AccountSessionsController, 'destroy'])
