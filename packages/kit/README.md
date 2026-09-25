@@ -34,7 +34,8 @@ XState workflows) are implemented with PostgreSQL tests; see the
 [business features guide](https://github.com/adulash/adula-kit/blob/main/docs/business-features.md).
 
 - Two-factor authentication is not included; it is planned for 2.0 (ADR 027).
-- Impersonation has not had an independent human security review.
+- Impersonation was reviewed by automated adversarial and black-box tests only; its
+  human security review is deferred to 2.0 (ADR 027).
 - XLSX import is not available (GAP-006); CSV is.
 
 See [implementation status](https://github.com/adulash/adula-kit/blob/main/docs/implementation-status.md), [gaps](https://github.com/adulash/adula-kit/blob/main/KIT_GAPS.md) and [1.0 acceptance](https://github.com/adulash/adula-kit/blob/main/docs/acceptance-1.0.md).

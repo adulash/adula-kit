@@ -42,8 +42,8 @@ the capability catalog and the docs.
    business features each have a kit test and an HTTP or browser consumer.
 2. **Security:** authorization is re-checked by every record service; webhooks are
    signed and refuse private targets in production; API tokens carry the owner's
-   current permissions. 2FA is not part of 1.0 (ADR 027). **Open:** impersonation
-   has no human review.
+   current permissions. 2FA is not part of 1.0 (ADR 027). Impersonation is reviewed
+   automatically; its human review is deferred to 2.0 (ADR 027).
 3. **Performance:** see the evidence file; one web process on a shared runner.
 4. **Upgrade safety:** doctor blocks unfinished upgrades; the UI compatibility
    review is enforced across minor versions; migrations are additive.

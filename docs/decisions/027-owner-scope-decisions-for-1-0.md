@@ -53,3 +53,15 @@ screenshot of the repository's branch protection rule 83547320 (a local file thi
 session could not open), and the GitHub API reports `main` as protected. The
 rule's individual settings were last recorded in
 `docs/evidence/alpha-publication-2026-09-23.json`.
+
+## Amendment, 2026-09-25: impersonation reviewed automatically for 1.0
+
+The owner stated: "أضف أنه مراجع آلياً، وأجّل المراجعة البشرية إلى V2" (record that
+it was reviewed automatically, and defer the human review to V2).
+
+Impersonation ships in 1.0 after automated review only: an adversarial test found
+a critical shared-browser takeover, commit 41bb4fd fixed it with 12 HTTP tests on
+PostgreSQL, and a separate black-box agent found no remaining vulnerability
+(`docs/evidence/impersonation-security-2026-09-25.json`). The human review that
+managed rule 11 requires is deferred to 2.0; rule 11 itself is unchanged, so any
+later change to impersonation still needs a human review.

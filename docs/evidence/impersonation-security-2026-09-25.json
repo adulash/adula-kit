@@ -26,7 +26,7 @@
     "user invitations sent while impersonating do not record the administrator (code reading only)",
     "impersonation has no time limit beyond the normal session"
   ],
-  "humanReview": "pending (managed rule 11)",
+  "humanReview": "deferred to 2.0 by the owner (ADR 027); 1.0 relies on the automated reviews recorded here",
   "independentBlackBox": {
     "date": "2026-09-25",
     "revision": "6272d97",
@@ -46,5 +46,6 @@
       "replay defence relies on server-side session tracking on every authenticated route"
     ],
     "verdict": "fix effective; the human review of managed rule 11 is still required"
-  }
+  },
+  "ownerStatement": "أضف أنه مراجع آلياً، وأجّل المراجعة البشرية إلى V2"
 }

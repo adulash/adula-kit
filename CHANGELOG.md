@@ -9,6 +9,10 @@ All new kit tables arrive through additive migrations (`kit_collaboration`,
 `kit_assignments`, `kit_messaging`, `kit_webhooks`, `kit_imports`,
 `kit_workflows`).
 
+* Security: impersonation no longer survives sign-out (a shared-browser takeover
+  found by an adversarial test), is bound to its target, cannot mint API tokens and
+  records the administrator on self-service actions. Reviewed by automated tests
+  only; the human review is deferred to 2.0 (ADR 027).
 * Collaboration: comments with mentions, followers, tags (with list filtering) and
   per-field change history; notifications only reach users who can read the record.
 * Assignments and a "my tasks" page; approval steps reuse assignments.

@@ -58,7 +58,7 @@ Remaining: a run on staging hardware with `NODE_ENV=production`, and a scheduled
 
 Needed by: 2.0.
 Deferred by the owner (ADR 027): two-factor authentication with its human ASVS review (the reverted implementation is commit f7c68b6), the natural monthly restore-test observation and an operated production consumer.
-Also open: impersonation human review, natural daily backup observation, the timed feasibility exercise, the weekly agent test, an independent repetition of the fourth-module exercise from published packages, killing a real worker process in the workflow crash test, and API contract coverage for the `./mcp`, `./provider`, `./commands` and `./eslint` exports.
+Also open: impersonation human review (deferred by the owner; automated review only in 1.0), natural daily backup observation, the timed feasibility exercise, the weekly agent test, an independent repetition of the fourth-module exercise from published packages, killing a real worker process in the workflow crash test, and API contract coverage for the `./mcp`, `./provider`, `./commands` and `./eslint` exports.
 
 ## Schedule follow-up — 2026-09-22
 
