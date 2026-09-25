@@ -36,7 +36,7 @@
         "docs/evidence/medical-consumer-2026-09-24.json",
         "docs/evidence/phase2-owner-acceptance-2026-09-24.json"
       ],
-      "remaining": "Accepted by owner attestation (ADR 025). Open deviation: k6 list/save p95 budgets failed and move to the phase 5 k6 run; genuine published-predecessor upgrade remains a 1.0 requirement.",
+      "remaining": "Accepted by owner attestation (ADR 025). The k6 deviation is resolved on CI hardware: list/save p95 152.15/134.71 ms (docs/evidence/phase5-performance-2026-09-25.json). The genuine published-predecessor upgrade passes in CI (phase 6 evidence).",
       "reviewedBy": "repository owner (conversation)",
       "reviewedAt": "2026-09-24"
     },
@@ -46,7 +46,7 @@
       "evidence": [
         "docs/evidence/phase3-implementation-2026-09-25.json"
       ],
-      "remaining": "All phase 3 features are implemented with consumers and PostgreSQL tests (2026-09-25). Acceptance waits on the written human ASVS review of 2FA and a green GitHub CI run. XLSX import is GAP-006."
+      "remaining": "All phase 3 features are implemented with consumers and PostgreSQL tests; GitHub CI is green (run 36085232225). Acceptance waits on the written human ASVS review of 2FA (or the owner's written waiver) and owner acceptance. XLSX import is GAP-006."
     },
     {
       "id": 4,
@@ -54,19 +54,24 @@
       "evidence": [
         "docs/evidence/phase4-implementation-2026-09-25.json"
       ],
-      "remaining": "Implemented and tested 2026-09-25 (amend-by-copy, versioned XState workflows, six step types, row locks, bounded retries, three screens; all three plan gates have tests). Acceptance waits on a green GitHub CI run and owner review."
+      "remaining": "Implemented and tested (amend-by-copy, versioned XState workflows, six step types, row locks, bounded retries, three screens); GitHub CI is green (run 36085232225). Waits on owner acceptance."
     },
     {
       "id": 5,
       "status": "pending",
-      "evidence": [],
-      "remaining": "Capability generation, full idea review, five reviewer skills, isolated acceptance consumers replacing deleted educational modules, second k6 and agent exercise."
+      "evidence": [
+        "docs/evidence/agent-module-exercise-2026-09-25.json",
+        "docs/evidence/phase5-performance-2026-09-25.json"
+      ],
+      "remaining": "Generated capability catalog, full idea review, five reviewer skills, test-only acceptance consumers, the agent module exercise and the second k6 run (passed on a GitHub runner, not staging) are recorded. Waits on owner acceptance."
     },
     {
       "id": 6,
       "status": "pending",
-      "evidence": [],
-      "remaining": "Public API extraction, independent disposable framework consumer integration, customization/data preservation, Docker runtime/recovery and council 2 ADR. No permanent medical product is required (ADR 024). A published-predecessor upgrade applies after a baseline exists."
+      "evidence": [
+        "docs/evidence/phase6-integration-2026-09-25.json"
+      ],
+      "remaining": "API contract check, disposable consumer, creator with Docker, customization/data preservation and the genuine upgrade from npm 0.2.0-alpha.1 pass in CI. Council 2 is proposed in ADR 026. Waits on owner acceptance."
     },
     {
       "id": 7,
@@ -75,7 +80,7 @@
       "remaining": "All framework 1.0 criteria accepted, independent consumer acceptance, public MIT repository and gap reporting; authorized release and verified npm publishing."
     }
   ],
-  "updatedAt": "2026-09-24",
+  "updatedAt": "2026-09-25",
   "scopeAmendments": [
     "docs/decisions/021-optional-oauth.md",
     "docs/decisions/024-framework-alpha-and-local-staging.md",
