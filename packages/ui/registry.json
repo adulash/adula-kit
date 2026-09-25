@@ -575,6 +575,27 @@
       ]
     },
     {
+      "name": "resource-import",
+      "type": "registry:ui",
+      "registryDependencies": [
+        "button",
+        "input",
+        "label",
+        "dialog",
+        "select"
+      ],
+      "dependencies": [
+        "lucide-react@1.47.0",
+        "axios@1.19.0"
+      ],
+      "files": [
+        {
+          "path": "registry/ui/resource-import.tsx",
+          "type": "registry:ui"
+        }
+      ]
+    },
+    {
       "name": "resource-page",
       "type": "registry:ui",
       "registryDependencies": [
@@ -582,7 +603,8 @@
         "data-table",
         "resource-form",
         "resource-show",
-        "resource-surface"
+        "resource-surface",
+        "resource-import"
       ],
       "dependencies": [
         "lucide-react@1.47.0"

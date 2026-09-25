@@ -40,6 +40,7 @@ declare module '@adonisjs/inertia/types' {
     'resources/index': ExtractProps<(typeof import('../../inertia/pages/resources/index.tsx'))['default']>
     'resources/page': ExtractProps<(typeof import('../../inertia/pages/resources/page.tsx'))['default']>
     'users/invite': ExtractProps<(typeof import('../../inertia/pages/users/invite.tsx'))['default']>
+    'work/imports': ExtractProps<(typeof import('../../inertia/pages/work/imports.tsx'))['default']>
     'work/my_tasks': ExtractProps<(typeof import('../../inertia/pages/work/my_tasks.tsx'))['default']>
   }
 }

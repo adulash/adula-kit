@@ -22,6 +22,7 @@ export const controllers = {
   ApiTokens: () => import('#controllers/api_tokens_controller'),
   Assignments: () => import('#controllers/assignments_controller'),
   Attachments: () => import('#controllers/attachments_controller'),
+  Imports: () => import('#controllers/imports_controller'),
   NewAccount: () => import('#controllers/new_account_controller'),
   Oauth: () => import('#controllers/oauth_controller'),
   Openapi: () => import('#controllers/openapi_controller'),

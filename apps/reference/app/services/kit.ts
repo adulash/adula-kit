@@ -6,6 +6,7 @@ import {
   ResourceService,
   SavedViews,
   Webhooks,
+  ImportBatches,
 } from '@adula/kit'
 import app from '@adonisjs/core/services/app'
 import encryption from '@adonisjs/core/services/encryption'
@@ -33,6 +34,7 @@ export function kit() {
     actors,
     collaboration: new RecordCollaboration(knex, resources, actors),
     assignments: new Assignments(knex, resources, actors),
+    imports: new ImportBatches(knex, registry, resources, actors),
     webhooks: new Webhooks(
       knex,
       registry,

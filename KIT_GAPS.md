@@ -67,3 +67,13 @@ Next: follow the framework gates in order under ADR 024. The owner authorized th
 ## Schedule follow-up — 2026-09-22
 
 Accelerated Docker timer dispatch, repeated bound-record/local/S3 restore, missing-archive rejection and automatic recovery passed. The two monitoring defects found in that run were repaired: listing and assessment honor BACKUP_S3_PREFIX, and COMPLETE is required in the same recent snapshot. Regression tests and real-provider command checks passed; see docs/evidence/backup-monitor-repair-2026-09-22.json. Evidence: docs/evidence/scheduled-backup-2026-09-22.json. Natural daily/monthly machine evidence remains separate from owner attestation; selected local Docker staging is now recorded in the newer evidence.
+
+## GAP-006 — Spreadsheet (XLSX) import
+
+Needed by: phase 3 import from spreadsheets exported by Excel.
+Tried: the plan names exceljs for XLSX parsing.
+Blocked because: exceljs 4.4.0 was last published 2024-12-20, failing the plan's
+section 3 dependency rule (a release within six months).
+Proposed kit change: accept XLSX once a maintained parser passes the rule, reusing
+ImportBatches.create with the parsed header and rows.
+Workaround: export the sheet as CSV (UTF-8); CSV import is implemented and tested.

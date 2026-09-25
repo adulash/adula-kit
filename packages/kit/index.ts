@@ -31,7 +31,15 @@ export {
   createAssignmentsSchema,
   createMessagingSchema,
   createWebhooksSchema,
+  createImportsSchema,
 } from './src/database/schema.js'
+export { ImportBatches, importCell, IMPORT_ROW_LIMIT } from './src/integrations/imports.js'
+export type {
+  ImportBatch,
+  ImportStatus,
+  ImportTarget,
+  ActorSource,
+} from './src/integrations/imports.js'
 export { openApiDocument } from './src/integrations/openapi.js'
 export { renderPrintHtml, htmlToPdf } from './src/integrations/print.js'
 export type { PrintIdentity, PrintInput } from './src/integrations/print.js'

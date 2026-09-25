@@ -411,3 +411,27 @@ export async function createWebhooksSchema(db: Knex) {
     "CREATE INDEX webhook_deliveries_due ON webhook_deliveries (next_attempt_at) WHERE status = 'pending'"
   )
 }
+
+/** CSV import batches: parsed rows, column mapping, progress and per-row errors. */
+export async function createImportsSchema(db: Knex) {
+  await db.schema.createTable('import_batches', (t) => {
+    t.increments('id')
+    t.string('resource').notNullable()
+    t.integer('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
+    t.string('file_name', 200).notNullable()
+    t.string('status', 20).notNullable()
+    t.jsonb('headers').notNullable()
+    t.jsonb('mapping').notNullable()
+    t.jsonb('rows').notNullable()
+    t.integer('total').notNullable()
+    t.integer('processed').notNullable().defaultTo(0)
+    t.integer('created').notNullable().defaultTo(0)
+    t.integer('failed').notNullable().defaultTo(0)
+    t.jsonb('errors').notNullable().defaultTo('[]')
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('started_at', { useTz: true })
+    t.timestamp('finished_at', { useTz: true })
+    t.index(['user_id', 'id'])
+    t.index(['status'])
+  })
+}

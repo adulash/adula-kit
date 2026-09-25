@@ -51,6 +51,7 @@
     "@jrmc/adonis-mcp": "2.0.0",
     "@poppinss/ts-exec": "1.4.4",
     "@types/node": "26.2.0",
+    "@types/papaparse": "5.5.2",
     "eslint": "10.9.0",
     "pg": "8.16.3",
     "typescript": "6.0.3"
@@ -80,7 +81,8 @@
   "prettier": "@adonisjs/prettier-config",
   "dependencies": {
     "@casl/ability": "7.0.1",
-    "knex": "3.3.0"
+    "knex": "3.3.0",
+    "papaparse": "5.7.0"
   },
   "repository": {
     "type": "git",
