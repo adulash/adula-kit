@@ -3,6 +3,7 @@ import { KitError } from '@adula/kit'
 import type { AccessToken } from '@adonisjs/auth/access_tokens'
 import User from '#models/user'
 import { positiveId, wantsJson } from '#controllers/admin/support'
+import { activeImpersonation } from '#services/impersonation'
 
 const ACCESS = { read: ['read'], write: ['read', 'write'] } as const
 
@@ -29,6 +30,9 @@ export default class ApiTokensController {
 
   async store(ctx: HttpContext) {
     const user = ctx.auth.getUserOrFail()
+    // A token outlives the session, so an administrator acting as this user cannot mint one.
+    if (activeImpersonation(ctx))
+      throw new KitError(403, 'E_IMPERSONATING', 'لا يمكن إنشاء رمز وصول أثناء انتحال الهوية')
     const name = String(ctx.request.input('name') ?? '').trim()
     if (!name || name.length > 60)
       throw new KitError(422, 'E_TOKEN_NAME', 'اسم الرمز مطلوب ولا يتجاوز 60 حرفاً')

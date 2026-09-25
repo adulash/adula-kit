@@ -15,9 +15,9 @@ import { registry } from '#start/modules'
 import cache from '@adonisjs/cache/services/main'
 import type { Actor } from '@adula/kit'
 import type { HttpContext } from '@adonisjs/core/http'
+import { activeImpersonation } from '#services/impersonation'
 
-/** Session key holding the administrator's id while they act as another user. */
-export const IMPERSONATOR_KEY = 'impersonator_id'
+export { IMPERSONATOR_KEY } from '#services/impersonation'
 
 export function kit() {
   const knex = db.connection().getWriteClient()
@@ -67,8 +67,6 @@ export function kit() {
 /** The signed-in actor; while impersonating, it also names the acting administrator. */
 export async function requestActor(ctx: HttpContext): Promise<Actor> {
   const actor = await kit().actors.load(ctx.auth.getUserOrFail().id)
-  const impersonator = Number(ctx.session?.get(IMPERSONATOR_KEY))
-  return Number.isSafeInteger(impersonator) && impersonator > 0
-    ? { ...actor, impersonatorId: impersonator }
-    : actor
+  const impersonation = activeImpersonation(ctx)
+  return impersonation ? { ...actor, impersonatorId: impersonation.adminId } : actor
 }

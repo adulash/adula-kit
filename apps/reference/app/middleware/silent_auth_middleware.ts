@@ -1,6 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import { ensureSessionActive } from '#services/sessions'
+import { endImpersonation } from '#services/impersonation'
 
 /**
  * Silent auth middleware can be used as a global middleware to silent check
@@ -14,7 +15,10 @@ export default class SilentAuthMiddleware {
     await ctx.auth.check()
     if (ctx.auth.isAuthenticated) {
       const state = await ensureSessionActive(ctx)
-      if (!state.active) await ctx.auth.use('web').logout()
+      if (!state.active) {
+        await ctx.auth.use('web').logout()
+        endImpersonation(ctx.session)
+      }
     }
 
     return next()

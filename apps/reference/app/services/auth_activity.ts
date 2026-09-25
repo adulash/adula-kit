@@ -1,5 +1,6 @@
 import db from '@adonisjs/lucid/services/db'
 import type { HttpContext } from '@adonisjs/core/http'
+import { activeImpersonation } from '#services/impersonation'
 
 /** Authentication events recorded in the kit "activities" table (resource "users"). */
 export type AuthAction =
@@ -25,11 +26,18 @@ export type AuthActivityEntry = {
 
 type Client = ReturnType<ReturnType<typeof db.connection>['getWriteClient']>
 
-/** Request facts stored with every authentication activity. */
-export function requestContext(ctx: Pick<HttpContext, 'request'>) {
+/**
+ * Request facts stored with every authentication activity. While an administrator
+ * impersonates the user, the administrator is recorded as `impersonatedBy`.
+ */
+export function requestContext(
+  ctx: Pick<HttpContext, 'request'> & Partial<Pick<HttpContext, 'session' | 'auth'>>
+) {
+  const impersonation = activeImpersonation(ctx)
   return {
     ip: ctx.request.ip(),
     userAgent: ctx.request.header('user-agent')?.slice(0, 512) ?? null,
+    ...(impersonation ? { impersonatedBy: impersonation.adminId } : {}),
   }
 }
 
