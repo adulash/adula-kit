@@ -15,6 +15,7 @@ import { Can } from '~/components/ui/can'
 import { Skeleton } from '~/components/ui/skeleton'
 import { ResourceActions } from '~/components/ui/resource-actions'
 import { ResourceValue, formatDatetime, type LookupOptions } from '~/components/ui/resource-value'
+import { RecordCollaboration } from '~/components/ui/record-collaboration'
 
 export type ResourceChildren = Children
 const meta = new Set(['id', 'version', 'docStatus', 'orgUnitId'])
@@ -184,6 +185,7 @@ export function ResourceShow({
           </div>
         </Deferred>
       )}
+      <RecordCollaboration resource={resource} id={result.data.id as number} />
       <Deferred data="activity" fallback={<SectionSkeleton title="سجل النشاط" rows={4} />}>
         <section aria-label="سجل النشاط" className="rounded-xl border bg-white">
           <div className="flex items-center gap-2 border-b px-7 py-4">

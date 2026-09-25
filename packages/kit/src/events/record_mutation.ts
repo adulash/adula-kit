@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto'
 import type { Knex } from 'knex'
 import type { Action } from '../resource/types.js'
 
+export type FieldChange = { field: string; before: unknown; after: unknown }
+
 /** Infrastructure writes for a module-owned mutation, inside its existing transaction. */
 export async function recordMutation(
   trx: Knex.Transaction,
@@ -14,6 +16,8 @@ export async function recordMutation(
     impersonatorId?: number
     action: Action
     fields: string[]
+    /** Before/after values of the changed fields; read back per viewer's field access. */
+    changes?: FieldChange[]
   }
 ) {
   const past: Record<string, string> = {
@@ -33,16 +37,29 @@ export async function recordMutation(
     actorId: mutation.actorId,
     ...(mutation.impersonatorId ? { impersonatorId: mutation.impersonatorId } : {}),
   }
-  await trx('activities').insert({
-    resource: mutation.resource,
-    record_id: mutation.id,
-    actor_id: mutation.actorId,
-    action: mutation.action,
-    changes: JSON.stringify({
-      fields: mutation.fields,
-      ...(mutation.impersonatorId ? { impersonatedBy: mutation.impersonatorId } : {}),
-    }),
-  })
+  const [activity] = await trx('activities')
+    .insert({
+      resource: mutation.resource,
+      record_id: mutation.id,
+      actor_id: mutation.actorId,
+      action: mutation.action,
+      changes: JSON.stringify({
+        fields: mutation.fields,
+        ...(mutation.impersonatorId ? { impersonatedBy: mutation.impersonatorId } : {}),
+      }),
+    })
+    .returning('id')
+  if (mutation.changes?.length)
+    await trx('field_changes').insert(
+      mutation.changes.map((change) => ({
+        activity_id: activity.id,
+        resource: mutation.resource,
+        record_id: mutation.id,
+        field: change.field,
+        before: JSON.stringify(change.before ?? null),
+        after: JSON.stringify(change.after ?? null),
+      }))
+    )
   await trx('outbox').insert({
     id: eventId,
     event,

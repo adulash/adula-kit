@@ -22,6 +22,7 @@ export const controllers = {
   Oauth: () => import('#controllers/oauth_controller'),
   PasswordReset: () => import('#controllers/password_reset_controller'),
   Profile: () => import('#controllers/profile_controller'),
+  RecordCollaboration: () => import('#controllers/record_collaboration_controller'),
   Resources: () => import('#controllers/resources_controller'),
   SavedViews: () => import('#controllers/saved_views_controller'),
   Session: () => import('#controllers/session_controller'),

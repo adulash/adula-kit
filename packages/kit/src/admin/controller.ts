@@ -62,6 +62,7 @@ export function createResourceController(
           sort: ctx.request.input('sort'),
           direction: ctx.request.input('direction'),
           filters: ctx.request.input('filters'),
+          tag: ctx.request.input('tag'),
           estimate:
             ctx.request.input('estimate') !== 'false' && ctx.request.input('estimate') !== false,
         })

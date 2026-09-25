@@ -27,7 +27,17 @@ export {
   createResourceTable,
   createAttachmentsSchema,
   createSavedViewsSchema,
+  createCollaborationSchema,
 } from './src/database/schema.js'
+export { RecordCollaboration, followerListeners } from './src/collaboration/record_collaboration.js'
+export type {
+  ActorLoader,
+  CommentEntry,
+  FieldChangeEntry,
+  RecordCollaborationState,
+  MentionCandidate,
+} from './src/collaboration/record_collaboration.js'
+export type { FieldChange } from './src/events/record_mutation.js'
 export {
   registerUpload,
   findAttachment,

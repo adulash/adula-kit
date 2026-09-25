@@ -25,6 +25,7 @@ import {
 const ResourcesController = () => import('#controllers/resources_controller')
 const AttachmentsController = () => import('#controllers/attachments_controller')
 const SavedViewsController = () => import('#controllers/saved_views_controller')
+const RecordCollaborationController = () => import('#controllers/record_collaboration_controller')
 const PasswordResetController = () => import('#controllers/password_reset_controller')
 const UserInvitationsController = () => import('#controllers/user_invitations_controller')
 const OauthController = () => import('#controllers/oauth_controller')
@@ -72,6 +73,20 @@ router
     router.get('/resources/:resource', [ResourcesController, 'index'])
     router.get('/resources/:resource/create', [ResourcesController, 'create'])
     router.get('/resources/:resource/options/:field', [ResourcesController, 'options'])
+    router.get('/resources/:resource/tag-options', [RecordCollaborationController, 'tagOptions'])
+    router.get('/resources/:resource/:id/collaboration', [RecordCollaborationController, 'show'])
+    router.get('/resources/:resource/:id/mentions', [RecordCollaborationController, 'mentions'])
+    router.post('/resources/:resource/:id/comments', [RecordCollaborationController, 'comment'])
+    router.patch('/resources/:resource/:id/comments/:comment', [
+      RecordCollaborationController,
+      'editComment',
+    ])
+    router.delete('/resources/:resource/:id/comments/:comment', [
+      RecordCollaborationController,
+      'deleteComment',
+    ])
+    router.put('/resources/:resource/:id/follow', [RecordCollaborationController, 'follow'])
+    router.put('/resources/:resource/:id/tags', [RecordCollaborationController, 'tags'])
     router.get('/resources/:resource/:id/edit', [ResourcesController, 'edit'])
     router.get('/resources/:resource/:id', [ResourcesController, 'show'])
     router.post('/resources/:resource', [ResourcesController, 'store'])

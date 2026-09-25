@@ -258,3 +258,63 @@ export async function createResourceTable(
     await db.raw('CREATE INDEX ?? ON ?? USING gin(search_vector)', [`${table}_search_gin`, table])
   }
 }
+
+/** Record collaboration (phase 3): comments with mentions, followers, tags and field history. */
+export async function createCollaborationSchema(db: Knex) {
+  await db.schema.createTable('comments', (t) => {
+    t.bigIncrements('id')
+    t.string('resource').notNullable()
+    t.integer('record_id').notNullable()
+    t.integer('author_id').notNullable().references('id').inTable('users').onDelete('RESTRICT')
+    t.text('body').notNullable()
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('edited_at', { useTz: true })
+    t.timestamp('deleted_at', { useTz: true })
+    t.index(['resource', 'record_id', 'id'])
+  })
+  await db.schema.createTable('comment_mentions', (t) => {
+    t.bigInteger('comment_id')
+      .notNullable()
+      .references('id')
+      .inTable('comments')
+      .onDelete('CASCADE')
+    t.integer('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
+    t.primary(['comment_id', 'user_id'])
+    t.index(['user_id'])
+  })
+  await db.schema.createTable('followers', (t) => {
+    t.string('resource').notNullable()
+    t.integer('record_id').notNullable()
+    t.integer('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.primary(['resource', 'record_id', 'user_id'])
+    t.index(['user_id'])
+  })
+  await db.schema.createTable('tags', (t) => {
+    t.increments('id')
+    t.string('name', 60).notNullable().unique()
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+  })
+  await db.schema.createTable('taggables', (t) => {
+    t.integer('tag_id').notNullable().references('id').inTable('tags').onDelete('CASCADE')
+    t.string('resource').notNullable()
+    t.integer('record_id').notNullable()
+    t.primary(['tag_id', 'resource', 'record_id'])
+    t.index(['resource', 'record_id'])
+  })
+  await db.schema.createTable('field_changes', (t) => {
+    t.bigIncrements('id')
+    t.bigInteger('activity_id')
+      .notNullable()
+      .references('id')
+      .inTable('activities')
+      .onDelete('CASCADE')
+      .index()
+    t.string('resource').notNullable()
+    t.integer('record_id').notNullable()
+    t.string('field').notNullable()
+    t.jsonb('before')
+    t.jsonb('after')
+    t.index(['resource', 'record_id', 'id'])
+  })
+}

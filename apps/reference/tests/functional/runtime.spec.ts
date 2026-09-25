@@ -120,7 +120,21 @@ test.group('Real Redis cache and queue delivery', (group) => {
     const repeated = await queue.useQueue('events').getJob(event.id)
     await waitUntil(async () => await repeated!.isCompleted())
     assert.lengthOf(await knex()('tasks').where('order_id', Number(order.id)), 1)
-    assert.lengthOf(await knex()('processed_events').where({ event_id: event.id }), 1)
+    // Each listener consumes the event once; follower notifications are a second listener.
+    assert.lengthOf(
+      await knex()('processed_events').where({
+        event_id: event.id,
+        listener: 'tasks.create_submission_followup',
+      }),
+      1
+    )
+    assert.lengthOf(
+      await knex()('processed_events').where({
+        event_id: event.id,
+        listener: 'kit.followers.orders.orders.submitted',
+      }),
+      1
+    )
     const published = await knex()('outbox').where('id', event.id).first()
     assert.isNotNull(published.published_at)
     assert.exists(await knex()('settings').where('key', 'worker.heartbeat').first())

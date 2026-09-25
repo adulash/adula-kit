@@ -7,6 +7,7 @@ import {
   createCoreSchema,
   createAttachmentsSchema,
   createSavedViewsSchema,
+  createCollaborationSchema,
   createResourceTable,
 } from '../index.js'
 import type { Actor, RecordData } from '../index.js'
@@ -154,6 +155,7 @@ export async function setup() {
   await createCoreSchema(db)
   await createAttachmentsSchema(db)
   await createSavedViewsSchema(db)
+  await createCollaborationSchema(db)
   await db('org_units').insert([
     { id: 1, name: 'Root', type: 'root', path: '1' },
     { id: 2, parent_id: 1, name: 'A', type: 'unit', path: '1.2' },
