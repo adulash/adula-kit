@@ -51,8 +51,10 @@
     {
       "id": 4,
       "status": "pending",
-      "evidence": [],
-      "remaining": "Complete document lifecycle and versioned durable XState workflows, six node types, concurrency/recovery tests and approval/retry screens."
+      "evidence": [
+        "docs/evidence/phase4-implementation-2026-09-25.json"
+      ],
+      "remaining": "Implemented and tested 2026-09-25 (amend-by-copy, versioned XState workflows, six step types, row locks, bounded retries, three screens; all three plan gates have tests). Acceptance waits on a green GitHub CI run and owner review."
     },
     {
       "id": 5,
