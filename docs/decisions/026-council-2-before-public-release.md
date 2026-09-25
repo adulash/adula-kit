@@ -42,8 +42,8 @@ the capability catalog and the docs.
    business features each have a kit test and an HTTP or browser consumer.
 2. **Security:** authorization is re-checked by every record service; webhooks are
    signed and refuse private targets in production; API tokens carry the owner's
-   current permissions. **Open:** 2FA needs the written human ASVS review
-   (`docs/security/two-factor-asvs-review.md`); impersonation has no human review.
+   current permissions. 2FA is not part of 1.0 (ADR 027). **Open:** impersonation
+   has no human review.
 3. **Performance:** see the evidence file; one web process on a shared runner.
 4. **Upgrade safety:** doctor blocks unfinished upgrades; the UI compatibility
    review is enforced across minor versions; migrations are additive.
@@ -65,9 +65,7 @@ decides), and performance measured on CI rather than staging hardware.
 ## What remains the owner's
 
 - Accept or reject this council record.
-- Complete or waive, in writing, the 2FA ASVS review.
 - Accept phases 3 to 6 (and the open items of phases 0 and 1).
-- Decide whether 1.0 requires a production consumer or follows ADR 024.
 - Authorize publishing `1.0.0` and the public MIT repository.
 
 ## Owner answers, 2026-09-25
