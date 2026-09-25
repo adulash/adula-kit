@@ -31,7 +31,8 @@ async function readConnection() {
   }
 }
 
-export async function prepareConsumer() {
+/** `baseline` installs published npm versions instead of the local archives. */
+export async function prepareConsumer({ baseline } = {}) {
   const source = resolve(process.env.ADULA_STARTER_PATH || join(work, 'starter-kits-main/inertia-react'))
   try {
     await access(join(source, 'package.json'))
@@ -84,8 +85,8 @@ export async function prepareConsumer() {
   delete pkg.pnpm
   pkg.dependencies.pg = pins.dependencies.pg
   pkg.dependencies['@inertiajs/core'] = pins.dependencies['@inertiajs/core']
-  pkg.dependencies['@adula/kit'] = `file:../adula-kit-${kit.version}.tgz`
-  pkg.dependencies['@adula/ui'] = `file:../adula-ui-${ui.version}.tgz`
+  pkg.dependencies['@adula/kit'] = baseline ?? `file:../adula-kit-${kit.version}.tgz`
+  pkg.dependencies['@adula/ui'] = baseline ?? `file:../adula-ui-${ui.version}.tgz`
   pkg.dependencies.tailwindcss = pins.dependencies.tailwindcss
   for (const name of ['shadcn', '@tailwindcss/vite', '@japa/api-client'])
     pkg.devDependencies[name] = pins.devDependencies[name]

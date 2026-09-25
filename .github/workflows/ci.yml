@@ -88,6 +88,8 @@ jobs:
       - run: pnpm test
       - run: pnpm test:release
       - run: pnpm test:consumer
+      # Genuine upgrade: the consumer starts on a version published to npm.
+      - run: pnpm test:upgrade --published=0.2.0-alpha.1
       - run: pnpm --filter @adula/create-app pack --pack-destination "$GITHUB_WORKSPACE/.work"
       - run: pnpm test:create --reuse-packages
       - run: pnpm test:create --docker --reuse-packages

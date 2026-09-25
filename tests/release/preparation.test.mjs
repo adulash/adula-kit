@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { releaseStatus } from '../../scripts/release-status.mjs'
-import { requireSyntheticRehearsal } from '../../scripts/upgrade-mode.mjs'
+import { requireSyntheticRehearsal, upgradeMode } from '../../scripts/upgrade-mode.mjs'
 
 test('release report exposes all pending phases even when version fails first', async () => {
   const report = await releaseStatus()
@@ -63,4 +63,14 @@ test('upgrade entrypoint refuses a purported predecessor before changing package
   assert.equal(run.status, 1)
   assert.match(run.stderr, /cannot select a published baseline/)
   assert.deepEqual(await Promise.all(paths.map((path) => readFile(path, 'utf8'))), before)
+})
+
+test('the genuine upgrade names an exact, earlier published baseline', () => {
+  assert.deepEqual(upgradeMode(['--published=0.2.0-alpha.1'], {}, '0.2.0-alpha.4'), {
+    mode: 'published',
+    previous: '0.2.0-alpha.1',
+  })
+  assert.throws(() => upgradeMode(['--published=latest'], {}, '1.0.0'), /exact version/)
+  assert.throws(() => upgradeMode(['--published=1.0.0'], {}, '1.0.0'), /earlier published/)
+  assert.deepEqual(upgradeMode(['--synthetic'], {}, '1.0.0'), { mode: 'synthetic', previous: '0.1.0' })
 })
