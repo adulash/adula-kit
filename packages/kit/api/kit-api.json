@@ -1,0 +1,964 @@
+{
+  ".": {
+    "accessibleBy": {
+      "kind": "FunctionDeclaration",
+      "type": "(query: QueryBuilder<any, any>, ability: KitAbility, actor: Actor, action: string, resource: Resource) => QueryBuilder<any, any>"
+    },
+    "Action": {
+      "kind": "TypeAliasDeclaration",
+      "type": "\"view\" | \"create\" | \"update\" | \"delete\" | \"submit\" | \"cancel\" | \"amend\""
+    },
+    "ActivityAdmin": {
+      "kind": "ClassDeclaration",
+      "type": "typeof ActivityAdmin"
+    },
+    "ActivityEntry": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ resource: string; recordId: number; actorId: number; action: string; changes?: Record<string, unknown> | undefined; }"
+    },
+    "ActivityFilters": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ resource?: string | undefined; actorId?: number | undefined; action?: string | undefined; from?: string | undefined; to?: string | undefined; cursor?: string | undefined; limit?: number | undefined; }"
+    },
+    "ActivityPage": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ data: ActivityRow[]; nextCursor: string | null; }"
+    },
+    "ActivityRow": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: string; resource: string; recordId: number; actorId: number; actor: string | null; action: string; changes: JsonValue; createdAt: string; }"
+    },
+    "Actor": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; orgPaths: string[]; permissionLevel: number; rules: Rule[]; impersonatorId?: number | undefined; }"
+    },
+    "ActorLoader": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ load(id: number): Promise<Actor>; }"
+    },
+    "ActorSource": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ load(id: number): Promise<Actor>; }"
+    },
+    "ActorStore": {
+      "kind": "ClassDeclaration",
+      "type": "typeof ActorStore"
+    },
+    "AdonisJobs": {
+      "kind": "ClassDeclaration",
+      "type": "typeof AdonisJobs"
+    },
+    "ALL_SUBJECT_LABEL": {
+      "kind": "VariableDeclaration",
+      "type": "Label"
+    },
+    "assessBackup": {
+      "kind": "FunctionDeclaration",
+      "type": "(objects: BackupObject[], now?: number | undefined, prefix?: string | undefined) => BackupStatus"
+    },
+    "Assignment": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; resource: string; resourceLabel: string; recordId: number; assigneeId: number; assigneeName: string | null; assignedBy: number | null; assignedByName: string | null; kind: string; title: string; note: string | null; dueOn: string | null; status: AssignmentStatus; outcome: string | null; createdAt: string; completedAt: string | null; workflowRunId: string | null; canComplete: boolean; canCancel: boolean; }"
+    },
+    "AssignmentPage": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ data: Assignment[]; nextCursor: string | null; open: number; }"
+    },
+    "Assignments": {
+      "kind": "ClassDeclaration",
+      "type": "typeof Assignments"
+    },
+    "AssignmentStatus": {
+      "kind": "TypeAliasDeclaration",
+      "type": "\"cancelled\" | \"done\" | \"open\""
+    },
+    "attachmentPolicy": {
+      "kind": "FunctionDeclaration",
+      "type": "(field: Field) => { extnames?: string[] | undefined; size: string; }"
+    },
+    "AttachmentRecord": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; disk: string; path: string; name: string; originalName: string; size: number; mimeType: string; extname: string; data: Record<string, JsonValue>; uploadedBy: number; orgUnitId: number | null; resource: string | null; recordId: number | null; field: string | null; createdAt: string; deletedAt: string | null; }"
+    },
+    "AttachmentSummary": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; name: string; size: number; mimeType: string; url: string; }"
+    },
+    "attachmentUrl": {
+      "kind": "FunctionDeclaration",
+      "type": "(id: number) => string"
+    },
+    "authorizationSql": {
+      "kind": "FunctionDeclaration",
+      "type": "(ability: KitAbility, action: string, resource: Resource, field?: string | undefined) => Sql"
+    },
+    "BACKUP_MAX_AGE_MS": {
+      "kind": "VariableDeclaration",
+      "type": "number"
+    },
+    "BackupObject": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key: string; size: number; modifiedAt: string; }"
+    },
+    "backupStale": {
+      "kind": "FunctionDeclaration",
+      "type": "(lastOffsite: unknown, now?: number | undefined) => boolean"
+    },
+    "BackupStatus": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ healthy: boolean; reason: string; checkedAt: string; }"
+    },
+    "buildAbility": {
+      "kind": "FunctionDeclaration",
+      "type": "(rules: readonly Rule[], schemas?: readonly Pick<Resource, \"fields\" | \"name\">[] | undefined) => KitAbility"
+    },
+    "CalendarPreference": {
+      "kind": "TypeAliasDeclaration",
+      "type": "CalendarSystem | \"both\""
+    },
+    "CalendarSystem": {
+      "kind": "TypeAliasDeclaration",
+      "type": "\"gregory\" | \"islamic-umalqura\""
+    },
+    "canRecord": {
+      "kind": "FunctionDeclaration",
+      "type": "(ability: KitAbility, actor: Actor, resource: Resource, action: string, record: RecordData, field?: string | undefined) => boolean"
+    },
+    "CAPABILITY_SERVICES": {
+      "kind": "VariableDeclaration",
+      "type": "Record<string, string[]>"
+    },
+    "capabilityCatalog": {
+      "kind": "FunctionDeclaration",
+      "type": "(options?: { registry?: ResourceRegistry | undefined; commands?: string[] | undefined; } | undefined) => string"
+    },
+    "claimAttachment": {
+      "kind": "FunctionDeclaration",
+      "type": "(trx: Transaction<any, any[]>, input: ClaimInput) => Promise<AttachmentRecord>"
+    },
+    "ClaimInput": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ attachmentId: number; actor: { id: number; }; resource: string; field: string; recordId?: number | undefined; orgUnitId?: number | null | undefined; scoped: boolean; }"
+    },
+    "columnName": {
+      "kind": "FunctionDeclaration",
+      "type": "(name: string) => string"
+    },
+    "CommentEntry": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; body: string; authorId: number; authorName: string | null; mentions: { id: number; name: string; }[]; createdAt: string; editedAt: string | null; own: boolean; }"
+    },
+    "conditionSql": {
+      "kind": "FunctionDeclaration",
+      "type": "(conditions: Conditions | undefined, resource: Resource) => Sql"
+    },
+    "configure": {
+      "kind": "FunctionDeclaration",
+      "type": "(command: Configure) => Promise<void>"
+    },
+    "consumeEvent": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, listener: Listener, event: DomainEvent) => Promise<boolean>"
+    },
+    "createAssignmentsSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
+    "createAttachmentsSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
+    "createCollaborationSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
+    "createCoreSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
+    "createImportsSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
+    "createMessagingSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
+    "createResourceController": {
+      "kind": "FunctionDeclaration",
+      "type": "(resolveRuntime: (ctx: HttpContext) => Promise<ResourceRuntime>, renderList?: ((ctx: HttpContext, resource: Resource, result: { data: SerializedRecord[]; permissions: { [k: string]: Partial<Record<Action, boolean>>; }; meta: { limit: number; estimatedTotal: number | undefined; nextCursor: string | null; }; related: Record<string, SerializedRecord[]>; }) => unknown) | undefined, renderForm?: ((ctx: HttpContext, resource: Resource, editor: { mode: string; name: string; label: string; fields: ({ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"belongsTo\"; resource: string; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"lookup\"; group: string; key: string; })[]; inline: Record<string, { rows: SerializedRecord[]; hasMore: boolean; canCreate: boolean; permissions: Record<string, { update: boolean; delete: boolean; }>; fields: ResourceField[]; createFields: string[]; updateFields: Record<string, string[]>; }>; options: Record<string, { value: string; label: string; }[]>; relationSearch: Record<string, boolean>; orgUnits: { value: string; label: string; }[]; scoped: boolean; record: SerializedRecord | null; }) => unknown) | undefined, renderShow?: ((ctx: HttpContext, resource: Resource, result: { data: SerializedRecord; permissions: Partial<Record<Action, boolean>>; related: Record<string, SerializedRecord[]>; }) => unknown) | undefined) => new () => ResourceController"
+    },
+    "createResourceTable": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, resource: Pick<Resource, \"fields\" | \"name\" | \"scoped\" | \"submittable\" | \"version\" | \"customFields\">) => Promise<void>"
+    },
+    "createSavedViewsSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
+    "createTwoFactorSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
+    "createWebhooksSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
+    "createWorkflowSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
+    "DEFAULT_ATTACHMENT_EXTENSIONS": {
+      "kind": "VariableDeclaration",
+      "type": "readonly string[]"
+    },
+    "DEFAULT_TEMPLATES": {
+      "kind": "VariableDeclaration",
+      "type": "Record<string, TemplateDefinition>"
+    },
+    "DEFAULT_UI_PREFERENCES": {
+      "kind": "VariableDeclaration",
+      "type": "UiPreferences"
+    },
+    "defineResource": {
+      "kind": "FunctionDeclaration",
+      "type": "<const F extends Record<string, Field>>(input: ResourceInput<F>) => Omit<Resource, \"fields\" | \"list\" | \"form\" | \"show\" | \"hidden\" | \"serialize\"> & { fields: F; list: readonly (keyof F & string)[]; form: readonly (keyof F & string)[]; show: readonly (keyof F & string)[]; hidden?: readonly (keyof F & string)[] | undefined; serialize?: readonly (keyof F & string)[] | undefined; } & Resource"
+    },
+    "defineWorkflow": {
+      "kind": "FunctionDeclaration",
+      "type": "(input: WorkflowInput) => WorkflowDefinition"
+    },
+    "deliverNotificationMail": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, send: MailSender, limit?: number | undefined) => Promise<{ sent: number; failed: number; }>"
+    },
+    "diagnoseAttachments": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, now?: number | undefined) => Promise<Finding>"
+    },
+    "DomainEvent": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: string; event: string; payload: Record<string, unknown>; }"
+    },
+    "FailedJob": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: string; name: string; attemptsMade: number; failedReason: string; failedAt: string | null; }"
+    },
+    "Field": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; } & ({ type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; } | { type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; } | { type: \"belongsTo\"; resource: string; } | { type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; } | { type: \"lookup\"; group: string; })"
+    },
+    "FIELD_TYPES": {
+      "kind": "VariableDeclaration",
+      "type": "Record<string, string>"
+    },
+    "FieldChange": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ field: string; before: unknown; after: unknown; }"
+    },
+    "FieldChangeEntry": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; field: string; before: JsonValue; after: JsonValue; actorName: string | null; createdAt: string; }"
+    },
+    "findAttachment": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, id: unknown) => Promise<AttachmentRecord | undefined>"
+    },
+    "followerListeners": {
+      "kind": "FunctionDeclaration",
+      "type": "(registry: { all(): Resource[]; owner(name: string): string; }, collaboration: () => RecordCollaboration) => Listener[]"
+    },
+    "forgetUpload": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, id: number) => Promise<boolean>"
+    },
+    "heartbeat": {
+      "kind": "FunctionDeclaration",
+      "type": "(value: unknown, now?: number | undefined) => HeartbeatStatus"
+    },
+    "HEARTBEAT_MAX_AGE_MS": {
+      "kind": "VariableDeclaration",
+      "type": "60000"
+    },
+    "HeartbeatStatus": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ at: string | null; ageMs: number | null; healthy: boolean; }"
+    },
+    "HookContext": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ trx: Transaction<any, any[]>; userId: number; action: Action; }"
+    },
+    "htmlToPdf": {
+      "kind": "FunctionDeclaration",
+      "type": "(html: string, options: { gotenbergUrl: string; timeoutMs?: number | undefined; fetch?: { (input: RequestInfo | URL, init?: RequestInit | undefined): Promise<Response>; (input: string | Request | URL, init?: RequestInit | undefined): Promise<Response>; } | undefined; }) => Promise<Buffer<ArrayBuffer>>"
+    },
+    "HttpPoster": {
+      "kind": "TypeAliasDeclaration",
+      "type": "(url: string, init: { headers: Record<string, string>; body: string; signal: AbortSignal; }) => Promise<{ status: number; }>"
+    },
+    "IMPORT_ROW_LIMIT": {
+      "kind": "VariableDeclaration",
+      "type": "5000"
+    },
+    "ImportBatch": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; resource: string; resourceLabel: string; fileName: string; status: ImportStatus; headers: string[]; mapping: Record<string, string>; sample: string[][]; total: number; processed: number; created: number; failed: number; errors: { row: number; message: string; }[]; createdAt: string; finishedAt: string | null; targets: ImportTarget[]; }"
+    },
+    "ImportBatches": {
+      "kind": "ClassDeclaration",
+      "type": "typeof ImportBatches"
+    },
+    "importCell": {
+      "kind": "FunctionDeclaration",
+      "type": "(field: Field, raw: string, lookups: Map<string, string>) => unknown"
+    },
+    "ImportStatus": {
+      "kind": "TypeAliasDeclaration",
+      "type": "\"running\" | \"failed\" | \"mapping\" | \"queued\" | \"done\""
+    },
+    "ImportTarget": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key: string; label: string; type: string; required: boolean; }"
+    },
+    "InitialSetup": {
+      "kind": "ClassDeclaration",
+      "type": "typeof InitialSetup"
+    },
+    "inOrgScope": {
+      "kind": "FunctionDeclaration",
+      "type": "(path: unknown, paths: readonly string[]) => boolean"
+    },
+    "InvitationDelivery": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ email: string; fullName: string; token: string; }"
+    },
+    "isAttachmentId": {
+      "kind": "FunctionDeclaration",
+      "type": "(value: unknown) => value is number"
+    },
+    "isBackupStale": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, now?: number | undefined) => Promise<boolean>"
+    },
+    "isProtectedSetting": {
+      "kind": "FunctionDeclaration",
+      "type": "(key: string) => boolean"
+    },
+    "isRelativeDiskPath": {
+      "kind": "FunctionDeclaration",
+      "type": "(path: unknown) => path is string"
+    },
+    "Jobs": {
+      "kind": "InterfaceDeclaration",
+      "type": "Jobs"
+    },
+    "JsonValue": {
+      "kind": "TypeAliasDeclaration",
+      "type": "string | number | boolean | JsonValue[] | { [key: string]: JsonValue; } | null"
+    },
+    "KIT_VERSION": {
+      "kind": "VariableDeclaration",
+      "type": "string"
+    },
+    "KitAbility": {
+      "kind": "TypeAliasDeclaration",
+      "type": "Ability<[string, any], Conditions>"
+    },
+    "KitError": {
+      "kind": "ClassDeclaration",
+      "type": "typeof KitError"
+    },
+    "Label": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ ar: string; en: string; }"
+    },
+    "Listener": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ name: string; event: string; handle(event: DomainEvent, trx: Transaction<any, any[]>): Promise<void>; }"
+    },
+    "listenForNotifications": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, onSignal: (signal: NotificationSignal) => void, options?: { retryMs?: number | undefined; onError?: ((error: unknown) => void) | undefined; } | undefined) => () => Promise<void>"
+    },
+    "loadAttachments": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, ids: readonly number[]) => Promise<Map<number, AttachmentSummary>>"
+    },
+    "logActivity": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, entry: ActivityEntry) => Promise<void>"
+    },
+    "MAIL_TEST_KEY": {
+      "kind": "VariableDeclaration",
+      "type": "\"mail.delivery_test\""
+    },
+    "MailDeliveryTest": {
+      "kind": "ClassDeclaration",
+      "type": "typeof MailDeliveryTest"
+    },
+    "MailSender": {
+      "kind": "TypeAliasDeclaration",
+      "type": "(message: { to: string; name: string | null; subject: string; text: string; }) => Promise<void>"
+    },
+    "MailTestState": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: string; recipient: string; fingerprint: string; status: \"failed\" | \"pending\" | \"sending\" | \"confirmed\" | \"not_received\"; requestedAt: string; answeredAt?: string | undefined; }"
+    },
+    "MatrixField": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key: string; label: Label; type: string; conditionable: boolean; }"
+    },
+    "MatrixSubject": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ name: string; label: Label; actions: string[]; fields: MatrixField[]; conditionFields: MatrixField[]; }"
+    },
+    "MentionCandidate": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; name: string; }"
+    },
+    "MessageTemplate": {
+      "kind": "TypeAliasDeclaration",
+      "type": "TemplateDefinition & { key: string; customized: boolean; updatedAt: string | null; }"
+    },
+    "MessageTemplates": {
+      "kind": "ClassDeclaration",
+      "type": "typeof MessageTemplates"
+    },
+    "migrateStorage": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, options: StorageMigrationOptions) => Promise<StorageMigrationResult>"
+    },
+    "Module": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ name: string; reference?: boolean | undefined; label: Label; dependsOn: readonly string[]; resources: readonly Resource[]; workflows?: readonly WorkflowDefinition[] | undefined; }"
+    },
+    "moveOrgUnit": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, id: number, parentId: number | null) => Promise<void>"
+    },
+    "nextStep": {
+      "kind": "FunctionDeclaration",
+      "type": "(definition: WorkflowDefinition, current: string, event: WorkflowEvent) => string"
+    },
+    "Notification": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; title: string; body: string; readAt: string | null; createdAt: string; }"
+    },
+    "NotificationPage": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ data: Notification[]; nextCursor: string | null; unread: number; }"
+    },
+    "NotificationsAdmin": {
+      "kind": "ClassDeclaration",
+      "type": "typeof NotificationsAdmin"
+    },
+    "NotificationSignal": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ userId: number; id: number; }"
+    },
+    "notify": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, userId: number, title: string, body: string) => Promise<void>"
+    },
+    "notifyWithTemplate": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, userId: number, key: string, variables: Record<string, unknown>, templates?: MessageTemplates | undefined) => Promise<void>"
+    },
+    "openApiDocument": {
+      "kind": "FunctionDeclaration",
+      "type": "(registry: ResourceRegistry, options: { title: string; version: string; serverUrl: string; basePath?: string | undefined; actor?: Actor | undefined; }) => { openapi: string; info: { title: string; version: string; }; servers: { url: string; }[]; security: { bearer: never[]; }[]; paths: Record<string, Schema>; components: { schemas: Record<string, Schema>; securitySchemes: { bearer: { type: string; scheme: string; description: string; }; }; }; }"
+    },
+    "OrgUnitNode": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; parentId: number | null; name: string; type: string; path: string; depth: number; members: number; }"
+    },
+    "OrgUnitsAdmin": {
+      "kind": "ClassDeclaration",
+      "type": "typeof OrgUnitsAdmin"
+    },
+    "packedResourceRules": {
+      "kind": "FunctionDeclaration",
+      "type": "(resource: Resource, actor: Actor) => PackRule<SubjectRawRule<string, any, Conditions>>[]"
+    },
+    "parseSettingValue": {
+      "kind": "FunctionDeclaration",
+      "type": "(text: string) => unknown"
+    },
+    "PENDING_UPLOAD_LIMIT": {
+      "kind": "VariableDeclaration",
+      "type": "50"
+    },
+    "pendingUploadCount": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, userId: number) => Promise<number>"
+    },
+    "PrintIdentity": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ name: string; logoUrl?: string | null | undefined; }"
+    },
+    "PrintInput": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ identity: PrintIdentity; resource: ResourceDescription; record: SerializedRecord; related?: Record<string, SerializedRecord[]> | undefined; lookups?: Record<string, { value: string; label: string; }[]> | undefined; children?: Record<string, { rows: SerializedRecord[]; fields: ResourceField[]; }> | undefined; printedBy: string; printedAt?: Date | undefined; }"
+    },
+    "PROTECTED_SETTING_KEYS": {
+      "kind": "VariableDeclaration",
+      "type": "string[]"
+    },
+    "publishOutbox": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, jobs: Jobs, limit?: number | undefined) => Promise<number>"
+    },
+    "QueueCounts": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ completed: number; waiting: number; failed: number; active: number; delayed: number; }"
+    },
+    "QueueSnapshot": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ name: string; counts: QueueCounts; failed: FailedJob[]; }"
+    },
+    "Recipients": {
+      "kind": "TypeAliasDeclaration",
+      "type": "\"creator\" | \"submitter\" | { role: string; } | { users: number[]; } | ((context: StepContext) => number[] | Promise<number[]>)"
+    },
+    "RecordCollaboration": {
+      "kind": "ClassDeclaration",
+      "type": "typeof RecordCollaboration"
+    },
+    "RecordCollaborationState": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ comments: CommentEntry[]; hasMoreComments: boolean; tags: string[]; following: boolean; followers: number; changes: FieldChangeEntry[]; canComment: boolean; canTag: boolean; }"
+    },
+    "RecordData": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ [x: string]: unknown; }"
+    },
+    "recordMutation": {
+      "kind": "FunctionDeclaration",
+      "type": "(trx: Transaction<any, any[]>, mutation: { module: string; resource: string; id: unknown; actorId: number; impersonatorId?: number | undefined; action: Action; fields: string[]; changes?: FieldChange[] | undefined; }) => Promise<void>"
+    },
+    "RecordPermissions": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ view?: boolean | undefined; create?: boolean | undefined; update?: boolean | undefined; delete?: boolean | undefined; submit?: boolean | undefined; cancel?: boolean | undefined; amend?: boolean | undefined; }"
+    },
+    "registerUpload": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, input: UploadInput) => Promise<AttachmentRecord>"
+    },
+    "releaseAttachment": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, id: number) => Promise<boolean>"
+    },
+    "RenderedMessage": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ subject: string; body: string; mail: boolean; }"
+    },
+    "renderPrintHtml": {
+      "kind": "FunctionDeclaration",
+      "type": "(input: PrintInput) => string"
+    },
+    "renderTemplate": {
+      "kind": "FunctionDeclaration",
+      "type": "(text: string, variables: Record<string, unknown>) => string"
+    },
+    "Resource": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ name: string; label: Label; model: LucidModel; scoped: boolean; submittable?: boolean | undefined; version?: boolean | undefined; customFields?: boolean | undefined; fields: Record<string, Field>; list: readonly string[]; form: readonly string[]; show: readonly string[]; serialize?: readonly string[] | undefined; hidden?: readonly string[] | undefined; actions: readonly Action[]; validator: { validate(data: unknown): Promise<RecordData>; }; hooks?: { beforeSave?: ((record: RecordData, context: HookContext) => Promise<void>) | undefined; afterSave?: ((record: RecordData, context: HookContext) => Promise<void>) | undefined; } | undefined; }"
+    },
+    "ResourceActivity": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; action: Action; fields: string[]; actorId: number; actorName: string | null; actorEmail: string | null; createdAt: string; }[]"
+    },
+    "ResourceChildren": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ [x: string]: { rows: SerializedRecord[]; hasMore: boolean; }; }"
+    },
+    "ResourceDescription": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ name: string; label: string; fields: ResourceField[]; list: string[]; show: string[]; searchable: boolean; canCreate: boolean; scoped: boolean; submittable: boolean; }"
+    },
+    "ResourceEditor": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ mode: string; name: string; label: string; fields: ({ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"belongsTo\"; resource: string; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"lookup\"; group: string; key: string; })[]; inline: Record<string, { rows: SerializedRecord[]; hasMore: boolean; canCreate: boolean; permissions: Record<string, { update: boolean; delete: boolean; }>; fields: ResourceField[]; createFields: string[]; updateFields: Record<string, string[]>; }>; options: Record<string, { value: string; label: string; }[]>; relationSearch: Record<string, boolean>; orgUnits: { value: string; label: string; }[]; scoped: boolean; record: SerializedRecord | null; }"
+    },
+    "ResourceField": {
+      "kind": "TypeAliasDeclaration",
+      "type": "Field & { key: string; }"
+    },
+    "ResourceInput": {
+      "kind": "TypeAliasDeclaration",
+      "type": "Omit<Resource, \"fields\" | \"list\" | \"form\" | \"show\" | \"hidden\" | \"serialize\"> & { fields: F; list: readonly (keyof F & string)[]; form: readonly (keyof F & string)[]; show: readonly (keyof F & string)[]; hidden?: readonly (keyof F & string)[] | undefined; serialize?: readonly (keyof F & string)[] | undefined; }"
+    },
+    "ResourceList": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ data: SerializedRecord[]; permissions: { [k: string]: Partial<Record<Action, boolean>>; }; meta: { limit: number; estimatedTotal: number | undefined; nextCursor: string | null; }; related: Record<string, SerializedRecord[]>; }"
+    },
+    "ResourceLookups": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ [x: string]: { value: string; label: string; }[]; }"
+    },
+    "ResourceNavigation": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ name: string; label: string; href: string; module: string; }[]"
+    },
+    "ResourceRegistry": {
+      "kind": "ClassDeclaration",
+      "type": "typeof ResourceRegistry"
+    },
+    "ResourceRuntime": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ registry: ResourceRegistry; resources: ResourceService; actor: Actor; }"
+    },
+    "ResourceService": {
+      "kind": "ClassDeclaration",
+      "type": "typeof ResourceService"
+    },
+    "ResourceShow": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ data: SerializedRecord; permissions: Partial<Record<Action, boolean>>; related: Record<string, SerializedRecord[]>; }"
+    },
+    "RoleDetail": {
+      "kind": "TypeAliasDeclaration",
+      "type": "Omit<RoleSummary, \"rules\"> & { rules: RoleRule[]; }"
+    },
+    "RoleMatrix": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ actions: string[]; subjects: MatrixSubject[]; }"
+    },
+    "RoleRule": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; subject: string; action: string; inverted: boolean; conditions: Conditions | null; fields: string[] | null; }"
+    },
+    "RolesAdmin": {
+      "kind": "ClassDeclaration",
+      "type": "typeof RolesAdmin"
+    },
+    "RoleSummary": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; name: string; permissionLevel: number; rules: number; users: number; }"
+    },
+    "Rule": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ subject: string; action: string | string[]; conditions?: Conditions | undefined; fields?: string[] | undefined; inverted?: boolean | undefined; }"
+    },
+    "RuleInput": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ subject: string; action: string; inverted?: boolean | undefined; conditions?: Conditions | null | undefined; fields?: string[] | null | undefined; }"
+    },
+    "runtimeHealth": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, now?: number | undefined) => Promise<RuntimeHealth>"
+    },
+    "RuntimeHealth": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ outbox: { backlog: number; oldestAgeMs: number | null; }; processedEvents: number; heartbeats: { scheduler: HeartbeatStatus; worker: HeartbeatStatus; }; backup: { lastOffsite: string | null; lastRestoreTest: string | null; stale: boolean; }; }"
+    },
+    "SavedView": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; name: string; query: SavedViewQuery; shared: boolean; own: boolean; }"
+    },
+    "SavedViewQuery": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ search?: string | undefined; sort?: string | undefined; direction?: \"asc\" | \"desc\" | undefined; filters?: Record<string, string | number | boolean | null> | undefined; }"
+    },
+    "SavedViews": {
+      "kind": "ClassDeclaration",
+      "type": "typeof SavedViews"
+    },
+    "Scalar": {
+      "kind": "TypeAliasDeclaration",
+      "type": "string | number | boolean | null"
+    },
+    "SecretBox": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ seal(value: string): string; open(value: string): string | null; }"
+    },
+    "selectedFields": {
+      "kind": "FunctionDeclaration",
+      "type": "(resource: Resource, ability: KitAbility, options?: { write?: boolean | undefined; extra?: string[] | undefined; } | undefined) => string[]"
+    },
+    "sequence": {
+      "kind": "FunctionDeclaration",
+      "type": "(trx: Transaction<any, any[]>, key: string) => Promise<string>"
+    },
+    "serialize": {
+      "kind": "FunctionDeclaration",
+      "type": "(resource: Resource, record: RecordData, ability: KitAbility, actor: Actor) => SerializedRecord"
+    },
+    "SerializedRecord": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ [x: string]: JsonValue; }"
+    },
+    "SETTING_SCOPES": {
+      "kind": "VariableDeclaration",
+      "type": "SettingScope[]"
+    },
+    "SettingInput": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key: string; scope: SettingScope; scopeId?: string | undefined; value: unknown; }"
+    },
+    "SettingRow": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; key: string; scope: SettingScope; scopeId: string; value: JsonValue; readOnly: boolean; }"
+    },
+    "Settings": {
+      "kind": "ClassDeclaration",
+      "type": "typeof Settings"
+    },
+    "SettingsAdmin": {
+      "kind": "ClassDeclaration",
+      "type": "typeof SettingsAdmin"
+    },
+    "SettingScope": {
+      "kind": "TypeAliasDeclaration",
+      "type": "\"system\" | \"org_unit\" | \"user\""
+    },
+    "SetupCheck": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ status: \"failed\" | \"checking\" | \"passed\"; checkedAt: string; fingerprint: string; attempt: string; }"
+    },
+    "signWebhook": {
+      "kind": "FunctionDeclaration",
+      "type": "(secret: string, timestamp: string, body: string) => string"
+    },
+    "staleUploads": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, olderThan: Date, limit?: number | undefined) => Promise<AttachmentRecord[]>"
+    },
+    "StepContext": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ record: RecordData; run: { id: string; resource: string; recordId: number; startedBy: number | null; }; db: Knex<any, any[]>; }"
+    },
+    "StorageDisk": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ exists(key: string): Promise<boolean>; getStream(key: string): Promise<Readable>; putStream(key: string, contents: Readable): Promise<void>; getMetaData(key: string): Promise<{ contentLength: number; }>; }"
+    },
+    "StorageMigrationOptions": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ from: string; to: string; disks: readonly string[]; use: (name: string) => StorageDisk; dryRun?: boolean | undefined; report?: ((line: string) => void) | undefined; }"
+    },
+    "StorageMigrationResult": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ from: string; to: string; dryRun: boolean; total: number; copied: number; skipped: number; failed: { id: number; path: string; reason: string; }[]; remaining: number; }"
+    },
+    "summarizeAttachment": {
+      "kind": "FunctionDeclaration",
+      "type": "(row: Record<string, unknown>) => AttachmentSummary"
+    },
+    "TemplateDefinition": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ label: string; subject: string; body: string; variables: string[]; mail: boolean; }"
+    },
+    "TwoFactor": {
+      "kind": "ClassDeclaration",
+      "type": "typeof TwoFactor"
+    },
+    "TwoFactorEnrollment": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ otpauthUrl: string; secret: string; }"
+    },
+    "TwoFactorStatus": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ enabled: boolean; pending: boolean; recoveryRemaining: number; }"
+    },
+    "UI_PREFERENCES_KEY": {
+      "kind": "VariableDeclaration",
+      "type": "\"ui.preferences\""
+    },
+    "uiPreferences": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<UiPreferences>"
+    },
+    "UiPreferences": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ calendar: CalendarPreference; confirmDialogClose: boolean; pageTransitions: boolean; }"
+    },
+    "UNBOUND_UPLOAD_TTL_MS": {
+      "kind": "VariableDeclaration",
+      "type": "number"
+    },
+    "UploadInput": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ disk: string; path: string; name: string; originalName: string; size: number; mimeType: string; extname: string; data: Record<string, unknown>; uploadedBy: number; orgUnitId?: number | null | undefined; resource?: string | null | undefined; field?: string | null | undefined; }"
+    },
+    "UserInvitations": {
+      "kind": "ClassDeclaration",
+      "type": "typeof UserInvitations"
+    },
+    "UserOrgUnit": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; name: string; path: string; }"
+    },
+    "UserPage": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ data: UserSummary[]; nextCursor: number | null; }"
+    },
+    "UserRoleAssignment": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; roleId: number; role: string; orgUnitId: number | null; orgUnit: string | null; }"
+    },
+    "UsersAdmin": {
+      "kind": "ClassDeclaration",
+      "type": "typeof UsersAdmin"
+    },
+    "UserSummary": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; fullName: string | null; email: string; disabledAt: string | null; roles: UserRoleAssignment[]; orgUnits: UserOrgUnit[]; }"
+    },
+    "validateUiPreferences": {
+      "kind": "FunctionDeclaration",
+      "type": "(value: unknown) => UiPreferences"
+    },
+    "verifyBackup": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, inspect: () => Promise<BackupObject[]>, now?: number | undefined, prefix?: string | undefined) => Promise<BackupStatus>"
+    },
+    "Webhook": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; name: string; url: string; events: string[]; active: boolean; createdAt: string; lastDeliveryAt: string | null; failing: number; }"
+    },
+    "WEBHOOK_MAX_ATTEMPTS": {
+      "kind": "VariableDeclaration",
+      "type": "number"
+    },
+    "WebhookDelivery": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: string; event: string; status: \"failed\" | \"pending\" | \"delivered\"; attempts: number; lastStatus: number | null; lastError: string | null; createdAt: string; deliveredAt: string | null; nextAttemptAt: string | null; }"
+    },
+    "WebhookOptions": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ allowPrivateTargets?: boolean | undefined; resolve?: ((host: string) => Promise<string[]>) | undefined; }"
+    },
+    "Webhooks": {
+      "kind": "ClassDeclaration",
+      "type": "typeof Webhooks"
+    },
+    "withKitDatabase": {
+      "kind": "FunctionDeclaration",
+      "type": "<T extends DatabaseConfig>(config: T, root: string) => T"
+    },
+    "WORKFLOW_STEPS": {
+      "kind": "VariableDeclaration",
+      "type": "string[]"
+    },
+    "WorkflowDefinition": {
+      "kind": "TypeAliasDeclaration",
+      "type": "WorkflowInput & { machine: AnyStateMachine; }"
+    },
+    "WorkflowEngine": {
+      "kind": "ClassDeclaration",
+      "type": "typeof WorkflowEngine"
+    },
+    "WorkflowEvent": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ type: \"EVALUATE\"; record: RecordData; } | { type: \"DONE\"; } | { type: \"APPROVE\"; } | { type: \"REJECT\"; }"
+    },
+    "WorkflowInput": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ name: string; version: number; resource: string; label: string; start: string; steps: Record<string, WorkflowStep>; maxAttempts?: number | undefined; }"
+    },
+    "workflowListeners": {
+      "kind": "FunctionDeclaration",
+      "type": "(registry: ResourceRegistry, engine: () => WorkflowEngine) => Listener[]"
+    },
+    "WorkflowOptions": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ post?: HttpPoster | undefined; beforeCommit?: ((run: { id: string; step: string; }) => void | Promise<void>) | undefined; now?: (() => Date) | undefined; }"
+    },
+    "WorkflowRun": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: string; resource: string; resourceLabel: string; recordId: number; definition: string; label: string; version: number; status: WorkflowRunStatus; step: string | null; stepLabel: string | null; outcome: string | null; attempts: number; lastError: string | null; wakeAt: string | null; createdAt: string; completedAt: string | null; history: { step: string | null; event: string; actorName: string | null; detail: { [key: string]: JsonValue; }; at: string; }[]; myApproval: { assignmentId: number; title: string; } | null; }"
+    },
+    "WorkflowRunStatus": {
+      "kind": "TypeAliasDeclaration",
+      "type": "\"completed\" | \"pending_definition\" | \"running\" | \"waiting\" | \"failed\" | \"cancelled\""
+    },
+    "WorkflowStep": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ type: \"condition\"; label?: string | undefined; when: (record: RecordData) => boolean; then: string; else: string; } | { type: \"update\"; label?: string | undefined; values: RecordData | ((context: StepContext) => RecordData); next: string; } | { type: \"notify\"; label?: string | undefined; to: Recipients; template?: string | undefined; variables?: ((context: StepContext) => Record<string, unknown>) | undefined; next: string; } | { type: \"approval\"; label: string; assignees: Recipients; dueInDays?: number | undefined; approve: string; reject: string; } | { type: \"delay\"; label?: string | undefined; ms: number; next: string; } | { type: \"http\"; label?: string | undefined; url: string | ((context: StepContext) => string); body?: ((context: StepContext) => unknown) | undefined; next: string; } | { type: \"end\"; label?: string | undefined; outcome: \"approved\" | \"rejected\" | \"completed\"; cancelDocument?: boolean | undefined; }"
+    },
+    "writableInput": {
+      "kind": "FunctionDeclaration",
+      "type": "(resource: Resource, input: RecordData) => { [k: string]: unknown; }"
+    }
+  },
+  "./auth": {
+    "abilitySchemas": {
+      "kind": "VariableDeclaration",
+      "type": "WeakMap<KitAbility, readonly Pick<Resource, \"fields\" | \"name\">[]>"
+    },
+    "Actor": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; orgPaths: string[]; permissionLevel: number; rules: Rule[]; impersonatorId?: number | undefined; }"
+    },
+    "buildAbility": {
+      "kind": "FunctionDeclaration",
+      "type": "(rules: readonly Rule[], schemas?: readonly Pick<Resource, \"fields\" | \"name\">[] | undefined) => KitAbility"
+    },
+    "canRecord": {
+      "kind": "FunctionDeclaration",
+      "type": "(ability: KitAbility, actor: Actor, resource: Resource, action: string, record: RecordData, field?: string | undefined) => boolean"
+    },
+    "conditionFields": {
+      "kind": "FunctionDeclaration",
+      "type": "(ability: KitAbility, resource: Resource) => string[]"
+    },
+    "inOrgScope": {
+      "kind": "FunctionDeclaration",
+      "type": "(path: unknown, paths: readonly string[]) => boolean"
+    },
+    "KitAbility": {
+      "kind": "TypeAliasDeclaration",
+      "type": "Ability<[string, any], Conditions>"
+    },
+    "Rule": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ subject: string; action: string | string[]; conditions?: Conditions | undefined; fields?: string[] | undefined; inverted?: boolean | undefined; }"
+    }
+  },
+  "./types": {
+    "Action": {
+      "kind": "TypeAliasDeclaration",
+      "type": "\"view\" | \"create\" | \"update\" | \"delete\" | \"submit\" | \"cancel\" | \"amend\""
+    },
+    "Field": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; } & ({ type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; } | { type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; } | { type: \"belongsTo\"; resource: string; } | { type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; } | { type: \"lookup\"; group: string; })"
+    },
+    "HookContext": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ trx: Transaction<any, any[]>; userId: number; action: Action; }"
+    },
+    "JsonValue": {
+      "kind": "TypeAliasDeclaration",
+      "type": "string | number | boolean | JsonValue[] | { [key: string]: JsonValue; } | null"
+    },
+    "Label": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ ar: string; en: string; }"
+    },
+    "Module": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ name: string; reference?: boolean | undefined; label: Label; dependsOn: readonly string[]; resources: readonly Resource[]; workflows?: readonly WorkflowDefinition[] | undefined; }"
+    },
+    "RecordData": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ [x: string]: unknown; }"
+    },
+    "Resource": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ name: string; label: Label; model: LucidModel; scoped: boolean; submittable?: boolean | undefined; version?: boolean | undefined; customFields?: boolean | undefined; fields: Record<string, Field>; list: readonly string[]; form: readonly string[]; show: readonly string[]; serialize?: readonly string[] | undefined; hidden?: readonly string[] | undefined; actions: readonly Action[]; validator: { validate(data: unknown): Promise<RecordData>; }; hooks?: { beforeSave?: ((record: RecordData, context: HookContext) => Promise<void>) | undefined; afterSave?: ((record: RecordData, context: HookContext) => Promise<void>) | undefined; } | undefined; }"
+    },
+    "ResourceInput": {
+      "kind": "TypeAliasDeclaration",
+      "type": "Omit<Resource, \"fields\" | \"list\" | \"form\" | \"show\" | \"hidden\" | \"serialize\"> & { fields: F; list: readonly (keyof F & string)[]; form: readonly (keyof F & string)[]; show: readonly (keyof F & string)[]; hidden?: readonly (keyof F & string)[] | undefined; serialize?: readonly (keyof F & string)[] | undefined; }"
+    },
+    "Scalar": {
+      "kind": "TypeAliasDeclaration",
+      "type": "string | number | boolean | null"
+    },
+    "SerializedRecord": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ [x: string]: JsonValue; }"
+    }
+  }
+}

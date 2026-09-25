@@ -53,3 +53,11 @@ The workflow does not push tags, modify account settings or deploy applications.
 Multi-package publication is not atomic. Publish kit/UI before the creator. If any publish fails, do not unpublish prior packages or blindly rerun all publishes. Inspect npm, compare published integrity with retained archives, and publish only missing packages through the approved environment. Different bytes require a new version and checks; never force-move tags or reuse a version.
 
 Artifacts are retained for 14 days. Preserve final integrity and acceptance in durable release evidence; ignored `.work` logs remain local diagnostics.
+
+## Public API contract
+
+`pnpm check:api` compares every export of the built `@adula/kit` entry points and its
+declared type with `packages/kit/api/kit-api.json`. CI fails on any difference.
+Removed or changed exports are breaking (major release, codemod, UPGRADE.md);
+added exports are a minor release. After a reviewed change run
+`pnpm check:api --update` and commit the report with the change.

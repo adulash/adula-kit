@@ -83,6 +83,7 @@ jobs:
       - run: pnpm --filter @adula/reference exec playwright install --with-deps chromium --only-shell
       - run: pnpm build
       - run: pnpm typecheck
+      - run: pnpm check:api
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm test:release
