@@ -36,4 +36,5 @@ export const controllers = {
   TwoFactorChallenge: () => import('#controllers/two_factor_challenge_controller'),
   TwoFactor: () => import('#controllers/two_factor_controller'),
   UserInvitations: () => import('#controllers/user_invitations_controller'),
+  Workflows: () => import('#controllers/workflows_controller'),
 }

@@ -12,6 +12,7 @@ import {
   Users,
   Mail,
   Webhook,
+  GitBranch,
 } from 'lucide-react'
 import { calendarDisplay } from '~/components/ui/calendar_date'
 import { useUiPreferences } from '~/components/ui/ui-preferences'
@@ -27,6 +28,7 @@ export const adminLinks = [
   { href: '/admin/settings', label: 'الإعدادات', icon: Settings },
   { href: '/admin/templates', label: 'قوالب الرسائل', icon: Mail },
   { href: '/admin/webhooks', label: 'الربط الخارجي', icon: Webhook },
+  { href: '/admin/workflows', label: 'تدفقات فاشلة', icon: GitBranch },
   { href: '/admin/sessions', label: 'الجلسات', icon: KeyRound },
 ]
 

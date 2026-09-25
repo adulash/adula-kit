@@ -1,5 +1,6 @@
 import type { Knex } from 'knex'
 import type { LucidModel } from '@adonisjs/lucid/types/model'
+import type { WorkflowDefinition } from '../workflows/define_workflow.js'
 
 export type Label = { ar: string; en: string }
 export type Action = 'view' | 'create' | 'update' | 'delete' | 'submit' | 'cancel' | 'amend'
@@ -64,6 +65,8 @@ export type Module = {
   label: Label
   dependsOn: readonly string[]
   resources: readonly Resource[]
+  /** Versioned workflows of this module's submittable resources (phase 4). */
+  workflows?: readonly WorkflowDefinition[]
 }
 export type ResourceInput<F extends Record<string, Field>> = Omit<
   Resource,

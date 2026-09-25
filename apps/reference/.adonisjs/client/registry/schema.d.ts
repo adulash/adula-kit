@@ -283,6 +283,42 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assignments_controller').default['store']>>>
     }
   }
+  'workflows.for_record': {
+    methods: ["GET","HEAD"]
+    pattern: '/resources/:resource/:id/workflows'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['forRecord']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['forRecord']>>>
+    }
+  }
+  'workflows.inbox': {
+    methods: ["GET","HEAD"]
+    pattern: '/approvals'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['inbox']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['inbox']>>>
+    }
+  }
+  'workflows.decide': {
+    methods: ["POST"]
+    pattern: '/workflows/:run/decide'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { run: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['decide']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['decide']>>>
+    }
+  }
   'assignments.mine': {
     methods: ["GET","HEAD"]
     pattern: '/my-tasks'
@@ -401,6 +437,18 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['cancel']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['cancel']>>>
+    }
+  }
+  'resources.amend': {
+    methods: ["POST"]
+    pattern: '/resources/:resource/:id/amend'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['amend']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['amend']>>>
     }
   }
   'saved_views.store': {
@@ -545,6 +593,18 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['cancel']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['cancel']>>>
+    }
+  }
+  'api.resources.amend': {
+    methods: ["POST"]
+    pattern: '/api/v1/resources/:resource/:id/amend'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['amend']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['amend']>>>
     }
   }
   'new_account.create': {
@@ -1337,6 +1397,30 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/admin/templates_controller').default['reset']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/admin/templates_controller').default['reset']>>>
+    }
+  }
+  'workflows.failed': {
+    methods: ["GET","HEAD"]
+    pattern: '/admin/workflows'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['failed']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['failed']>>>
+    }
+  }
+  'workflows.retry': {
+    methods: ["POST"]
+    pattern: '/admin/workflows/:run/retry'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { run: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['retry']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['retry']>>>
     }
   }
   'admin_webhooks.index': {

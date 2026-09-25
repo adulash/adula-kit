@@ -30,6 +30,7 @@ declare module '@adonisjs/inertia/types' {
     'admin/users/index': ExtractProps<(typeof import('../../inertia/pages/admin/users/index.tsx'))['default']>
     'admin/users/show': ExtractProps<(typeof import('../../inertia/pages/admin/users/show.tsx'))['default']>
     'admin/webhooks/index': ExtractProps<(typeof import('../../inertia/pages/admin/webhooks/index.tsx'))['default']>
+    'admin/workflows/index': ExtractProps<(typeof import('../../inertia/pages/admin/workflows/index.tsx'))['default']>
     'auth/forgot': ExtractProps<(typeof import('../../inertia/pages/auth/forgot.tsx'))['default']>
     'auth/invitation': ExtractProps<(typeof import('../../inertia/pages/auth/invitation.tsx'))['default']>
     'auth/login': ExtractProps<(typeof import('../../inertia/pages/auth/login.tsx'))['default']>
@@ -42,6 +43,7 @@ declare module '@adonisjs/inertia/types' {
     'resources/index': ExtractProps<(typeof import('../../inertia/pages/resources/index.tsx'))['default']>
     'resources/page': ExtractProps<(typeof import('../../inertia/pages/resources/page.tsx'))['default']>
     'users/invite': ExtractProps<(typeof import('../../inertia/pages/users/invite.tsx'))['default']>
+    'work/approvals': ExtractProps<(typeof import('../../inertia/pages/work/approvals.tsx'))['default']>
     'work/imports': ExtractProps<(typeof import('../../inertia/pages/work/imports.tsx'))['default']>
     'work/my_tasks': ExtractProps<(typeof import('../../inertia/pages/work/my_tasks.tsx'))['default']>
   }

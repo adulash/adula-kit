@@ -127,11 +127,11 @@
       "component": "resource-field"
     },
     "inertia/components/ui/resource-show.tsx": {
-      "hash": "2d6ecb703815fb250e54d9a978ac5cbc0ea8ec63e076be84bcf55ec45363ff0f",
+      "hash": "bb9ba889bc285e2d6779f7e639a3aecaa2a1aa5b1ef8fc75921643d31bc6681a",
       "component": "resource-show"
     },
     "inertia/components/ui/resource-actions.tsx": {
-      "hash": "738245c46e2dc5e6ada362ed24eb13369618648f435f21e06d7b099fef63c91a",
+      "hash": "c0a7f4e1e7173fae477916d9a7318c5b88ae280ffda0f60da18f17a9ea93f9cb",
       "component": "resource-actions"
     },
     "inertia/components/ui/resource-surface.tsx": {
@@ -165,6 +165,10 @@
     "inertia/components/ui/resource-import.tsx": {
       "hash": "f839742219c04986b61aa65a0a3493f642ebfe43f4d690e2b2fe33f44fb21e30",
       "component": "resource-import"
+    },
+    "inertia/components/ui/record-workflows.tsx": {
+      "hash": "c1eac083491ffc4463767b1e07aa0a6c472f71f34edcc90c47b77eef9f4b1fdd",
+      "component": "record-workflows"
     }
   }
 }

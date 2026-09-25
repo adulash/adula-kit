@@ -17,6 +17,7 @@ import { ResourceActions } from '~/components/ui/resource-actions'
 import { ResourceValue, formatDatetime, type LookupOptions } from '~/components/ui/resource-value'
 import { RecordCollaboration } from '~/components/ui/record-collaboration'
 import { RecordAssignments } from '~/components/ui/record-assignments'
+import { RecordWorkflows } from '~/components/ui/record-workflows'
 
 export type ResourceChildren = Children
 const meta = new Set(['id', 'version', 'docStatus', 'orgUnitId'])
@@ -191,6 +192,9 @@ export function ResourceShow({
             })}
           </div>
         </Deferred>
+      )}
+      {resource.submittable && (
+        <RecordWorkflows resource={resource.name} id={result.data.id as number} />
       )}
       <RecordAssignments
         resource={resource.name}

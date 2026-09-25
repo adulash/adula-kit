@@ -144,6 +144,24 @@ const routes = {
     tokens: [{"old":"/resources/:resource/:id/assignments","type":0,"val":"resources","end":""},{"old":"/resources/:resource/:id/assignments","type":1,"val":"resource","end":""},{"old":"/resources/:resource/:id/assignments","type":1,"val":"id","end":""},{"old":"/resources/:resource/:id/assignments","type":0,"val":"assignments","end":""}],
     types: placeholder as Registry['assignments.store']['types'],
   },
+  'workflows.for_record': {
+    methods: ["GET","HEAD"],
+    pattern: '/resources/:resource/:id/workflows',
+    tokens: [{"old":"/resources/:resource/:id/workflows","type":0,"val":"resources","end":""},{"old":"/resources/:resource/:id/workflows","type":1,"val":"resource","end":""},{"old":"/resources/:resource/:id/workflows","type":1,"val":"id","end":""},{"old":"/resources/:resource/:id/workflows","type":0,"val":"workflows","end":""}],
+    types: placeholder as Registry['workflows.for_record']['types'],
+  },
+  'workflows.inbox': {
+    methods: ["GET","HEAD"],
+    pattern: '/approvals',
+    tokens: [{"old":"/approvals","type":0,"val":"approvals","end":""}],
+    types: placeholder as Registry['workflows.inbox']['types'],
+  },
+  'workflows.decide': {
+    methods: ["POST"],
+    pattern: '/workflows/:run/decide',
+    tokens: [{"old":"/workflows/:run/decide","type":0,"val":"workflows","end":""},{"old":"/workflows/:run/decide","type":1,"val":"run","end":""},{"old":"/workflows/:run/decide","type":0,"val":"decide","end":""}],
+    types: placeholder as Registry['workflows.decide']['types'],
+  },
   'assignments.mine': {
     methods: ["GET","HEAD"],
     pattern: '/my-tasks',
@@ -203,6 +221,12 @@ const routes = {
     pattern: '/resources/:resource/:id/cancel',
     tokens: [{"old":"/resources/:resource/:id/cancel","type":0,"val":"resources","end":""},{"old":"/resources/:resource/:id/cancel","type":1,"val":"resource","end":""},{"old":"/resources/:resource/:id/cancel","type":1,"val":"id","end":""},{"old":"/resources/:resource/:id/cancel","type":0,"val":"cancel","end":""}],
     types: placeholder as Registry['resources.cancel']['types'],
+  },
+  'resources.amend': {
+    methods: ["POST"],
+    pattern: '/resources/:resource/:id/amend',
+    tokens: [{"old":"/resources/:resource/:id/amend","type":0,"val":"resources","end":""},{"old":"/resources/:resource/:id/amend","type":1,"val":"resource","end":""},{"old":"/resources/:resource/:id/amend","type":1,"val":"id","end":""},{"old":"/resources/:resource/:id/amend","type":0,"val":"amend","end":""}],
+    types: placeholder as Registry['resources.amend']['types'],
   },
   'saved_views.store': {
     methods: ["POST"],
@@ -275,6 +299,12 @@ const routes = {
     pattern: '/api/v1/resources/:resource/:id/cancel',
     tokens: [{"old":"/api/v1/resources/:resource/:id/cancel","type":0,"val":"api","end":""},{"old":"/api/v1/resources/:resource/:id/cancel","type":0,"val":"v1","end":""},{"old":"/api/v1/resources/:resource/:id/cancel","type":0,"val":"resources","end":""},{"old":"/api/v1/resources/:resource/:id/cancel","type":1,"val":"resource","end":""},{"old":"/api/v1/resources/:resource/:id/cancel","type":1,"val":"id","end":""},{"old":"/api/v1/resources/:resource/:id/cancel","type":0,"val":"cancel","end":""}],
     types: placeholder as Registry['api.resources.cancel']['types'],
+  },
+  'api.resources.amend': {
+    methods: ["POST"],
+    pattern: '/api/v1/resources/:resource/:id/amend',
+    tokens: [{"old":"/api/v1/resources/:resource/:id/amend","type":0,"val":"api","end":""},{"old":"/api/v1/resources/:resource/:id/amend","type":0,"val":"v1","end":""},{"old":"/api/v1/resources/:resource/:id/amend","type":0,"val":"resources","end":""},{"old":"/api/v1/resources/:resource/:id/amend","type":1,"val":"resource","end":""},{"old":"/api/v1/resources/:resource/:id/amend","type":1,"val":"id","end":""},{"old":"/api/v1/resources/:resource/:id/amend","type":0,"val":"amend","end":""}],
+    types: placeholder as Registry['api.resources.amend']['types'],
   },
   'new_account.create': {
     methods: ["GET","HEAD"],
@@ -671,6 +701,18 @@ const routes = {
     pattern: '/admin/templates/:key',
     tokens: [{"old":"/admin/templates/:key","type":0,"val":"admin","end":""},{"old":"/admin/templates/:key","type":0,"val":"templates","end":""},{"old":"/admin/templates/:key","type":1,"val":"key","end":""}],
     types: placeholder as Registry['admin_templates.reset']['types'],
+  },
+  'workflows.failed': {
+    methods: ["GET","HEAD"],
+    pattern: '/admin/workflows',
+    tokens: [{"old":"/admin/workflows","type":0,"val":"admin","end":""},{"old":"/admin/workflows","type":0,"val":"workflows","end":""}],
+    types: placeholder as Registry['workflows.failed']['types'],
+  },
+  'workflows.retry': {
+    methods: ["POST"],
+    pattern: '/admin/workflows/:run/retry',
+    tokens: [{"old":"/admin/workflows/:run/retry","type":0,"val":"admin","end":""},{"old":"/admin/workflows/:run/retry","type":0,"val":"workflows","end":""},{"old":"/admin/workflows/:run/retry","type":1,"val":"run","end":""},{"old":"/admin/workflows/:run/retry","type":0,"val":"retry","end":""}],
+    types: placeholder as Registry['workflows.retry']['types'],
   },
   'admin_webhooks.index': {
     methods: ["GET","HEAD"],

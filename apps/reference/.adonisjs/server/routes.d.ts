@@ -27,6 +27,9 @@ export type ScannedRoutes = {
     'print': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'assignments.for_record': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'assignments.store': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
+    'workflows.for_record': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
+    'workflows.inbox': { paramsTuple?: []; params?: {} }
+    'workflows.decide': { paramsTuple: [ParamValue]; params: {'run': ParamValue} }
     'assignments.mine': { paramsTuple?: []; params?: {} }
     'assignments.complete': { paramsTuple: [ParamValue]; params: {'assignment': ParamValue} }
     'assignments.cancel': { paramsTuple: [ParamValue]; params: {'assignment': ParamValue} }
@@ -37,6 +40,7 @@ export type ScannedRoutes = {
     'resources.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'resources.submit': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'resources.cancel': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
+    'resources.amend': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'saved_views.store': { paramsTuple: [ParamValue]; params: {'resource': ParamValue} }
     'saved_views.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'attachments.store': { paramsTuple?: []; params?: {} }
@@ -49,6 +53,7 @@ export type ScannedRoutes = {
     'api.resources.destroy': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'api.resources.submit': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'api.resources.cancel': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
+    'api.resources.amend': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'new_account.create': { paramsTuple?: []; params?: {} }
     'user_invitations.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'user_invitations.accept': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
@@ -115,6 +120,8 @@ export type ScannedRoutes = {
     'admin_templates.index': { paramsTuple?: []; params?: {} }
     'admin_templates.update': { paramsTuple: [ParamValue]; params: {'key': ParamValue} }
     'admin_templates.reset': { paramsTuple: [ParamValue]; params: {'key': ParamValue} }
+    'workflows.failed': { paramsTuple?: []; params?: {} }
+    'workflows.retry': { paramsTuple: [ParamValue]; params: {'run': ParamValue} }
     'admin_webhooks.index': { paramsTuple?: []; params?: {} }
     'admin_webhooks.store': { paramsTuple?: []; params?: {} }
     'admin_webhooks.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -143,6 +150,8 @@ export type ScannedRoutes = {
     'record_collaboration.mentions': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'print': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'assignments.for_record': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
+    'workflows.for_record': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
+    'workflows.inbox': { paramsTuple?: []; params?: {} }
     'assignments.mine': { paramsTuple?: []; params?: {} }
     'resources.edit': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'resources.show': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
@@ -174,6 +183,7 @@ export type ScannedRoutes = {
     'admin_jobs.index': { paramsTuple?: []; params?: {} }
     'admin_settings.index': { paramsTuple?: []; params?: {} }
     'admin_templates.index': { paramsTuple?: []; params?: {} }
+    'workflows.failed': { paramsTuple?: []; params?: {} }
     'admin_webhooks.index': { paramsTuple?: []; params?: {} }
     'admin_webhooks.deliveries': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'setup.index': { paramsTuple?: []; params?: {} }
@@ -191,6 +201,8 @@ export type ScannedRoutes = {
     'record_collaboration.mentions': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'print': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'assignments.for_record': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
+    'workflows.for_record': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
+    'workflows.inbox': { paramsTuple?: []; params?: {} }
     'assignments.mine': { paramsTuple?: []; params?: {} }
     'resources.edit': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'resources.show': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
@@ -222,6 +234,7 @@ export type ScannedRoutes = {
     'admin_jobs.index': { paramsTuple?: []; params?: {} }
     'admin_settings.index': { paramsTuple?: []; params?: {} }
     'admin_templates.index': { paramsTuple?: []; params?: {} }
+    'workflows.failed': { paramsTuple?: []; params?: {} }
     'admin_webhooks.index': { paramsTuple?: []; params?: {} }
     'admin_webhooks.deliveries': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'setup.index': { paramsTuple?: []; params?: {} }
@@ -234,16 +247,19 @@ export type ScannedRoutes = {
     'imports.start': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'record_collaboration.comment': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'assignments.store': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
+    'workflows.decide': { paramsTuple: [ParamValue]; params: {'run': ParamValue} }
     'assignments.complete': { paramsTuple: [ParamValue]; params: {'assignment': ParamValue} }
     'assignments.cancel': { paramsTuple: [ParamValue]; params: {'assignment': ParamValue} }
     'resources.store': { paramsTuple: [ParamValue]; params: {'resource': ParamValue} }
     'resources.submit': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'resources.cancel': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
+    'resources.amend': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'saved_views.store': { paramsTuple: [ParamValue]; params: {'resource': ParamValue} }
     'attachments.store': { paramsTuple?: []; params?: {} }
     'api.resources.store': { paramsTuple: [ParamValue]; params: {'resource': ParamValue} }
     'api.resources.submit': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'api.resources.cancel': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
+    'api.resources.amend': { paramsTuple: [ParamValue,ParamValue]; params: {'resource': ParamValue,'id': ParamValue} }
     'user_invitations.accept': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
@@ -271,6 +287,7 @@ export type ScannedRoutes = {
     'admin_org_units.store': { paramsTuple?: []; params?: {} }
     'admin_org_units.move': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'admin_jobs.retry': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'workflows.retry': { paramsTuple: [ParamValue]; params: {'run': ParamValue} }
     'admin_webhooks.store': { paramsTuple?: []; params?: {} }
     'admin_webhooks.retry': { paramsTuple: [ParamValue]; params: {'delivery': ParamValue} }
     'setup.check': { paramsTuple: [ParamValue]; params: {'service': ParamValue} }

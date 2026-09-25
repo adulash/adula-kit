@@ -7,6 +7,7 @@ import {
   SavedViews,
   Webhooks,
   ImportBatches,
+  WorkflowEngine,
 } from '@adula/kit'
 import app from '@adonisjs/core/services/app'
 import encryption from '@adonisjs/core/services/encryption'
@@ -27,13 +28,28 @@ export function kit() {
       await cache.set({ key, value, ttl: '5m' })
     },
   })
+  const assignments = new Assignments(knex, resources, actors)
   return {
     registry,
     resources,
     savedViews: new SavedViews(knex, registry),
     actors,
     collaboration: new RecordCollaboration(knex, resources, actors),
-    assignments: new Assignments(knex, resources, actors),
+    assignments,
+    workflows: new WorkflowEngine(
+      knex,
+      registry,
+      resources,
+      actors,
+      assignments,
+      registry.workflows(),
+      {
+        post: async (url, init) => {
+          const response = await fetch(url, { method: 'POST', redirect: 'manual', ...init })
+          return { status: response.status }
+        },
+      }
+    ),
     imports: new ImportBatches(knex, registry, resources, actors),
     webhooks: new Webhooks(
       knex,

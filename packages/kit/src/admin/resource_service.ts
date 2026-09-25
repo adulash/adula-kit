@@ -152,7 +152,7 @@ export class ResourceService {
             !['update', 'delete', 'submit'].includes(action) ||
             record.docStatus === 0) &&
           (action !== 'cancel' || (resource.submittable && record.docStatus === 1)) &&
-          action !== 'amend',
+          (action !== 'amend' || (resource.submittable && record.docStatus === 2)),
       ])
     )
   }
@@ -1056,6 +1056,93 @@ export class ResourceService {
     }
     return transaction ? work(transaction) : this.db.transaction(work)
   }
+  /**
+   * Amend-by-copy: a cancelled document is copied into a new draft that points to
+   * it through amended_from_id, together with its inline lines. The original stays
+   * cancelled and unchanged; sequence fields receive new numbers.
+   */
+  async amend(name: string, id: number, actor: Actor, transaction?: Knex.Transaction) {
+    const resource = this.registry.get(name)
+    if (!resource.submittable)
+      throw new KitError(409, 'E_DOCUMENT_STATE', 'Only submittable documents can be amended')
+    const ability = this.authorizeAction(resource, actor, 'amend')
+    const work = async (trx: Knex.Transaction) => {
+      const source = await this.find(trx, resource, actor, ability, id, true)
+      this.requireRecord(ability, actor, resource, 'amend', source)
+      if (source.docStatus !== 2)
+        throw new KitError(409, 'E_DOCUMENT_STATE', 'Only cancelled documents can be amended')
+      const existing = await trx(name)
+        .where('amended_from_id', id)
+        .whereNull('deleted_at')
+        .first('id')
+      if (existing)
+        throw new KitError(409, 'E_ALREADY_AMENDED', 'تم تعديل هذا المستند بالنسخ من قبل')
+      const values: RecordData = {
+        created_by: actor.id,
+        updated_by: actor.id,
+        doc_status: 0,
+        amended_from_id: id,
+      }
+      if (resource.scoped) values.org_unit_id = source.orgUnitId
+      if (resource.version) values.version = 1
+      const copied: string[] = []
+      for (const [key, field] of Object.entries(resource.fields)) {
+        if (field.type === 'hasMany' || !(key in source)) continue
+        const column = field.column ?? columnName(key)
+        if (field.sequence) values[column] = await sequence(trx, field.sequence)
+        else if (field.type === 'attachment') continue
+        else {
+          values[column] = field.type === 'json' ? JSON.stringify(source[key]) : source[key]
+          copied.push(key)
+        }
+      }
+      const [row] = await trx(name).insert(values).returning('*')
+      const saved: RecordData = { ...fromRow(row, resource), orgPath: source.orgPath }
+      for (const field of Object.values(resource.fields)) {
+        if (field.type !== 'hasMany' || !field.inline) continue
+        const child = this.registry.get(field.resource)
+        const foreign = child.fields[field.foreignKey].column ?? columnName(field.foreignKey)
+        const lines = await trx(child.name).where(foreign, id).whereNull('deleted_at').orderBy('id')
+        for (const line of lines) {
+          const copy: RecordData = {
+            created_by: actor.id,
+            updated_by: actor.id,
+            [foreign]: row.id,
+          }
+          if (child.scoped) copy.org_unit_id = line.org_unit_id
+          if (child.version) copy.version = 1
+          for (const [key, childField] of Object.entries(child.fields)) {
+            const column = childField.column ?? columnName(key)
+            if (
+              key === field.foreignKey ||
+              childField.type === 'hasMany' ||
+              childField.type === 'attachment' ||
+              !(column in line)
+            )
+              continue
+            copy[column] = childField.sequence
+              ? await sequence(trx, childField.sequence)
+              : childField.type === 'json'
+                ? JSON.stringify(line[column])
+                : line[column]
+          }
+          const [inserted] = await trx(child.name).insert(copy).returning('id')
+          await this.audit(
+            trx,
+            child,
+            actor,
+            'create',
+            { id: inserted.id },
+            Object.keys(child.fields)
+          )
+        }
+      }
+      await this.audit(trx, resource, actor, 'amend', saved, copied)
+      return serialize(resource, await this.hydrateOne(trx, resource, saved), ability, actor)
+    }
+    return transaction ? work(transaction) : this.db.transaction(work)
+  }
+
   private async audit(
     trx: Knex.Transaction,
     resource: Resource,

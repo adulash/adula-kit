@@ -33,7 +33,19 @@ export {
   createWebhooksSchema,
   createImportsSchema,
   createTwoFactorSchema,
+  createWorkflowSchema,
 } from './src/database/schema.js'
+export { defineWorkflow, nextStep } from './src/workflows/define_workflow.js'
+export type {
+  WorkflowDefinition,
+  WorkflowInput,
+  WorkflowStep,
+  WorkflowEvent,
+  StepContext,
+  Recipients,
+} from './src/workflows/define_workflow.js'
+export { WorkflowEngine, workflowListeners } from './src/workflows/engine.js'
+export type { WorkflowRun, WorkflowRunStatus, WorkflowOptions } from './src/workflows/engine.js'
 export { TwoFactor } from './src/core/two_factor.js'
 export type { TwoFactorStatus, TwoFactorEnrollment } from './src/core/two_factor.js'
 export { ImportBatches, importCell, IMPORT_ROW_LIMIT } from './src/integrations/imports.js'

@@ -20,6 +20,7 @@ export interface ApiDefinition {
     destroy: typeof routes['resources.destroy']
     submit: typeof routes['resources.submit']
     cancel: typeof routes['resources.cancel']
+    amend: typeof routes['resources.amend']
   }
   imports: {
     store: typeof routes['imports.store']
@@ -45,6 +46,13 @@ export interface ApiDefinition {
     complete: typeof routes['assignments.complete']
     cancel: typeof routes['assignments.cancel']
   }
+  workflows: {
+    forRecord: typeof routes['workflows.for_record']
+    inbox: typeof routes['workflows.inbox']
+    decide: typeof routes['workflows.decide']
+    failed: typeof routes['workflows.failed']
+    retry: typeof routes['workflows.retry']
+  }
   savedViews: {
     store: typeof routes['saved_views.store']
     destroy: typeof routes['saved_views.destroy']
@@ -63,6 +71,7 @@ export interface ApiDefinition {
       destroy: typeof routes['api.resources.destroy']
       submit: typeof routes['api.resources.submit']
       cancel: typeof routes['api.resources.cancel']
+      amend: typeof routes['api.resources.amend']
     }
   }
   newAccount: {

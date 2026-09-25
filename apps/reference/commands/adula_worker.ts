@@ -20,6 +20,7 @@ export default class AdulaWorker extends BaseCommand {
         try {
           await publishEvents()
           await deliverNotificationEmails()
+          await kit().workflows.tick()
           await kit().imports.process()
           await kit().webhooks.deliver(async (url, init) => {
             const response = await fetch(url, { method: 'POST', redirect: 'manual', ...init })

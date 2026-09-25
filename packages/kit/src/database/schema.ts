@@ -447,3 +447,32 @@ export async function createTwoFactorSchema(db: Knex) {
     t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
   })
 }
+
+/**
+ * Workflow engine state (phase 4): the submission envelope rows gain execution
+ * columns, and every transition is appended to workflow_events.
+ */
+export async function createWorkflowSchema(db: Knex) {
+  await db.schema.alterTable('workflow_runs', (t) => {
+    t.string('current_step', 100)
+    t.timestamp('wake_at', { useTz: true })
+    t.integer('attempts').notNullable().defaultTo(0)
+    t.string('last_error', 1000)
+    t.string('outcome', 30)
+    t.integer('started_by').references('id').inTable('users').onDelete('SET NULL')
+    t.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('completed_at', { useTz: true })
+    t.index(['resource', 'record_id'])
+  })
+  await db.raw("CREATE INDEX workflow_runs_due ON workflow_runs (wake_at) WHERE status = 'running'")
+  await db.schema.createTable('workflow_events', (t) => {
+    t.bigIncrements('id')
+    t.uuid('run_id').notNullable().references('id').inTable('workflow_runs').onDelete('CASCADE')
+    t.string('step', 100)
+    t.string('event', 50).notNullable()
+    t.integer('actor_id').references('id').inTable('users').onDelete('SET NULL')
+    t.jsonb('detail').notNullable().defaultTo('{}')
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.index(['run_id', 'id'])
+  })
+}
