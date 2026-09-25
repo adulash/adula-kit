@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased — toward 1.0.0
+
+Phase 2 accepted by owner attestation (ADR 025; the k6 budget remains an open,
+recorded deviation). Phases 3–5 implemented with consumers and PostgreSQL tests.
+All new kit tables arrive through additive migrations (`kit_collaboration`,
+`kit_assignments`, `kit_messaging`, `kit_webhooks`, `kit_imports`,
+`kit_two_factor`, `kit_workflows`).
+
+* Collaboration: comments with mentions, followers, tags (with list filtering) and
+  per-field change history; notifications only reach users who can read the record.
+* Assignments and a "my tasks" page; approval steps reuse assignments.
+* Message templates editable per deployment, templated notification e-mail sent by
+  the worker, and a realtime notification bell (PostgreSQL NOTIFY on commit, SSE via
+  @adonisjs/transmit).
+* Outgoing webhooks signed with HMAC-SHA256, retried with backoff, HTTPS-only and
+  private-address safe, with a delivery log.
+* Personal API tokens (read or read-write) for a bearer-only `/api/v1` resource API
+  and a generated OpenAPI 3.1 document.
+* CSV import batches with column mapping, processed by the worker with per-row
+  errors (XLSX is GAP-006).
+* Generic RTL record printing with optional Gotenberg PDF conversion.
+* TOTP two-factor authentication with single-use recovery codes (human ASVS review
+  pending, see docs/security/two-factor-asvs-review.md).
+* Document lifecycle: amend-by-copy for cancelled documents.
+* Workflows: versioned `defineWorkflow` definitions compiled to XState 5, a durable
+  engine with row locks, six step types, bounded retries, an approvals inbox, a
+  record workflow panel and a failed-runs screen.
+* Agent: generated capability catalog (`adula:capabilities`), idea-review reading it,
+  and the module, security, schema, UI and performance reviewer skills.
+* Release: public API contract report (`pnpm check:api`), a genuine upgrade test from
+  a version published on npm (`pnpm test:upgrade --published=<version>`), and a
+  Performance workflow measuring the compiled build with k6 on a GitHub runner.
+
 ## 0.2.0-alpha.4 — 2026-09-24
 
 * Login: the per-address limit is 100 attempts per minute (configurable with
