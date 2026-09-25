@@ -56,4 +56,15 @@ export class ResourceRegistry {
   modules() {
     return [...this.#modules.values()]
   }
+  /** Workflow definitions declared by registered modules, validated against their resources. */
+  workflows() {
+    return this.modules().flatMap((module) => {
+      for (const workflow of module.workflows ?? [])
+        if (this.owner(workflow.resource) !== module.name)
+          throw new Error(
+            `Workflow ${workflow.name} must belong to the module of ${workflow.resource}`
+          )
+      return [...(module.workflows ?? [])]
+    })
+  }
 }

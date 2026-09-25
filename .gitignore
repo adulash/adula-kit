@@ -14,3 +14,4 @@ playwright-report/
 *.log
 .DS_Store
 .playwright-mcp/
+dump.rdb

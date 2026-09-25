@@ -67,6 +67,7 @@ test.group('Core administration services', (group) => {
       'delete',
       'submit',
       'cancel',
+      'amend',
       'invite',
       'manage',
     ])

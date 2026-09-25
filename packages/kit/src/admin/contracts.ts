@@ -26,18 +26,27 @@ export function selectedFields(
     ]),
   ].filter((key) => key !== 'orgPath' && resource.fields[key]?.type !== 'hasMany')
 }
+const rowKeys = new WeakMap<Resource, [key: string, column: string][]>()
+/** Record keys and their columns for a resource, computed once per definition. */
+function keysOf(resource: Resource) {
+  let keys = rowKeys.get(resource)
+  if (!keys) {
+    keys = [
+      ...standard,
+      'orgUnitId',
+      'version',
+      'docStatus',
+      'amendedFromId',
+      'orgPath',
+      ...Object.keys(resource.fields),
+    ].map((key) => [key, resource.fields[key]?.column ?? columnName(key)])
+    rowKeys.set(resource, keys)
+  }
+  return keys
+}
 export function fromRow(row: RecordData, resource: Resource) {
   const result: RecordData = {}
-  for (const key of [
-    ...standard,
-    'orgUnitId',
-    'version',
-    'docStatus',
-    'amendedFromId',
-    'orgPath',
-    ...Object.keys(resource.fields),
-  ]) {
-    const column = resource.fields[key]?.column ?? columnName(key)
+  for (const [key, column] of keysOf(resource)) {
     if (column in row) {
       const value = row[column]
       result[key] =

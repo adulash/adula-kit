@@ -1,0 +1,101 @@
+name: Performance
+# Plan section 13 budget, measured on a GitHub-hosted runner with the disposable
+# medical consumer (100000 rows, 50 users, compiled build). It takes long and its
+# result is evidence, not a merge gate: run manually or when the harness changes.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/performance.yml
+      - scripts/test-medical-consumer.mjs
+      - apps/reference/tests/perf/**
+permissions:
+  contents: read
+jobs:
+  k6:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: adula_test
+          POSTGRES_USER: adula
+          POSTGRES_PASSWORD: ci-only-password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U adula -d adula_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://adula:ci-only-password@127.0.0.1:5432/adula_test
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      K6_VERSION: v2.3.0
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check out the official consumer fixture
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: adonisjs/starter-kits
+          ref: 7e1c7930ec260ea38c3eb394eb192e05c12d3f7b
+          path: .work/starter-kits-main
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with: { version: 11.19.0 }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with: { node-version: 24 }
+      - name: Use PostgreSQL 17 backup and restore clients
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -x /usr/lib/postgresql/17/bin/pg_dump ]; then
+            . /etc/os-release
+            sudo install -d /usr/share/postgresql-common/pgdg
+            sudo curl --fail --silent --show-error --location https://www.postgresql.org/media/keys/ACCC4CF8.asc -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+            printf 'Types: deb\nURIs: https://apt.postgresql.org/pub/repos/apt\nSuites: %s-pgdg\nComponents: main\nSigned-By: /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc\n' "$VERSION_CODENAME" | sudo tee /etc/apt/sources.list.d/pgdg.sources > /dev/null
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client-17
+          fi
+          echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
+      - name: Install k6
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location -o /tmp/k6.tgz \
+            "https://github.com/grafana/k6/releases/download/${K6_VERSION}/k6-${K6_VERSION}-linux-amd64.tar.gz"
+          mkdir -p "$RUNNER_TEMP/k6" && tar -xzf /tmp/k6.tgz -C "$RUNNER_TEMP/k6" --strip-components=1
+          "$RUNNER_TEMP/k6/k6" version
+          echo "K6_BINARY=$RUNNER_TEMP/k6/k6" >> "$GITHUB_ENV"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @adula/reference exec playwright install --with-deps chromium --only-shell
+      - run: pnpm build
+      - run: pnpm test:consumer
+      - run: pnpm --filter @adula/create-app pack --pack-destination "$GITHUB_WORKSPACE/.work"
+      - run: pnpm check:release --artifacts=.work
+      - name: Medical consumer with the k6 workload
+        run: pnpm test:medical
+      - name: Keep the sanitized k6 summary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.work/medical-latest.json','utf8')).directory)")
+          mkdir -p perf-summary
+          cp "$latest/k6-summary.json" perf-summary/ 2>/dev/null || true
+          node -e "const s=JSON.parse(require('fs').readFileSync('$latest/state.json','utf8'));console.log(JSON.stringify({completed:s.completed,performance:s.performance,ability:s.ability??null},null,2))" > perf-summary/state-summary.json || true
+          # The measured values are evidence; print them so the job log carries them too.
+          node -e "const m=JSON.parse(require('fs').readFileSync('perf-summary/k6-summary.json','utf8')).metrics;for(const k of ['list_with_relations','form_save','http_req_duration','successful_lists','successful_saves','checks','http_reqs'])if(m[k])console.log('k6',k,JSON.stringify(m[k]))" || true
+          cat perf-summary/state-summary.json || true
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: performance-${{ github.run_id }}
+          path: perf-summary
+          if-no-files-found: warn
+          retention-days: 30

@@ -20,14 +20,21 @@ test('refuses private files and archives missing executable exports', () => {
   assert.throws(() => validateContents(kit, ['package/package.json', 'package/README.md']), /Required package file missing/)
 })
 
-test('current implementation cannot be published as stable or mislabeled next', () => {
-  assert.throws(() => validateReadiness(readiness, kit.version, 'latest'), /completed 1.0.0/)
-  assert.throws(() => validateReadiness(readiness, kit.version, 'next'), /prerelease version|Phase [01] acceptance/)
+test('the accepted 1.0.0 passes the stable guard and cannot be relabeled as a prerelease', () => {
+  assert.equal(kit.version, '1.0.0')
+  assert.ok(validateReadiness(readiness, kit.version, 'latest').length >= 8)
+  assert.throws(() => validateReadiness(readiness, kit.version, 'next'), /prerelease version/)
+  assert.throws(() => validateReadiness(readiness, kit.version, 'alpha'), /alpha version/)
+  const pending = structuredClone(readiness)
+  pending.phases[7].status = 'pending'
+  assert.throws(() => validateReadiness(pending, kit.version, 'latest'), /incomplete/)
 })
 
 test('alpha authorizes only an explicit owner-selected preview and never accepts later channels', () => {
   const value = structuredClone(readiness)
   value.version = '0.2.0-alpha.1'
+  // An alpha preview is authorized while phases are still open.
+  for (const phase of value.phases) phase.status = 'pending'
   value.alpha = { version: value.version, authorized: true, reviewedBy: 'test owner', reviewedAt: '2026-09-22', evidence: ['docs/evidence/alpha-decision.json'] }
   assert.deepEqual(validateReadiness(value, value.version, 'alpha'), value.alpha.evidence)
   assert.throws(() => validateReadiness(value, value.version, 'latest'))

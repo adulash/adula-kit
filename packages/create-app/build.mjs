@@ -79,7 +79,7 @@ files['database/schema.ts'] =
 files['start/modules.ts'] =
   `import { ResourceRegistry, type Module } from '@adula/kit'\n// adula:imports\nexport const modules: Module[] = [\n  /* adula:modules */\n]\nexport const registry = new ResourceRegistry().register(modules)\n`
 files['start/listeners.ts'] =
-  `import type { Listener } from '@adula/kit'\nexport const listeners: Listener[] = []\n`
+  `import { followerListeners, workflowListeners, type Listener } from '@adula/kit'\nimport { registry } from '#start/modules'\nimport { kit } from '#services/kit'\n\n// Follower notifications for every registered resource; add module listeners below.\nexport const listeners: Listener[] = [\n  ...followerListeners(registry, () => kit().collaboration),\n  ...workflowListeners(registry, () => kit().workflows),\n  {\n    name: 'kit.webhooks',\n    event: '*',\n    handle: (event, trx) => kit().webhooks.listener().handle(event, trx),\n  },\n]\n`
 files['config/database.ts'] = files['config/database.ts']
   .replace('modules, fixtureModuleNames', 'modules')
   .replace(/\$\{fixtureModuleNames\.has\(module.name\).*?\}/, 'app/modules')

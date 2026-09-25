@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import { changePasswordValidator, profileValidator } from '#validators/user'
 import { logAuthActivity, requestContext } from '#services/auth_activity'
 import { revokeUserSessions } from '#services/sessions'
+import { acting } from '#services/impersonation'
 
 export default class ProfileController {
   async show({ inertia }: HttpContext) {
@@ -17,6 +18,7 @@ export default class ProfileController {
     await user.save()
     await logAuthActivity({
       userId: user.id,
+      actorId: acting(ctx),
       action: 'profile_updated',
       changes: { ...requestContext(ctx), fields: ['fullName'], previous: { fullName: previous } },
     })
@@ -35,9 +37,10 @@ export default class ProfileController {
     }
     user.password = password
     await user.save()
-    await revokeUserSessions(user.id, user.id, { except: session.sessionId })
+    await revokeUserSessions(user.id, acting(ctx), { except: session.sessionId })
     await logAuthActivity({
       userId: user.id,
+      actorId: acting(ctx),
       action: 'password_changed',
       changes: requestContext(ctx),
     })

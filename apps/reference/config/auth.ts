@@ -1,5 +1,6 @@
 import { defineConfig } from '@adonisjs/auth'
 import { sessionGuard, sessionUserProvider } from '@adonisjs/auth/session'
+import { tokensGuard, tokensUserProvider } from '@adonisjs/auth/access_tokens'
 import type { InferAuthenticators, InferAuthEvents, Authenticators } from '@adonisjs/auth/types'
 
 const authConfig = defineConfig({
@@ -19,6 +20,13 @@ const authConfig = defineConfig({
       useRememberMeTokens: false,
 
       provider: sessionUserProvider({
+        model: () => import('#models/user'),
+      }),
+    }),
+    /** Bearer tokens for /api/v1 only; browser routes keep using sessions. */
+    api: tokensGuard({
+      provider: tokensUserProvider({
+        tokens: 'accessTokens',
         model: () => import('#models/user'),
       }),
     }),

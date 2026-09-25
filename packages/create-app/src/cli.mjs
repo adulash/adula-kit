@@ -32,7 +32,7 @@ import {
 
 export const help = `Create a new business application with AdonisJS and adula
 
-  npm create @adula/app@alpha my-app
+  npm create @adula/app@latest my-app
 
   --company "Company name"     Company display name (Arabic supported)
   --admin-email email          Administrator email

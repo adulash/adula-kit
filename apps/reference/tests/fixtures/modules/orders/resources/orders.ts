@@ -111,7 +111,7 @@ export default defineResource({
       'contract',
     ],
     hidden: ['internalNote'],
-    actions: ['view', 'create', 'update', 'delete', 'submit', 'cancel'],
+    actions: ['view', 'create', 'update', 'delete', 'submit', 'cancel', 'amend'],
   },
   model: Model,
   validator,

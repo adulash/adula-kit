@@ -3,8 +3,17 @@ import hash from '@adonisjs/core/services/hash'
 import { beforeSave } from '@adonisjs/lucid/orm'
 import { compose } from '@adonisjs/core/helpers'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
+import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 
 export default class User extends compose(UserSchema, withAuthFinder(hash)) {
+  /** Personal API tokens; they act with the owner's current roles and scope. */
+  static accessTokens = DbAccessTokensProvider.forModel(User, {
+    prefix: 'adula_',
+    table: 'auth_access_tokens',
+    type: 'api_token',
+    tokenSecretLength: 40,
+  })
+
   /** E-mail is a case-insensitive identity (unique index on lower(email)). */
   @beforeSave()
   static normalizeEmail(user: User) {

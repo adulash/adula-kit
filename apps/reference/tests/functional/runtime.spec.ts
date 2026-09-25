@@ -120,7 +120,21 @@ test.group('Real Redis cache and queue delivery', (group) => {
     const repeated = await queue.useQueue('events').getJob(event.id)
     await waitUntil(async () => await repeated!.isCompleted())
     assert.lengthOf(await knex()('tasks').where('order_id', Number(order.id)), 1)
-    assert.lengthOf(await knex()('processed_events').where({ event_id: event.id }), 1)
+    // Each listener consumes the event once; follower notifications are a second listener.
+    assert.lengthOf(
+      await knex()('processed_events').where({
+        event_id: event.id,
+        listener: 'tasks.create_submission_followup',
+      }),
+      1
+    )
+    assert.lengthOf(
+      await knex()('processed_events').where({
+        event_id: event.id,
+        listener: 'kit.followers.orders.orders.submitted',
+      }),
+      1
+    )
     const published = await knex()('outbox').where('id', event.id).first()
     assert.isNotNull(published.published_at)
     assert.exists(await knex()('settings').where('key', 'worker.heartbeat').first())
@@ -178,9 +192,15 @@ test.group('Real Redis cache and queue delivery', (group) => {
     assert.equal(await queue.useQueue('events').getJobCountByTypes('failed'), 0)
     assert.isAtLeast(await queue.useQueue('events').getJobCountByTypes('completed'), pending.length)
     assert.deepEqual(await knex()('tasks').select('id').orderBy('id'), before)
-    assert.deepEqual(
-      await knex()('processed_events').select('event_id', 'listener').orderBy('event_id'),
-      events
-    )
+    // Replay never repeats an effect: every earlier (event, listener) pair is still recorded
+    // once, and the effect-bearing listener processed exactly the same events. Catch-all
+    // framework listeners may consume, for the first time, events no worker had seen.
+    const after = await knex()('processed_events')
+      .select('event_id', 'listener')
+      .orderBy('event_id')
+    assert.includeDeepMembers(after, events)
+    const effects = (rows: { listener: string }[]) =>
+      rows.filter((row) => row.listener === 'tasks.create_submission_followup')
+    assert.deepEqual(effects(after), effects(events))
   })
 })

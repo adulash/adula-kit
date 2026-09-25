@@ -2,14 +2,14 @@
 
 After signing in, open **الإعداد الأولي** to review identity and test notifications, mail receipt, storage and runtime services. See [initial setup](initial-setup.md).
 
-Version **0.2.0-alpha.1 is published and experimental**. Both `alpha` and the owner-authorized `latest` alias select this version. `next` is not published. A default installation is still experimental, not 1.0 acceptance.
+Version **1.0.0** is the accepted 1.0 release on `latest` (ADR 028). Earlier `0.2.0-alpha.*` versions remain on the `alpha` tag.
 
 ## New application: one command
 
 The standalone initializer is:
 
 ```sh
-npm create @adula/app@alpha my-app
+npm create @adula/app@latest my-app
 ```
 
 This follows npm's [scoped initializer convention](https://docs.npmjs.com/cli/v11/commands/npm-init/): `@adula/app` resolves to `@adula/create-app`. It does not require an existing AdonisJS application. Node.js 24+ and npm are host prerequisites. The default requires installed/running Docker with Compose; it runs PostgreSQL 17 and Redis 7 in isolated local containers with persistent volumes and loopback ports. Alternatively pass `--services existing --connection /path/to/local.json`; see [creator options](../packages/create-app/README.md).
@@ -21,7 +21,7 @@ Terminal instructions are English; the application stays Arabic. Interactive ter
 For local archive testing, first run `pnpm test:create` in this repository to produce the three verified archives. Then invoke the creator using their actual absolute paths:
 
 ```sh
-npm exec --yes --package=/path/to/adula-create-app-0.2.0-alpha.1.tgz -- create-adula my-app --packages /path/to/archives
+npm exec --yes --package=/path/to/adula-create-app-1.0.0.tgz -- create-adula my-app --packages /path/to/archives
 ```
 
 Run `npm run dev` inside the created application. Workers/scheduler are separate runtime processes described in its README. The creator installs application dependencies and local services; Node/Docker installation, real SMTP, OAuth, S3, off-site backup and production hosting remain explicit host/service configuration.
@@ -41,7 +41,7 @@ In the source repository, `pnpm test:consumer` builds and packs both packages in
 Inside your configured application, install the archives using their actual paths. Replace the illustrative paths below:
 
 ```sh
-pnpm add /path/to/adula-kit-0.2.0-alpha.1.tgz /path/to/adula-ui-0.2.0-alpha.1.tgz
+pnpm add /path/to/adula-kit-1.0.0.tgz /path/to/adula-ui-1.0.0.tgz
 pnpm add tailwindcss@4.3.3
 pnpm add -D shadcn@4.21.0 @tailwindcss/vite@4.3.3
 node ace configure @adula/kit
@@ -75,4 +75,4 @@ UI work uses `.agents/skills/adula-frontend-design/SKILL.md`, local shadcn compo
 
 ## Meaning of one-command installation
 
-`npm create @adula/app@alpha my-app` creates and initializes a complete application from an empty folder after the creator is published. `node ace adula:install` initializes the kit inside an existing AdonisJS application. The plan's `make deploy` deploys an application; it is not an npm installer.
+`npm create @adula/app@latest my-app` creates and initializes a complete application from an empty folder after the creator is published. `node ace adula:install` initializes the kit inside an existing AdonisJS application. The plan's `make deploy` deploys an application; it is not an npm installer.

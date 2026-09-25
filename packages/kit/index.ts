@@ -27,7 +27,72 @@ export {
   createResourceTable,
   createAttachmentsSchema,
   createSavedViewsSchema,
+  createCollaborationSchema,
+  createAssignmentsSchema,
+  createMessagingSchema,
+  createWebhooksSchema,
+  createImportsSchema,
+  createWorkflowSchema,
 } from './src/database/schema.js'
+export { defineWorkflow, nextStep } from './src/workflows/define_workflow.js'
+export type {
+  WorkflowDefinition,
+  WorkflowInput,
+  WorkflowStep,
+  WorkflowEvent,
+  StepContext,
+  Recipients,
+} from './src/workflows/define_workflow.js'
+export { WorkflowEngine, workflowListeners } from './src/workflows/engine.js'
+export type { WorkflowRun, WorkflowRunStatus, WorkflowOptions } from './src/workflows/engine.js'
+export { ImportBatches, importCell, IMPORT_ROW_LIMIT } from './src/integrations/imports.js'
+export type {
+  ImportBatch,
+  ImportStatus,
+  ImportTarget,
+  ActorSource,
+} from './src/integrations/imports.js'
+export { openApiDocument } from './src/integrations/openapi.js'
+export { renderPrintHtml, htmlToPdf } from './src/integrations/print.js'
+export type { PrintIdentity, PrintInput } from './src/integrations/print.js'
+export { Webhooks, signWebhook, WEBHOOK_MAX_ATTEMPTS } from './src/integrations/webhooks.js'
+export type {
+  SecretBox,
+  Webhook,
+  WebhookDelivery,
+  WebhookOptions,
+  HttpPoster,
+} from './src/integrations/webhooks.js'
+export {
+  MessageTemplates,
+  DEFAULT_TEMPLATES,
+  renderTemplate,
+  notifyWithTemplate,
+  deliverNotificationMail,
+  listenForNotifications,
+} from './src/core/message_templates.js'
+export type {
+  TemplateDefinition,
+  MessageTemplate,
+  RenderedMessage,
+  MailSender,
+  NotificationSignal,
+} from './src/core/message_templates.js'
+export { Assignments } from './src/collaboration/assignments.js'
+export type {
+  Assignment,
+  AssignmentPage,
+  AssignmentStatus,
+} from './src/collaboration/assignments.js'
+export { RecordCollaboration, followerListeners } from './src/collaboration/record_collaboration.js'
+export type {
+  ActorLoader,
+  CommentEntry,
+  FieldChangeEntry,
+  RecordCollaborationState,
+  MentionCandidate,
+} from './src/collaboration/record_collaboration.js'
+export type { FieldChange } from './src/events/record_mutation.js'
 export {
   registerUpload,
   findAttachment,
@@ -129,3 +194,10 @@ export type {
 } from './src/core/health.js'
 export { MailDeliveryTest, MAIL_TEST_KEY, type MailTestState } from './src/core/mail_test.js'
 export { InitialSetup, type SetupCheck } from './src/core/setup.js'
+export { KIT_VERSION } from './src/version.js'
+export {
+  capabilityCatalog,
+  SERVICES as CAPABILITY_SERVICES,
+  FIELD_TYPES,
+  WORKFLOW_STEPS,
+} from './src/commands/capabilities.js'

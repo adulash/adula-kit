@@ -11,3 +11,4 @@
 **/public/assets
 **/coverage
 *.log
+.claude

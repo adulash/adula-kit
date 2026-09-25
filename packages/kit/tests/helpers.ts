@@ -7,6 +7,12 @@ import {
   createCoreSchema,
   createAttachmentsSchema,
   createSavedViewsSchema,
+  createCollaborationSchema,
+  createAssignmentsSchema,
+  createMessagingSchema,
+  createWebhooksSchema,
+  createImportsSchema,
+  createWorkflowSchema,
   createResourceTable,
 } from '../index.js'
 import type { Actor, RecordData } from '../index.js'
@@ -75,7 +81,7 @@ export const order = defineResource({
   form: ['notes', 'total', 'customerId', 'status', 'internalNote', 'lines'],
   show: ['number', 'notes', 'total', 'customerId', 'internalNote'],
   hidden: ['internalNote'],
-  actions: ['view', 'create', 'update', 'delete', 'submit', 'cancel'],
+  actions: ['view', 'create', 'update', 'delete', 'submit', 'cancel', 'amend'],
   validator: { validate: async (data) => data as RecordData },
 })
 export const line = defineResource({
@@ -154,6 +160,12 @@ export async function setup() {
   await createCoreSchema(db)
   await createAttachmentsSchema(db)
   await createSavedViewsSchema(db)
+  await createCollaborationSchema(db)
+  await createAssignmentsSchema(db)
+  await createMessagingSchema(db)
+  await createWebhooksSchema(db)
+  await createImportsSchema(db)
+  await createWorkflowSchema(db)
   await db('org_units').insert([
     { id: 1, name: 'Root', type: 'root', path: '1' },
     { id: 2, parent_id: 1, name: 'A', type: 'unit', path: '1.2' },

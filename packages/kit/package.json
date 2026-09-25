@@ -1,7 +1,7 @@
 {
   "name": "@adula/kit",
   "description": "Resource-driven business applications for AdonisJS 7",
-  "version": "0.2.0-alpha.4",
+  "version": "1.0.0",
   "engines": {
     "node": ">=24.0.0"
   },
@@ -27,7 +27,8 @@
     "build": "node ../../scripts/clean-kit-build.mjs && tsc -p tsconfig.build.json && node ../../scripts/copy-kit-assets.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --import=@poppinss/ts-exec bin/test.ts",
-    "lint": "eslint src providers commands database tests index.ts"
+    "lint": "eslint src providers commands database tests index.ts",
+    "capabilities": "node --import=@poppinss/ts-exec bin/generate_capabilities.ts"
   },
   "keywords": [
     "adonisjs",
@@ -51,6 +52,7 @@
     "@jrmc/adonis-mcp": "2.0.0",
     "@poppinss/ts-exec": "1.4.4",
     "@types/node": "26.2.0",
+    "@types/papaparse": "5.5.2",
     "eslint": "10.9.0",
     "pg": "8.16.3",
     "typescript": "6.0.3"
@@ -80,7 +82,9 @@
   "prettier": "@adonisjs/prettier-config",
   "dependencies": {
     "@casl/ability": "7.0.1",
-    "knex": "3.3.0"
+    "knex": "3.3.0",
+    "papaparse": "5.7.0",
+    "xstate": "5.33.2"
   },
   "repository": {
     "type": "git",

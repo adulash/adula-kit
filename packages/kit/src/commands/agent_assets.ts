@@ -18,6 +18,11 @@ export async function agentAssets() {
   for (const [source, target] of [
     ['idea-review', 'adula-idea-review'],
     ['adula-frontend-design', 'adula-frontend-design'],
+    ['module-review', 'adula-module-review'],
+    ['security-review', 'adula-security-review'],
+    ['schema-review', 'adula-schema-review'],
+    ['ui-review', 'adula-ui-review'],
+    ['perf-review', 'adula-perf-review'],
   ]) {
     skills[`.agents/skills/${target}/SKILL.md`] = await readFile(
       new URL(`../../agent/skills/${source}/SKILL.md`, import.meta.url),

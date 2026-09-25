@@ -4,8 +4,14 @@ export function identifier(value: string): string {
   if (!/^[a-z][a-z0-9_]*$/.test(value)) throw new Error(`Unsafe SQL identifier: ${value}`)
   return value
 }
+const columns = new Map<string, string>()
+/** camelCase field key → snake_case column; validated once and memoized (hot in row mapping). */
 export function columnName(name: string): string {
-  return identifier(name.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`))
+  const cached = columns.get(name)
+  if (cached !== undefined) return cached
+  const column = identifier(name.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`))
+  if (columns.size < 10000) columns.set(name, column)
+  return column
 }
 export function defineResource<const F extends Record<string, Field>>(
   input: ResourceInput<F>

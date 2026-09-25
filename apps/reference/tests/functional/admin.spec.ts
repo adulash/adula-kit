@@ -457,7 +457,7 @@ test.group('Core administration screens', (group) => {
     const created = await client
       .post('/resources/customers')
       .loginAs(other)
-      .withSession({ impersonator_id: admin.id })
+      .withSession({ impersonator_id: { adminId: admin.id, targetId: other.id } })
       .withCsrfToken()
       .header('Accept', 'application/json')
       .json({ name: `عميل منتحل ${randomUUID()}` })

@@ -167,13 +167,15 @@ await ace('tests', ['test'], { env: { ...consumerEnv, NODE_ENV: 'test' } })
 await ace('install', ['adula:install'])
 const capabilities = await ace('capabilities', ['adula:capabilities'])
 assert(
-  capabilities.includes(`Version ${kit.version}, experimental alpha`),
+  capabilities.includes(`# adula-kit capabilities (${kit.version})`),
   'Packed capability catalog has a stale version'
 )
+// The generated catalog reads this consumer's registry, not only the kit.
 assert(
-  capabilities.includes('business frontend-design'),
-  'Packed catalog is missing the design capability'
+  capabilities.includes('### examples') && capabilities.includes('`samples`'),
+  'The capability catalog does not list the consumer module and resource'
 )
+assert(capabilities.includes('adula:resource'), 'The catalog is missing the kit commands')
 const lockPath = join(target, 'ui.lock.json')
 const uiLock = JSON.parse(await readFile(lockPath, 'utf8'))
 const registryRoot = join(repo, 'packages/ui/build')

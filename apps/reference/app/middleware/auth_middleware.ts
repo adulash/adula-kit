@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import type { Authenticators } from '@adonisjs/auth/types'
 import { ensureSessionActive } from '#services/sessions'
+import { endImpersonation } from '#services/impersonation'
 
 /**
  * Auth middleware is used authenticate HTTP requests and deny
@@ -25,6 +26,7 @@ export default class AuthMiddleware {
     const state = await ensureSessionActive(ctx)
     if (!state.active) {
       await ctx.auth.use('web').logout()
+      endImpersonation(ctx.session)
       const message =
         state.reason === 'disabled'
           ? 'هذا الحساب معطّل. تواصل مع مدير النظام.'

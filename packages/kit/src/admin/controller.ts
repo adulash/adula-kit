@@ -24,6 +24,7 @@ export interface ResourceController {
   destroy(ctx: HttpContext): Promise<unknown>
   submit(ctx: HttpContext): Promise<unknown>
   cancel(ctx: HttpContext): Promise<unknown>
+  amend(ctx: HttpContext): Promise<unknown>
   create(ctx: HttpContext): Promise<unknown>
   edit(ctx: HttpContext): Promise<unknown>
   options(ctx: HttpContext): Promise<unknown>
@@ -62,6 +63,7 @@ export function createResourceController(
           sort: ctx.request.input('sort'),
           direction: ctx.request.input('direction'),
           filters: ctx.request.input('filters'),
+          tag: ctx.request.input('tag'),
           estimate:
             ctx.request.input('estimate') !== 'false' && ctx.request.input('estimate') !== false,
         })
@@ -110,6 +112,13 @@ export function createResourceController(
     }
     async cancel(ctx: HttpContext) {
       return this.#transition(ctx, 'cancel')
+    }
+    async amend(ctx: HttpContext) {
+      return this.#execute(ctx, async ({ resources, actor }, resource) =>
+        ctx.response.created({
+          data: await resources.amend(resource.name, this.#id(ctx), actor),
+        })
+      )
     }
     #id(ctx: HttpContext) {
       return this.#positiveId(ctx.params.id)

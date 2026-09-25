@@ -1,6 +1,6 @@
 {
   "version": "0.2.0-alpha.1",
-  "kitCompatibility": "0.2",
+  "kitCompatibility": "1.0",
   "files": {
     "inertia/components/ui/button.tsx": {
       "hash": "79dd6f75f8136394442202d6b8b922fb269eaad0a5dba579397c9d5b41f893bb",
@@ -103,7 +103,7 @@
       "component": "alert"
     },
     "inertia/components/ui/resource-page.tsx": {
-      "hash": "b42141dd839d557a40275a1fda0964cfc1fe63a6a633349001c93069b9e24fa0",
+      "hash": "5a6b18019101a3c55a7a316a9d4c6ed9a241ff32d83f32e39b5dd4d9f8c39dec",
       "component": "resource-page"
     },
     "inertia/components/ui/data-table.tsx": {
@@ -127,11 +127,11 @@
       "component": "resource-field"
     },
     "inertia/components/ui/resource-show.tsx": {
-      "hash": "757e2ecf2201c859a0f29226f4bad2b717e88a4d141830d7ef58c2e09950fc99",
+      "hash": "bb9ba889bc285e2d6779f7e639a3aecaa2a1aa5b1ef8fc75921643d31bc6681a",
       "component": "resource-show"
     },
     "inertia/components/ui/resource-actions.tsx": {
-      "hash": "738245c46e2dc5e6ada362ed24eb13369618648f435f21e06d7b099fef63c91a",
+      "hash": "c0a7f4e1e7173fae477916d9a7318c5b88ae280ffda0f60da18f17a9ea93f9cb",
       "component": "resource-actions"
     },
     "inertia/components/ui/resource-surface.tsx": {
@@ -153,6 +153,22 @@
     "inertia/components/ui/calendar_date.ts": {
       "hash": "f41962e057abf26945ce77f16625af7f12ead8f5ad68eed3508b3f4f8c11aeb5",
       "component": "calendar-date"
+    },
+    "inertia/components/ui/record-collaboration.tsx": {
+      "hash": "5df96ae393a67b982c39872ff5315f9416eee011116b653719907d511b0163a1",
+      "component": "record-collaboration"
+    },
+    "inertia/components/ui/record-assignments.tsx": {
+      "hash": "4992b87d47da4a4c0ce794421cbc48b4d149032daf17a997be31304eaae4fe8a",
+      "component": "record-assignments"
+    },
+    "inertia/components/ui/resource-import.tsx": {
+      "hash": "f839742219c04986b61aa65a0a3493f642ebfe43f4d690e2b2fe33f44fb21e30",
+      "component": "resource-import"
+    },
+    "inertia/components/ui/record-workflows.tsx": {
+      "hash": "c1eac083491ffc4463767b1e07aa0a6c472f71f34edcc90c47b77eef9f4b1fdd",
+      "component": "record-workflows"
     }
   }
 }

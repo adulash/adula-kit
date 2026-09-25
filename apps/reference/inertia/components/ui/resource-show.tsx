@@ -1,6 +1,6 @@
 import { Deferred, router } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
-import { History, Pencil } from 'lucide-react'
+import { History, Pencil, Printer } from 'lucide-react'
 import type {
   ResourceActivity,
   ResourceChildren as Children,
@@ -15,6 +15,9 @@ import { Can } from '~/components/ui/can'
 import { Skeleton } from '~/components/ui/skeleton'
 import { ResourceActions } from '~/components/ui/resource-actions'
 import { ResourceValue, formatDatetime, type LookupOptions } from '~/components/ui/resource-value'
+import { RecordCollaboration } from '~/components/ui/record-collaboration'
+import { RecordAssignments } from '~/components/ui/record-assignments'
+import { RecordWorkflows } from '~/components/ui/record-workflows'
 
 export type ResourceChildren = Children
 const meta = new Set(['id', 'version', 'docStatus', 'orgUnitId'])
@@ -68,6 +71,12 @@ export function ResourceShow({
             </Link>
           </Button>
         </Can>
+        <Button variant="outline" asChild>
+          <a href={`${base}/print`} target="_blank" rel="noopener">
+            <Printer size={15} />
+            طباعة
+          </a>
+        </Button>
         <ResourceActions
           resource={resource.name}
           id={result.data.id as number}
@@ -184,6 +193,15 @@ export function ResourceShow({
           </div>
         </Deferred>
       )}
+      {resource.submittable && (
+        <RecordWorkflows resource={resource.name} id={result.data.id as number} />
+      )}
+      <RecordAssignments
+        resource={resource.name}
+        id={result.data.id as number}
+        canAssign={Boolean(result.permissions.update)}
+      />
+      <RecordCollaboration resource={resource} id={result.data.id as number} />
       <Deferred data="activity" fallback={<SectionSkeleton title="سجل النشاط" rows={4} />}>
         <section aria-label="سجل النشاط" className="rounded-xl border bg-white">
           <div className="flex items-center gap-2 border-b px-7 py-4">

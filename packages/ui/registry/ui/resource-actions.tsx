@@ -14,16 +14,18 @@ import {
 } from '~/components/ui/dialog'
 import { Can } from '~/components/ui/can'
 
-export type TransitionAction = 'delete' | 'submit' | 'cancel'
+export type TransitionAction = 'delete' | 'submit' | 'cancel' | 'amend'
 export const transitionLabels: Record<TransitionAction, string> = {
   delete: 'حذف السجل',
   submit: 'اعتماد المستند',
   cancel: 'إلغاء الاعتماد',
+  amend: 'تعديل بالنسخ',
 }
 const descriptions: Record<TransitionAction, string> = {
   delete: 'سيُخفى السجل من القوائم ولن يمكن تعديله بعد الحذف.',
   submit: 'بعد الاعتماد لا يمكن تعديل المستند أو بنوده.',
   cancel: 'سيُعاد المستند إلى حالة الإلغاء ولن يُحتسب.',
+  amend: 'تُنشأ مسودة جديدة منسوخة من هذا المستند الملغي مع بنوده، ويبقى الأصل كما هو.',
 }
 
 export function failureMessage(error: unknown, fallback: string) {
@@ -67,7 +69,7 @@ export function ResourceActions({
     setBusy(true)
     setFailure('')
     try {
-      await axios.request({
+      const response = await axios.request({
         method: pending === 'delete' ? 'delete' : 'post',
         url: pending === 'delete' ? base : `${base}/${pending}`,
         data: version === undefined ? {} : { version },
@@ -77,7 +79,9 @@ export function ResourceActions({
       toast.success(`تم ${transitionLabels[pending]}`)
       const done = pending
       setPending(null)
-      if (onDone) onDone(done)
+      // The amended copy is a new draft; continue editing it.
+      if (done === 'amend') router.visit(`/resources/${resource}/${response.data.data.id}/edit`)
+      else if (onDone) onDone(done)
       else if (done === 'delete') router.visit(`/resources/${resource}`)
       else router.reload()
     } catch (error) {
@@ -89,7 +93,7 @@ export function ResourceActions({
   }
   return (
     <>
-      {(['submit', 'cancel', 'delete'] as const).map((action) => (
+      {(['submit', 'cancel', 'amend', 'delete'] as const).map((action) => (
         <Can key={action} permissions={permissions} action={action}>
           <Button
             type="button"

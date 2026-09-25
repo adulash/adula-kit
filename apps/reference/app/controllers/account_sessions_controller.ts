@@ -7,6 +7,7 @@ import {
   revokeUserSessions,
   sessionHandle,
 } from '#services/sessions'
+import { acting, endImpersonation } from '#services/impersonation'
 
 export default class AccountSessionsController {
   async index({ inertia, auth, session }: HttpContext) {
@@ -18,7 +19,8 @@ export default class AccountSessionsController {
   }
 
   /** Ending the current session signs the user out at once. */
-  async destroy({ auth, params, response, session }: HttpContext) {
+  async destroy(ctx: HttpContext) {
+    const { auth, params, response, session } = ctx
     const user = auth.getUserOrFail()
     const id = await resolveSessionHandle(String(params.id), user.id)
     if (!id)
@@ -26,9 +28,10 @@ export default class AccountSessionsController {
         status: 404,
         code: 'E_ROUTE_NOT_FOUND',
       })
-    await revokeSession(id, user.id)
+    await revokeSession(id, acting(ctx))
     if (id === session.sessionId) {
       await auth.use('web').logout()
+      endImpersonation(session)
       session.flash('success', 'أُنهيت جلستك الحالية. سجّل الدخول مجدداً عند الحاجة.')
       return response.redirect().toRoute('session.create')
     }
@@ -36,9 +39,10 @@ export default class AccountSessionsController {
     return response.redirect().toRoute('account_sessions.index')
   }
 
-  async purge({ auth, response, session }: HttpContext) {
+  async purge(ctx: HttpContext) {
+    const { auth, response, session } = ctx
     const user = auth.getUserOrFail()
-    const count = await revokeUserSessions(user.id, user.id, { except: session.sessionId })
+    const count = await revokeUserSessions(user.id, acting(ctx), { except: session.sessionId })
     session.flash('success', count ? `أُنهيت ${count} من الجلسات الأخرى.` : 'لا توجد جلسات أخرى.')
     return response.redirect().toRoute('account_sessions.index')
   }

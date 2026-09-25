@@ -16,6 +16,7 @@ import { Button } from '~/components/ui/button'
 import { DataTable } from '~/components/ui/data-table'
 import { ResourceForm } from '~/components/ui/resource-form'
 import { ResourceShow } from '~/components/ui/resource-show'
+import { ResourceImport } from '~/components/ui/resource-import'
 import { ResourceSurface, type ResourcePresentation } from '~/components/ui/resource-surface'
 
 /** The discriminated view stays nested: Inertia's page typing flattens top-level unions. */
@@ -71,12 +72,15 @@ export function ResourcePage({
             </p>
           </div>
           {view.mode === 'index' && view.resource.canCreate && (
-            <Button asChild>
-              <Link href={`/resources/${name}/create`}>
-                <Plus size={16} />
-                إضافة سجل
-              </Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <ResourceImport resource={name} label={label} />
+              <Button asChild>
+                <Link href={`/resources/${name}/create`}>
+                  <Plus size={16} />
+                  إضافة سجل
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
       )}

@@ -14,7 +14,7 @@ import { accessibleBy, conditionSql } from '../auth/sql.js'
 import { fromRow, selectedFields, serialize, writableInput } from './contracts.js'
 import { KitError } from './errors.js'
 import { sequence } from '../services/settings.js'
-import { recordMutation } from '../events/record_mutation.js'
+import { recordMutation, type FieldChange } from '../events/record_mutation.js'
 import { fieldValue } from '../resource/values.js'
 import {
   claimAttachment,
@@ -29,6 +29,11 @@ import type {
   ResourceField,
 } from './presentation.js'
 
+/** Per-process cache of planner row estimates for identical list queries. */
+const estimates = new Map<string, { rows: number; at: number }>()
+const ESTIMATE_TTL_MS = 30_000
+const ESTIMATE_CACHE_LIMIT = 500
+
 export type ListOptions = {
   limit?: number
   cursor?: string
@@ -36,6 +41,8 @@ export type ListOptions = {
   sort?: string
   direction?: 'asc' | 'desc'
   filters?: Record<string, unknown>
+  /** Only records carrying this tag (see RecordCollaboration.setTags). */
+  tag?: string
   estimate?: boolean
 }
 
@@ -66,6 +73,11 @@ export class ResourceService {
     private db: Knex,
     private registry: ResourceRegistry
   ) {}
+
+  /** The Arabic label of a registered resource, for notifications and titles. */
+  label(name: string) {
+    return this.registry.get(name).label.ar
+  }
 
   /** Project navigation is derived from registered resources and the current actor. */
   navigation(actor: Actor): ResourceNavigation {
@@ -145,7 +157,7 @@ export class ResourceService {
             !['update', 'delete', 'submit'].includes(action) ||
             record.docStatus === 0) &&
           (action !== 'cancel' || (resource.submittable && record.docStatus === 1)) &&
-          action !== 'amend',
+          (action !== 'amend' || (resource.submittable && record.docStatus === 2)),
       ])
     )
   }
@@ -236,6 +248,42 @@ export class ResourceService {
       throw new KitError(403, 'E_FORBIDDEN', 'ليس لديك صلاحية لهذا الإجراء')
   }
 
+  /**
+   * Authorizes one record for collaboration features (comments, tags, assignments...).
+   * Scope and conditional rules apply exactly as for show/update.
+   */
+  async access(
+    name: string,
+    id: number,
+    actor: Actor,
+    action: Action = 'view',
+    db: Knex = this.db
+  ) {
+    let resource: Resource
+    try {
+      resource = this.registry.get(name)
+    } catch {
+      throw new KitError(404, 'E_NOT_FOUND', 'الكيان غير موجود')
+    }
+    if (!Number.isSafeInteger(id) || id <= 0)
+      throw new KitError(404, 'E_NOT_FOUND', 'السجل غير موجود')
+    const ability = this.authorizeAction(resource, actor, action)
+    const record = await this.find(db, resource, actor, ability, id)
+    this.requireRecord(ability, actor, resource, action, record)
+    return { resource, record, ability }
+  }
+
+  /** Whether a (possibly other) actor may perform an action on a record; never throws for denial. */
+  async permits(name: string, id: number, actor: Actor, action: Action = 'view') {
+    try {
+      await this.access(name, id, actor, action)
+      return true
+    } catch (error) {
+      if (error instanceof KitError && [403, 404].includes(error.status)) return false
+      throw error
+    }
+  }
+
   async list(name: string, actor: Actor, options: ListOptions = {}) {
     const resource = this.registry.get(name)
     const ability = this.authorizeAction(resource, actor, 'view')
@@ -273,15 +321,36 @@ export class ResourceService {
         throw new KitError(422, 'E_FILTER', 'Invalid filter value')
       query.where(`r.${resource.fields[key].column ?? columnName(key)}`, value as string)
     }
+    if (options.tag !== undefined && options.tag !== null && options.tag !== '') {
+      if (typeof options.tag !== 'string' || options.tag.length > 60)
+        throw new KitError(422, 'E_FILTER', 'Invalid tag filter')
+      query.whereExists((exists) =>
+        exists
+          .from('taggables as tg')
+          .join('tags as tn', 'tn.id', 'tg.tag_id')
+          .where('tg.resource', name)
+          .whereRaw('tg.record_id = r.id')
+          .where('tn.name', options.tag as string)
+      )
+    }
     // Estimate the authorized, filtered query, never the deployment-wide table cardinality.
     // Only the first page pays for the extra planner round trip; later pages keep its figure.
     let estimatedTotal: number | undefined
     if (options.estimate !== false && !options.cursor) {
       const compiled = query.clone().clearSelect().select('r.id').toSQL()
-      const estimate = await this.db.raw(`EXPLAIN (FORMAT JSON) ${compiled.sql}`, [
-        ...compiled.bindings,
-      ])
-      estimatedTotal = Number(estimate.rows[0]['QUERY PLAN'][0].Plan['Plan Rows'])
+      // The planner estimate is approximate by nature; reuse it briefly for the same
+      // authorized, filtered query instead of planning it on every first page.
+      const key = `${compiled.sql}\u0000${JSON.stringify(compiled.bindings)}`
+      const cached = estimates.get(key)
+      if (cached && cached.at > Date.now() - ESTIMATE_TTL_MS) estimatedTotal = cached.rows
+      else {
+        const estimate = await this.db.raw(`EXPLAIN (FORMAT JSON) ${compiled.sql}`, [
+          ...compiled.bindings,
+        ])
+        estimatedTotal = Number(estimate.rows[0]['QUERY PLAN'][0].Plan['Plan Rows'])
+        if (estimates.size >= ESTIMATE_CACHE_LIMIT) estimates.delete(estimates.keys().next().value!)
+        estimates.set(key, { rows: estimatedTotal, at: Date.now() })
+      }
     }
     if (options.cursor) {
       let cursor: { id: number; value: unknown; sort: string; direction: string }
@@ -813,7 +882,7 @@ export class ResourceService {
         id === undefined
           ? await trx(name).insert(values).returning('*')
           : await trx(name).where({ id }).update(values).returning('*')
-      const saved = { ...fromRow(row, resource), orgPath: candidate.orgPath }
+      const saved: RecordData = { ...fromRow(row, resource), orgPath: candidate.orgPath }
       for (const [key, field] of Object.entries(resource.fields)) {
         if (field.type !== 'attachment' || !(key in candidate)) continue
         const next = isAttachmentId(candidate[key]) ? candidate[key] : null
@@ -894,7 +963,16 @@ export class ResourceService {
           )
         }
       }
-      await this.audit(trx, resource, actor, action, saved, Object.keys(form))
+      const changes: FieldChange[] = []
+      if (id !== undefined)
+        for (const key of Object.keys(resource.fields)) {
+          if (resource.fields[key].type === 'hasMany' || !(key in saved)) continue
+          const before = existing[key] ?? null
+          const after = saved[key] ?? null
+          if (JSON.stringify(before) !== JSON.stringify(after))
+            changes.push({ field: key, before, after })
+        }
+      await this.audit(trx, resource, actor, action, saved, Object.keys(form), changes)
       await resource.hooks?.afterSave?.(saved, context)
       return serialize(resource, await this.hydrateOne(trx, resource, saved), ability, actor)
     }
@@ -992,13 +1070,101 @@ export class ResourceService {
     }
     return transaction ? work(transaction) : this.db.transaction(work)
   }
+  /**
+   * Amend-by-copy: a cancelled document is copied into a new draft that points to
+   * it through amended_from_id, together with its inline lines. The original stays
+   * cancelled and unchanged; sequence fields receive new numbers.
+   */
+  async amend(name: string, id: number, actor: Actor, transaction?: Knex.Transaction) {
+    const resource = this.registry.get(name)
+    if (!resource.submittable)
+      throw new KitError(409, 'E_DOCUMENT_STATE', 'Only submittable documents can be amended')
+    const ability = this.authorizeAction(resource, actor, 'amend')
+    const work = async (trx: Knex.Transaction) => {
+      const source = await this.find(trx, resource, actor, ability, id, true)
+      this.requireRecord(ability, actor, resource, 'amend', source)
+      if (source.docStatus !== 2)
+        throw new KitError(409, 'E_DOCUMENT_STATE', 'Only cancelled documents can be amended')
+      const existing = await trx(name)
+        .where('amended_from_id', id)
+        .whereNull('deleted_at')
+        .first('id')
+      if (existing)
+        throw new KitError(409, 'E_ALREADY_AMENDED', 'تم تعديل هذا المستند بالنسخ من قبل')
+      const values: RecordData = {
+        created_by: actor.id,
+        updated_by: actor.id,
+        doc_status: 0,
+        amended_from_id: id,
+      }
+      if (resource.scoped) values.org_unit_id = source.orgUnitId
+      if (resource.version) values.version = 1
+      const copied: string[] = []
+      for (const [key, field] of Object.entries(resource.fields)) {
+        if (field.type === 'hasMany' || !(key in source)) continue
+        const column = field.column ?? columnName(key)
+        if (field.sequence) values[column] = await sequence(trx, field.sequence)
+        else if (field.type === 'attachment') continue
+        else {
+          values[column] = field.type === 'json' ? JSON.stringify(source[key]) : source[key]
+          copied.push(key)
+        }
+      }
+      const [row] = await trx(name).insert(values).returning('*')
+      const saved: RecordData = { ...fromRow(row, resource), orgPath: source.orgPath }
+      for (const field of Object.values(resource.fields)) {
+        if (field.type !== 'hasMany' || !field.inline) continue
+        const child = this.registry.get(field.resource)
+        const foreign = child.fields[field.foreignKey].column ?? columnName(field.foreignKey)
+        const lines = await trx(child.name).where(foreign, id).whereNull('deleted_at').orderBy('id')
+        for (const line of lines) {
+          const copy: RecordData = {
+            created_by: actor.id,
+            updated_by: actor.id,
+            [foreign]: row.id,
+          }
+          if (child.scoped) copy.org_unit_id = line.org_unit_id
+          if (child.version) copy.version = 1
+          for (const [key, childField] of Object.entries(child.fields)) {
+            const column = childField.column ?? columnName(key)
+            if (
+              key === field.foreignKey ||
+              childField.type === 'hasMany' ||
+              childField.type === 'attachment' ||
+              !(column in line)
+            )
+              continue
+            copy[column] = childField.sequence
+              ? await sequence(trx, childField.sequence)
+              : childField.type === 'json'
+                ? JSON.stringify(line[column])
+                : line[column]
+          }
+          const [inserted] = await trx(child.name).insert(copy).returning('id')
+          await this.audit(
+            trx,
+            child,
+            actor,
+            'create',
+            { id: inserted.id },
+            Object.keys(child.fields)
+          )
+        }
+      }
+      await this.audit(trx, resource, actor, 'amend', saved, copied)
+      return serialize(resource, await this.hydrateOne(trx, resource, saved), ability, actor)
+    }
+    return transaction ? work(transaction) : this.db.transaction(work)
+  }
+
   private async audit(
     trx: Knex.Transaction,
     resource: Resource,
     actor: Actor,
     action: Action,
     record: RecordData,
-    fields: string[]
+    fields: string[],
+    changes?: FieldChange[]
   ) {
     await recordMutation(trx, {
       module: this.registry.owner(resource.name),
@@ -1008,6 +1174,7 @@ export class ResourceService {
       impersonatorId: actor.impersonatorId,
       action,
       fields,
+      changes,
     })
   }
 }

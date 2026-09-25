@@ -6,6 +6,8 @@ export default class AdulaWorker extends BaseCommand {
   static options = { startApp: true, staysAlive: true }
   async run() {
     const { publishEvents } = await import('#services/events')
+    const { deliverNotificationEmails } = await import('#services/notification_mail')
+    const { kit } = await import('#services/kit')
     const { default: db } = await import('@adonisjs/lucid/services/db')
     const { Settings } = await import('@adula/kit')
     const worker = await this.kernel.exec('queue:work', [])
@@ -17,6 +19,13 @@ export default class AdulaWorker extends BaseCommand {
       active = (async () => {
         try {
           await publishEvents()
+          await deliverNotificationEmails()
+          await kit().workflows.tick()
+          await kit().imports.process()
+          await kit().webhooks.deliver(async (url, init) => {
+            const response = await fetch(url, { method: 'POST', redirect: 'manual', ...init })
+            return { status: response.status }
+          })
           await new Settings(db.connection().getWriteClient()).set(
             'worker.heartbeat',
             new Date().toISOString()

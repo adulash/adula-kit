@@ -6,7 +6,7 @@ import { mkdir, open, readFile, rm, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { basename, join } from 'node:path'
 import { prepareConsumer, repo, work } from './prepare-consumer.mjs'
-import { requireSyntheticRehearsal } from './upgrade-mode.mjs'
+import { upgradeMode } from './upgrade-mode.mjs'
 
 /**
  * 0.1.0 was never tagged, so the baseline is reconstructed from the current source by
@@ -19,7 +19,9 @@ const WITHHELD_FROM_BASELINE = [
 ]
 
 // Refuse ambiguous use before creating databases, repacking or rewriting manifests.
-const previous = requireSyntheticRehearsal(process.argv.slice(2), process.env)
+const current = JSON.parse(await readFile(join(repo, 'packages/kit/package.json'), 'utf8')).version
+const { mode, previous } = upgradeMode(process.argv.slice(2), process.env, current)
+const genuine = mode === 'published'
 const pnpmEntry = process.env.npm_execpath
 assert(
   pnpmEntry && basename(pnpmEntry).includes('pnpm'),
@@ -86,27 +88,44 @@ async function pack(version, { withhold = [] } = {}) {
 }
 
 const { Client } = createRequire(join(repo, 'apps/reference/package.json'))('pg')
-async function savedViewColumns(url) {
+async function query(url, sql, params = []) {
   const client = new Client(url)
   try {
     await client.connect()
-    const result = await client.query(
-      "select column_name from information_schema.columns where table_name = 'saved_views' order by 1"
-    )
-    return result.rows.map((row) => row.column_name)
+    return (await client.query(sql, params)).rows
   } finally {
     await client.end()
   }
 }
+async function columnsOf(url, table) {
+  const rows = await query(
+    url,
+    'select column_name from information_schema.columns where table_name = $1 order by 1',
+    [table]
+  )
+  return rows.map((row) => row.column_name)
+}
+// The synthetic baseline withholds saved_views; published baselines predate the phase 3 tables.
+const deliveredTable = genuine ? 'comments' : 'saved_views'
+const deliveredColumns = genuine
+  ? ['author_id', 'body', 'id', 'record_id', 'resource']
+  : ['id', 'name', 'query', 'resource', 'shared', 'user_id']
 
 const released = JSON.parse(await readFile(join(repo, 'packages/kit/package.json'), 'utf8')).version
 assert.notEqual(previous, released, 'The upgrade test needs two different versions')
-console.log(`SYNTHETIC rehearsal: ${previous} -> ${released}; not published-version acceptance`)
+console.log(
+  genuine
+    ? `GENUINE upgrade: published ${previous} from npm -> ${released}`
+    : `SYNTHETIC rehearsal: ${previous} -> ${released}; not published-version acceptance`
+)
 
 let consumer
 try {
-  await pack(previous, { withhold: WITHHELD_FROM_BASELINE })
-  consumer = await prepareConsumer()
+  if (genuine) consumer = await prepareConsumer({ baseline: previous })
+  else {
+    await pack(previous, { withhold: WITHHELD_FROM_BASELINE })
+    consumer = await prepareConsumer()
+  }
   const target = consumer.root
   const consumerEnv = { ...process.env }
   for (const line of (await readFile(join(target, '.env.test'), 'utf8')).trim().split(/\r?\n/)) {
@@ -160,12 +179,25 @@ try {
   )
   const customized = { button: await digest(buttonPath), page: await digest(overridePath) }
   await runPnpm('consumer-typecheck-previous', ['exec', 'tsc', '--noEmit'], options)
+  const installedPrevious = JSON.parse(
+    await readFile(join(target, 'node_modules/@adula/kit/package.json'), 'utf8')
+  )
+  assert.equal(installedPrevious.version, previous, 'The consumer must start on the baseline')
   assert.deepEqual(
-    await savedViewColumns(consumerEnv.TEST_DATABASE_URL),
+    await columnsOf(consumerEnv.TEST_DATABASE_URL, deliveredTable),
     [],
     'The baseline must not already carry the table the upgrade delivers'
   )
-  console.log('PASS baseline-has-no-saved-views')
+  console.log(`PASS baseline-has-no-${deliveredTable}`)
+  // Consumer data written on the baseline must survive the upgrade.
+  const [{ count: usersBefore }] = await query(
+    consumerEnv.TEST_DATABASE_URL,
+    'select count(*)::int as count from users'
+  )
+  const [{ count: activitiesBefore }] = await query(
+    consumerEnv.TEST_DATABASE_URL,
+    'select count(*)::int as count from activities'
+  )
 
   // ---- Current source is repacked; neither archive was published ----
   await pack(released)
@@ -190,10 +222,21 @@ try {
   assert.match(drift, /FAIL/, 'Doctor must fail on an unfinished upgrade')
 
   await ace('migrate-upgrade', ['migration:run', '--force'])
-  const columns = await savedViewColumns(consumerEnv.TEST_DATABASE_URL)
-  for (const column of ['id', 'name', 'query', 'resource', 'shared', 'user_id'])
-    assert.ok(columns.includes(column), `The upgraded schema is missing saved_views.${column}`)
+  const columns = await columnsOf(consumerEnv.TEST_DATABASE_URL, deliveredTable)
+  for (const column of deliveredColumns)
+    assert.ok(columns.includes(column), `The upgraded schema is missing ${deliveredTable}.${column}`)
   console.log('PASS additive-migration-applied')
+  const [{ count: usersAfter }] = await query(
+    consumerEnv.TEST_DATABASE_URL,
+    'select count(*)::int as count from users'
+  )
+  const [{ count: activitiesAfter }] = await query(
+    consumerEnv.TEST_DATABASE_URL,
+    'select count(*)::int as count from activities'
+  )
+  assert.equal(usersAfter, usersBefore, 'The upgrade changed consumer users')
+  assert.ok(activitiesAfter >= activitiesBefore, 'The upgrade lost consumer activity history')
+  console.log('PASS consumer-data-preserved')
   await ace('install-upgrade', ['adula:install'])
 
   // ---- Ownership held: a customization blocks a silent overwrite and must be reviewed ----
@@ -203,9 +246,18 @@ try {
   assert.match(protection, /customized/i, 'Reinstalling UI must refuse to overwrite a customization')
   assert.equal(await digest(buttonPath), customized.button, 'A refused install still wrote the file')
 
-  // Doctor keeps failing until the registry review is finished; that is the gate.
-  const blocked = await ace('doctor-before-review', ['adula:doctor'], { failure: true })
-  assert.match(blocked, /ui\.compatibility/, 'Doctor must demand the UI compatibility review')
+  // UI compatibility is tracked per minor version. Across a minor change doctor keeps
+  // failing until the registry review is finished; within one minor the registry stays
+  // compatible and doctor still names the customized files that need a review.
+  const minor = (version) => version.split('.').slice(0, 2).join('.')
+  if (minor(previous) !== minor(released)) {
+    const blocked = await ace('doctor-before-review', ['adula:doctor'], { failure: true })
+    assert.match(blocked, /ui\.compatibility/, 'Doctor must demand the UI compatibility review')
+  } else {
+    const sameMinor = await ace('doctor-before-review', ['adula:doctor'])
+    assert.match(sameMinor, /PASS ui\.compatibility/, 'Same-minor registries stay compatible')
+    assert.match(sameMinor, /ui\.pages: UI review required/, 'Doctor must list pages to review')
+  }
 
   await ace('ui-preview', ['adula:ui', 'add', 'all', '--preview'])
   assert.equal(await digest(buttonPath), customized.button, 'A preview modified project files')
@@ -226,11 +278,15 @@ try {
   await ace('tests-upgraded', ['test'], { env: { ...consumerEnv, NODE_ENV: 'test' } })
   await ace('build-upgraded', ['build'])
 
-  console.log(`\nSynthetic regression verified at ${target}; genuine upgrade acceptance remains pending`)
+  console.log(
+    genuine
+      ? `\nGenuine upgrade verified at ${target}: published ${previous} -> ${released}`
+      : `\nSynthetic regression verified at ${target}; genuine upgrade acceptance remains pending`
+  )
   console.log(`${previous} -> ${released}: additive migration ran, doctor gated the drift,`)
   console.log('the customized component and the overridden page were preserved.')
 } finally {
-  await setVersion(released)
+  if (!genuine) await setVersion(released)
   await runPnpm('restore-build', ['--filter', '@adula/kit', 'build']).catch(() => {})
   await runPnpm('restore-ui-build', ['--filter', '@adula/ui', 'build']).catch(() => {})
 }

@@ -10,6 +10,7 @@
 import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import router from '@adonisjs/core/services/router'
+import transmit from '@adonisjs/transmit/services/main'
 import db from '@adonisjs/lucid/services/db'
 import { Settings } from '@adula/kit'
 import redis from '@adonisjs/redis/services/main'
@@ -25,6 +26,13 @@ import {
 const ResourcesController = () => import('#controllers/resources_controller')
 const AttachmentsController = () => import('#controllers/attachments_controller')
 const SavedViewsController = () => import('#controllers/saved_views_controller')
+const AssignmentsController = () => import('#controllers/assignments_controller')
+const ApiTokensController = () => import('#controllers/api_tokens_controller')
+const OpenApiController = () => import('#controllers/openapi_controller')
+const PrintController = () => import('#controllers/print_controller')
+const ImportsController = () => import('#controllers/imports_controller')
+const WorkflowsController = () => import('#controllers/workflows_controller')
+const RecordCollaborationController = () => import('#controllers/record_collaboration_controller')
 const PasswordResetController = () => import('#controllers/password_reset_controller')
 const UserInvitationsController = () => import('#controllers/user_invitations_controller')
 const OauthController = () => import('#controllers/oauth_controller')
@@ -39,8 +47,29 @@ const AdminJobsController = () => import('#controllers/admin/jobs_controller')
 const AdminSettingsController = () => import('#controllers/admin/settings_controller')
 const SetupController = () => import('#controllers/admin/setup_controller')
 const NotificationsController = () => import('#controllers/admin/notifications_controller')
+const AdminTemplatesController = () => import('#controllers/admin/templates_controller')
+const AdminWebhooksController = () => import('#controllers/admin/webhooks_controller')
 
 router.on('/').renderInertia('home', {}).as('home')
+
+// Realtime notification signals: every Transmit route requires a signed-in user.
+transmit.registerRoutes((route) => {
+  route.middleware(middleware.auth())
+  // Upstream controllers throw (500) on missing input; answer 400 before they run.
+  const needsChannel = route.getPattern() !== '__transmit/events'
+  route.middleware(async (ctx, next) => {
+    const uid = String(ctx.request.input('uid') ?? '')
+    const channel = ctx.request.input('channel')
+    if (
+      !/^[\w-]{8,64}$/.test(uid) ||
+      (needsChannel && (typeof channel !== 'string' || !/^[\w/-]{1,120}$/.test(channel)))
+    )
+      return ctx.response.badRequest({
+        error: { code: 'E_STREAM_REQUEST', message: 'طلب الاتصال الفوري غير صالح' },
+      })
+    return next()
+  })
+})
 
 router.mcp().use([middleware.auth(), apiThrottle, middleware.mcp()])
 
@@ -72,6 +101,33 @@ router
     router.get('/resources/:resource', [ResourcesController, 'index'])
     router.get('/resources/:resource/create', [ResourcesController, 'create'])
     router.get('/resources/:resource/options/:field', [ResourcesController, 'options'])
+    router.post('/resources/:resource/imports', [ImportsController, 'store'])
+    router.get('/imports', [ImportsController, 'index'])
+    router.get('/imports/:id', [ImportsController, 'show'])
+    router.post('/imports/:id/start', [ImportsController, 'start'])
+    router.get('/resources/:resource/tag-options', [RecordCollaborationController, 'tagOptions'])
+    router.get('/resources/:resource/:id/collaboration', [RecordCollaborationController, 'show'])
+    router.get('/resources/:resource/:id/mentions', [RecordCollaborationController, 'mentions'])
+    router.post('/resources/:resource/:id/comments', [RecordCollaborationController, 'comment'])
+    router.patch('/resources/:resource/:id/comments/:comment', [
+      RecordCollaborationController,
+      'editComment',
+    ])
+    router.delete('/resources/:resource/:id/comments/:comment', [
+      RecordCollaborationController,
+      'deleteComment',
+    ])
+    router.put('/resources/:resource/:id/follow', [RecordCollaborationController, 'follow'])
+    router.put('/resources/:resource/:id/tags', [RecordCollaborationController, 'tags'])
+    router.get('/resources/:resource/:id/print', [PrintController])
+    router.get('/resources/:resource/:id/assignments', [AssignmentsController, 'forRecord'])
+    router.post('/resources/:resource/:id/assignments', [AssignmentsController, 'store'])
+    router.get('/resources/:resource/:id/workflows', [WorkflowsController, 'forRecord'])
+    router.get('/approvals', [WorkflowsController, 'inbox'])
+    router.post('/workflows/:run/decide', [WorkflowsController, 'decide'])
+    router.get('/my-tasks', [AssignmentsController, 'mine'])
+    router.post('/my-tasks/:assignment/complete', [AssignmentsController, 'complete'])
+    router.post('/my-tasks/:assignment/cancel', [AssignmentsController, 'cancel'])
     router.get('/resources/:resource/:id/edit', [ResourcesController, 'edit'])
     router.get('/resources/:resource/:id', [ResourcesController, 'show'])
     router.post('/resources/:resource', [ResourcesController, 'store'])
@@ -79,12 +135,30 @@ router
     router.delete('/resources/:resource/:id', [ResourcesController, 'destroy'])
     router.post('/resources/:resource/:id/submit', [ResourcesController, 'submit'])
     router.post('/resources/:resource/:id/cancel', [ResourcesController, 'cancel'])
+    router.post('/resources/:resource/:id/amend', [ResourcesController, 'amend'])
     router.post('/resources/:resource/views', [SavedViewsController, 'store'])
     router.delete('/resources/:resource/views/:id', [SavedViewsController, 'destroy'])
     router.post('/attachments', [AttachmentsController, 'store'])
     router.get('/attachments/:id', [AttachmentsController, 'show'])
   })
   .use([middleware.auth(), apiThrottle])
+
+// Bearer-token resource API: the same ResourceService authorization as the UI.
+router
+  .group(() => {
+    router.get('openapi.json', [OpenApiController])
+    router.get('resources/:resource', [ResourcesController, 'index'])
+    router.get('resources/:resource/:id', [ResourcesController, 'show'])
+    router.post('resources/:resource', [ResourcesController, 'store'])
+    router.patch('resources/:resource/:id', [ResourcesController, 'update'])
+    router.delete('resources/:resource/:id', [ResourcesController, 'destroy'])
+    router.post('resources/:resource/:id/submit', [ResourcesController, 'submit'])
+    router.post('resources/:resource/:id/cancel', [ResourcesController, 'cancel'])
+    router.post('resources/:resource/:id/amend', [ResourcesController, 'amend'])
+  })
+  .prefix('api/v1')
+  .as('api')
+  .use([middleware.apiAuth(), apiThrottle])
 
 router
   .group(() => {
@@ -115,6 +189,9 @@ router
     router.get('account/profile', [ProfileController, 'show'])
     router.patch('account/profile', [ProfileController, 'update'])
     router.post('account/password', [ProfileController, 'password']).use(passwordChangeThrottle)
+    router.get('account/tokens', [ApiTokensController, 'index'])
+    router.post('account/tokens', [ApiTokensController, 'store']).use(apiThrottle)
+    router.delete('account/tokens/:id', [ApiTokensController, 'destroy'])
     router.get('account/sessions', [AccountSessionsController, 'index'])
     router.delete('account/sessions', [AccountSessionsController, 'purge'])
     router.delete('account/sessions/:id', [AccountSessionsController, 'destroy'])
@@ -162,6 +239,17 @@ router
     router.get('jobs', [AdminJobsController, 'index'])
     router.post('jobs/:id/retry', [AdminJobsController, 'retry'])
     router.get('settings', [AdminSettingsController, 'index'])
+    router.get('templates', [AdminTemplatesController, 'index'])
+    router.put('templates/:key', [AdminTemplatesController, 'update'])
+    router.delete('templates/:key', [AdminTemplatesController, 'reset'])
+    router.get('workflows', [WorkflowsController, 'failed'])
+    router.post('workflows/:run/retry', [WorkflowsController, 'retry'])
+    router.get('webhooks', [AdminWebhooksController, 'index'])
+    router.post('webhooks', [AdminWebhooksController, 'store'])
+    router.put('webhooks/:id', [AdminWebhooksController, 'update'])
+    router.delete('webhooks/:id', [AdminWebhooksController, 'destroy'])
+    router.get('webhooks/:id/deliveries', [AdminWebhooksController, 'deliveries'])
+    router.post('webhooks/deliveries/:delivery/retry', [AdminWebhooksController, 'retry'])
     router.get('setup', [SetupController, 'index'])
     router.post('setup/check/:service', [SetupController, 'check'])
     router.post('setup/identity', [SetupController, 'confirmIdentity'])

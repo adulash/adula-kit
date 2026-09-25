@@ -1,6 +1,6 @@
 {
   "name": "@adula/reference",
-  "version": "0.2.0-alpha.4",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -81,6 +81,8 @@
     "@adonisjs/session": "8.1.0",
     "@adonisjs/shield": "9.0.0",
     "@adonisjs/static": "2.0.1",
+    "@adonisjs/transmit": "3.0.2",
+    "@adonisjs/transmit-client": "1.1.0",
     "@adonisjs/vite": "6.0.1",
     "@adula/kit": "workspace:*",
     "@adula/ui": "workspace:*",

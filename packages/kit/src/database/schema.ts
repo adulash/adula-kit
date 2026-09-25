@@ -258,3 +258,209 @@ export async function createResourceTable(
     await db.raw('CREATE INDEX ?? ON ?? USING gin(search_vector)', [`${table}_search_gin`, table])
   }
 }
+
+/** Record collaboration (phase 3): comments with mentions, followers, tags and field history. */
+export async function createCollaborationSchema(db: Knex) {
+  await db.schema.createTable('comments', (t) => {
+    t.bigIncrements('id')
+    t.string('resource').notNullable()
+    t.integer('record_id').notNullable()
+    t.integer('author_id').notNullable().references('id').inTable('users').onDelete('RESTRICT')
+    t.text('body').notNullable()
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('edited_at', { useTz: true })
+    t.timestamp('deleted_at', { useTz: true })
+    t.index(['resource', 'record_id', 'id'])
+  })
+  await db.schema.createTable('comment_mentions', (t) => {
+    t.bigInteger('comment_id')
+      .notNullable()
+      .references('id')
+      .inTable('comments')
+      .onDelete('CASCADE')
+    t.integer('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
+    t.primary(['comment_id', 'user_id'])
+    t.index(['user_id'])
+  })
+  await db.schema.createTable('followers', (t) => {
+    t.string('resource').notNullable()
+    t.integer('record_id').notNullable()
+    t.integer('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.primary(['resource', 'record_id', 'user_id'])
+    t.index(['user_id'])
+  })
+  await db.schema.createTable('tags', (t) => {
+    t.increments('id')
+    t.string('name', 60).notNullable().unique()
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+  })
+  await db.schema.createTable('taggables', (t) => {
+    t.integer('tag_id').notNullable().references('id').inTable('tags').onDelete('CASCADE')
+    t.string('resource').notNullable()
+    t.integer('record_id').notNullable()
+    t.primary(['tag_id', 'resource', 'record_id'])
+    t.index(['resource', 'record_id'])
+  })
+  await db.schema.createTable('field_changes', (t) => {
+    t.bigIncrements('id')
+    t.bigInteger('activity_id')
+      .notNullable()
+      .references('id')
+      .inTable('activities')
+      .onDelete('CASCADE')
+      .index()
+    t.string('resource').notNullable()
+    t.integer('record_id').notNullable()
+    t.string('field').notNullable()
+    t.jsonb('before')
+    t.jsonb('after')
+    t.index(['resource', 'record_id', 'id'])
+  })
+}
+
+/** Work assigned to a user on a record; approval steps of workflows reuse it (phase 4). */
+export async function createAssignmentsSchema(db: Knex) {
+  await db.schema.createTable('assignments', (t) => {
+    t.bigIncrements('id')
+    t.string('resource').notNullable()
+    t.integer('record_id').notNullable()
+    t.integer('assignee_id').notNullable().references('id').inTable('users').onDelete('RESTRICT')
+    t.integer('assigned_by').references('id').inTable('users').onDelete('RESTRICT')
+    t.string('kind', 20).notNullable().defaultTo('task')
+    t.string('title', 200).notNullable()
+    t.text('note')
+    t.date('due_on')
+    t.string('status', 20).notNullable().defaultTo('open')
+    t.uuid('workflow_run_id')
+    t.string('workflow_step', 100)
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('completed_at', { useTz: true })
+    t.integer('completed_by').references('id').inTable('users').onDelete('RESTRICT')
+    t.string('outcome', 20)
+    t.index(['assignee_id', 'status', 'id'])
+    t.index(['resource', 'record_id'])
+    t.index(['workflow_run_id'])
+  })
+}
+
+/**
+ * Message templates, notification e-mail delivery state and the realtime signal.
+ * The trigger's NOTIFY is delivered only when the inserting transaction commits.
+ */
+export async function createMessagingSchema(db: Knex) {
+  await db.schema.createTable('message_templates', (t) => {
+    t.string('key', 100).primary()
+    t.string('subject', 255).notNullable()
+    t.text('body').notNullable()
+    t.boolean('mail').notNullable().defaultTo(false)
+    t.integer('updated_by').references('id').inTable('users').onDelete('SET NULL')
+    t.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+  })
+  await db.schema.alterTable('notifications', (t) => {
+    t.string('template_key', 100)
+    t.string('mail_state', 20)
+    t.integer('mail_attempts').notNullable().defaultTo(0)
+    t.string('mail_error', 500)
+    t.timestamp('mailed_at', { useTz: true })
+  })
+  await db.raw(
+    "CREATE INDEX notifications_mail_pending ON notifications (id) WHERE mail_state = 'pending'"
+  )
+  await db.raw(
+    `CREATE FUNCTION kit_notification_signal() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM pg_notify('kit_notifications', json_build_object('userId', NEW.user_id, 'id', NEW.id)::text); RETURN NULL; END $$`
+  )
+  await db.raw(
+    'CREATE TRIGGER kit_notification_signal AFTER INSERT ON notifications FOR EACH ROW EXECUTE FUNCTION kit_notification_signal()'
+  )
+}
+
+/** Outgoing webhooks and their delivery log (exactly one row per webhook and event). */
+export async function createWebhooksSchema(db: Knex) {
+  await db.schema.createTable('webhooks', (t) => {
+    t.increments('id')
+    t.string('name', 100).notNullable()
+    t.string('url', 2000).notNullable()
+    t.text('secret').notNullable()
+    t.jsonb('events').notNullable()
+    t.boolean('active').notNullable().defaultTo(true)
+    t.integer('failing').notNullable().defaultTo(0)
+    t.integer('created_by').references('id').inTable('users').onDelete('SET NULL')
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('last_delivery_at', { useTz: true })
+  })
+  await db.raw('CREATE INDEX webhooks_events_gin ON webhooks USING gin(events)')
+  await db.schema.createTable('webhook_deliveries', (t) => {
+    t.uuid('id').primary()
+    t.integer('webhook_id').notNullable().references('id').inTable('webhooks').onDelete('CASCADE')
+    t.uuid('event_id').notNullable()
+    t.string('event').notNullable()
+    t.jsonb('payload').notNullable()
+    t.string('status', 20).notNullable().defaultTo('pending')
+    t.integer('attempts').notNullable().defaultTo(0)
+    t.integer('last_status')
+    t.string('last_error', 500)
+    t.timestamp('next_attempt_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('delivered_at', { useTz: true })
+    t.unique(['webhook_id', 'event_id'])
+    t.index(['webhook_id', 'created_at'])
+  })
+  await db.raw(
+    "CREATE INDEX webhook_deliveries_due ON webhook_deliveries (next_attempt_at) WHERE status = 'pending'"
+  )
+}
+
+/** CSV import batches: parsed rows, column mapping, progress and per-row errors. */
+export async function createImportsSchema(db: Knex) {
+  await db.schema.createTable('import_batches', (t) => {
+    t.increments('id')
+    t.string('resource').notNullable()
+    t.integer('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
+    t.string('file_name', 200).notNullable()
+    t.string('status', 20).notNullable()
+    t.jsonb('headers').notNullable()
+    t.jsonb('mapping').notNullable()
+    t.jsonb('rows').notNullable()
+    t.integer('total').notNullable()
+    t.integer('processed').notNullable().defaultTo(0)
+    t.integer('created').notNullable().defaultTo(0)
+    t.integer('failed').notNullable().defaultTo(0)
+    t.jsonb('errors').notNullable().defaultTo('[]')
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('started_at', { useTz: true })
+    t.timestamp('finished_at', { useTz: true })
+    t.index(['user_id', 'id'])
+    t.index(['status'])
+  })
+}
+
+/**
+ * Workflow engine state (phase 4): the submission envelope rows gain execution
+ * columns, and every transition is appended to workflow_events.
+ */
+export async function createWorkflowSchema(db: Knex) {
+  await db.schema.alterTable('workflow_runs', (t) => {
+    t.string('current_step', 100)
+    t.timestamp('wake_at', { useTz: true })
+    t.integer('attempts').notNullable().defaultTo(0)
+    t.string('last_error', 1000)
+    t.string('outcome', 30)
+    t.integer('started_by').references('id').inTable('users').onDelete('SET NULL')
+    t.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('completed_at', { useTz: true })
+    t.index(['resource', 'record_id'])
+  })
+  await db.raw("CREATE INDEX workflow_runs_due ON workflow_runs (wake_at) WHERE status = 'running'")
+  await db.schema.createTable('workflow_events', (t) => {
+    t.bigIncrements('id')
+    t.uuid('run_id').notNullable().references('id').inTable('workflow_runs').onDelete('CASCADE')
+    t.string('step', 100)
+    t.string('event', 50).notNullable()
+    t.integer('actor_id').references('id').inTable('users').onDelete('SET NULL')
+    t.jsonb('detail').notNullable().defaultTo('{}')
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.index(['run_id', 'id'])
+  })
+}

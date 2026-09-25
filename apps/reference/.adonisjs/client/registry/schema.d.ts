@@ -19,6 +19,42 @@ export interface Registry {
       errorResponse: unknown
     }
   }
+  'event_stream': {
+    methods: ["GET","HEAD"]
+    pattern: '/__transmit/events'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'subscribe': {
+    methods: ["POST"]
+    pattern: '/__transmit/subscribe'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
+  'unsubscribe': {
+    methods: ["POST"]
+    pattern: '/__transmit/unsubscribe'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: unknown
+      errorResponse: unknown
+    }
+  }
   'mcp.post': {
     methods: ["POST"]
     pattern: '/mcp'
@@ -65,6 +101,258 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['options']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['options']>>>
+    }
+  }
+  'imports.store': {
+    methods: ["POST"]
+    pattern: '/resources/:resource/imports'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { resource: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/imports_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/imports_controller').default['store']>>>
+    }
+  }
+  'imports.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/imports'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/imports_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/imports_controller').default['index']>>>
+    }
+  }
+  'imports.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/imports/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/imports_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/imports_controller').default['show']>>>
+    }
+  }
+  'imports.start': {
+    methods: ["POST"]
+    pattern: '/imports/:id/start'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/imports_controller').default['start']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/imports_controller').default['start']>>>
+    }
+  }
+  'record_collaboration.tag_options': {
+    methods: ["GET","HEAD"]
+    pattern: '/resources/:resource/tag-options'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { resource: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['tagOptions']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['tagOptions']>>>
+    }
+  }
+  'record_collaboration.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/resources/:resource/:id/collaboration'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['show']>>>
+    }
+  }
+  'record_collaboration.mentions': {
+    methods: ["GET","HEAD"]
+    pattern: '/resources/:resource/:id/mentions'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['mentions']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['mentions']>>>
+    }
+  }
+  'record_collaboration.comment': {
+    methods: ["POST"]
+    pattern: '/resources/:resource/:id/comments'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['comment']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['comment']>>>
+    }
+  }
+  'record_collaboration.edit_comment': {
+    methods: ["PATCH"]
+    pattern: '/resources/:resource/:id/comments/:comment'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue; comment: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['editComment']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['editComment']>>>
+    }
+  }
+  'record_collaboration.delete_comment': {
+    methods: ["DELETE"]
+    pattern: '/resources/:resource/:id/comments/:comment'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue; comment: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['deleteComment']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['deleteComment']>>>
+    }
+  }
+  'record_collaboration.follow': {
+    methods: ["PUT"]
+    pattern: '/resources/:resource/:id/follow'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['follow']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['follow']>>>
+    }
+  }
+  'record_collaboration.tags': {
+    methods: ["PUT"]
+    pattern: '/resources/:resource/:id/tags'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['tags']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/record_collaboration_controller').default['tags']>>>
+    }
+  }
+  'print': {
+    methods: ["GET","HEAD"]
+    pattern: '/resources/:resource/:id/print'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/print_controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/print_controller').default['handle']>>>
+    }
+  }
+  'assignments.for_record': {
+    methods: ["GET","HEAD"]
+    pattern: '/resources/:resource/:id/assignments'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/assignments_controller').default['forRecord']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assignments_controller').default['forRecord']>>>
+    }
+  }
+  'assignments.store': {
+    methods: ["POST"]
+    pattern: '/resources/:resource/:id/assignments'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/assignments_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assignments_controller').default['store']>>>
+    }
+  }
+  'workflows.for_record': {
+    methods: ["GET","HEAD"]
+    pattern: '/resources/:resource/:id/workflows'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['forRecord']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['forRecord']>>>
+    }
+  }
+  'workflows.inbox': {
+    methods: ["GET","HEAD"]
+    pattern: '/approvals'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['inbox']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['inbox']>>>
+    }
+  }
+  'workflows.decide': {
+    methods: ["POST"]
+    pattern: '/workflows/:run/decide'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { run: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['decide']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['decide']>>>
+    }
+  }
+  'assignments.mine': {
+    methods: ["GET","HEAD"]
+    pattern: '/my-tasks'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/assignments_controller').default['mine']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assignments_controller').default['mine']>>>
+    }
+  }
+  'assignments.complete': {
+    methods: ["POST"]
+    pattern: '/my-tasks/:assignment/complete'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { assignment: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/assignments_controller').default['complete']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assignments_controller').default['complete']>>>
+    }
+  }
+  'assignments.cancel': {
+    methods: ["POST"]
+    pattern: '/my-tasks/:assignment/cancel'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { assignment: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/assignments_controller').default['cancel']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/assignments_controller').default['cancel']>>>
     }
   }
   'resources.edit': {
@@ -151,6 +439,18 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['cancel']>>>
     }
   }
+  'resources.amend': {
+    methods: ["POST"]
+    pattern: '/resources/:resource/:id/amend'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['amend']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['amend']>>>
+    }
+  }
   'saved_views.store': {
     methods: ["POST"]
     pattern: '/resources/:resource/views'
@@ -197,6 +497,114 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/attachments_controller').default['show']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/attachments_controller').default['show']>>>
+    }
+  }
+  'api.open_api': {
+    methods: ["GET","HEAD"]
+    pattern: '/api/v1/openapi.json'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/openapi_controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/openapi_controller').default['handle']>>>
+    }
+  }
+  'api.resources.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/api/v1/resources/:resource'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { resource: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['index']>>>
+    }
+  }
+  'api.resources.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/api/v1/resources/:resource/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['show']>>>
+    }
+  }
+  'api.resources.store': {
+    methods: ["POST"]
+    pattern: '/api/v1/resources/:resource'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { resource: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['store']>>>
+    }
+  }
+  'api.resources.update': {
+    methods: ["PATCH"]
+    pattern: '/api/v1/resources/:resource/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['update']>>>
+    }
+  }
+  'api.resources.destroy': {
+    methods: ["DELETE"]
+    pattern: '/api/v1/resources/:resource/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['destroy']>>>
+    }
+  }
+  'api.resources.submit': {
+    methods: ["POST"]
+    pattern: '/api/v1/resources/:resource/:id/submit'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['submit']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['submit']>>>
+    }
+  }
+  'api.resources.cancel': {
+    methods: ["POST"]
+    pattern: '/api/v1/resources/:resource/:id/cancel'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['cancel']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['cancel']>>>
+    }
+  }
+  'api.resources.amend': {
+    methods: ["POST"]
+    pattern: '/api/v1/resources/:resource/:id/amend'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue, ParamValue]
+      params: { resource: ParamValue; id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['amend']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/resources_controller').default['amend']>>>
     }
   }
   'new_account.create': {
@@ -413,6 +821,42 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/user').changePasswordValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/profile_controller').default['password']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/profile_controller').default['password']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'api_tokens.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/account/tokens'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/api_tokens_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/api_tokens_controller').default['index']>>>
+    }
+  }
+  'api_tokens.store': {
+    methods: ["POST"]
+    pattern: '/account/tokens'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/api_tokens_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/api_tokens_controller').default['store']>>>
+    }
+  }
+  'api_tokens.destroy': {
+    methods: ["DELETE"]
+    pattern: '/account/tokens/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/api_tokens_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/api_tokens_controller').default['destroy']>>>
     }
   }
   'account_sessions.index': {
@@ -833,6 +1277,138 @@ export interface Registry {
       query: {}
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/admin/settings_controller').default['index']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/admin/settings_controller').default['index']>>>
+    }
+  }
+  'admin_templates.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/admin/templates'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/admin/templates_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/admin/templates_controller').default['index']>>>
+    }
+  }
+  'admin_templates.update': {
+    methods: ["PUT"]
+    pattern: '/admin/templates/:key'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { key: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/admin/templates_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/admin/templates_controller').default['update']>>>
+    }
+  }
+  'admin_templates.reset': {
+    methods: ["DELETE"]
+    pattern: '/admin/templates/:key'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { key: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/admin/templates_controller').default['reset']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/admin/templates_controller').default['reset']>>>
+    }
+  }
+  'workflows.failed': {
+    methods: ["GET","HEAD"]
+    pattern: '/admin/workflows'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['failed']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['failed']>>>
+    }
+  }
+  'workflows.retry': {
+    methods: ["POST"]
+    pattern: '/admin/workflows/:run/retry'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { run: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['retry']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/workflows_controller').default['retry']>>>
+    }
+  }
+  'admin_webhooks.index': {
+    methods: ["GET","HEAD"]
+    pattern: '/admin/webhooks'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/admin/webhooks_controller').default['index']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/admin/webhooks_controller').default['index']>>>
+    }
+  }
+  'admin_webhooks.store': {
+    methods: ["POST"]
+    pattern: '/admin/webhooks'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/admin/webhooks_controller').default['store']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/admin/webhooks_controller').default['store']>>>
+    }
+  }
+  'admin_webhooks.update': {
+    methods: ["PUT"]
+    pattern: '/admin/webhooks/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/admin/webhooks_controller').default['update']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/admin/webhooks_controller').default['update']>>>
+    }
+  }
+  'admin_webhooks.destroy': {
+    methods: ["DELETE"]
+    pattern: '/admin/webhooks/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/admin/webhooks_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/admin/webhooks_controller').default['destroy']>>>
+    }
+  }
+  'admin_webhooks.deliveries': {
+    methods: ["GET","HEAD"]
+    pattern: '/admin/webhooks/:id/deliveries'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/admin/webhooks_controller').default['deliveries']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/admin/webhooks_controller').default['deliveries']>>>
+    }
+  }
+  'admin_webhooks.retry': {
+    methods: ["POST"]
+    pattern: '/admin/webhooks/deliveries/:delivery/retry'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { delivery: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/admin/webhooks_controller').default['retry']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/admin/webhooks_controller').default['retry']>>>
     }
   }
   'setup.index': {

@@ -1,6 +1,6 @@
 # @adula/kit
 
-Experimental 0.2.0-alpha.4 resource framework for AdonisJS 7 and PostgreSQL 17. Node 24 or later is required. MIT licensed. The target is the complete approved 1.0 scope; it has not passed acceptance.
+Resource framework for AdonisJS 7 and PostgreSQL 17, version 1.0.0 (accepted by the owner, ADR 028). Node 24 or later is required. MIT licensed. The public API in `api/kit-api.json` follows semantic versioning.
 
 ## Install into a consumer
 
@@ -28,4 +28,14 @@ Doctor measures the deployment's `storage/uploads` directory and warns above 5 d
 
 ## Current limitations
 
-Attachment ownership, upload/download, storage migration, authentication lifecycle/rate limiting, generic resource UI and core administration have local integration consumers and tests. Real OAuth/SMTP, full Tuyau field contracts, human/performance acceptance, XState workflows, later business features, staging/offsite restoration and a genuine minor-version consumer upgrade remain open. Submission envelopes are durable records in pending_definition state, not running workflows. See [implementation status](https://github.com/adulash/adula-kit/blob/main/docs/implementation-status.md), [gaps](https://github.com/adulash/adula-kit/blob/main/KIT_GAPS.md) and [1.0 acceptance](https://github.com/adulash/adula-kit/blob/main/docs/acceptance-1.0.md). Version 0.2.0-alpha.4 targets alpha; the owner-authorized latest alias remains on 0.2.0-alpha.1.
+Phases 3 and 4 (collaboration, assignments, templates and realtime notifications,
+CSV import, printing, webhooks, API tokens/OpenAPI, amend-by-copy and versioned
+XState workflows) are implemented with PostgreSQL tests; see the
+[business features guide](https://github.com/adulash/adula-kit/blob/main/docs/business-features.md).
+
+- Two-factor authentication is not included; it is planned for 2.0 (ADR 027).
+- Impersonation was reviewed by automated adversarial and black-box tests only; its
+  human security review is deferred to 2.0 (ADR 027).
+- XLSX import is not available (GAP-006); CSV is.
+
+See [implementation status](https://github.com/adulash/adula-kit/blob/main/docs/implementation-status.md), [gaps](https://github.com/adulash/adula-kit/blob/main/KIT_GAPS.md) and [1.0 acceptance](https://github.com/adulash/adula-kit/blob/main/docs/acceptance-1.0.md).

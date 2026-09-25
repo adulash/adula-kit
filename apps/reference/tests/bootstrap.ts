@@ -58,7 +58,7 @@ export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
       await cache.clear()
       await testUtils.db().migrate()
       await db.rawQuery(
-        'TRUNCATE users, user_sessions, password_reset_tokens, social_accounts, org_units, roles, settings, lookups, sequences, activities, outbox, processed_events, notifications, workflow_runs, attachments, saved_views RESTART IDENTITY CASCADE'
+        'TRUNCATE users, user_sessions, password_reset_tokens, social_accounts, org_units, roles, settings, lookups, sequences, activities, outbox, processed_events, notifications, workflow_runs, attachments, saved_views, tags, taggables, assignments, message_templates, webhooks, auth_access_tokens, import_batches, workflow_events RESTART IDENTITY CASCADE'
       )
     },
   ],

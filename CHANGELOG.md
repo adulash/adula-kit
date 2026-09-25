@@ -1,5 +1,44 @@
 # Changelog
 
+## 1.0.0 — 2026-09-25
+
+The complete approved 1.0 scope, accepted by the owner with release authorization
+(ADR 028; scope decisions in ADR 027). Two-factor authentication is not included
+and returns in 2.0; impersonation was reviewed by automated tests, with its human
+review due in 2.0. Phase 2 was accepted by owner attestation (ADR 025). The k6 budget now passes on a
+GitHub runner with the compiled build (list p95 152 ms, save p95 135 ms;
+docs/evidence/phase5-performance-2026-09-25.json). Phases 3–6 implemented with consumers and PostgreSQL tests.
+All new kit tables arrive through additive migrations (`kit_collaboration`,
+`kit_assignments`, `kit_messaging`, `kit_webhooks`, `kit_imports`,
+`kit_workflows`).
+
+* Security: impersonation no longer survives sign-out (a shared-browser takeover
+  found by an adversarial test), is bound to its target, cannot mint API tokens and
+  records the administrator on self-service actions. Reviewed by automated tests
+  only; the human review is deferred to 2.0 (ADR 027).
+* Collaboration: comments with mentions, followers, tags (with list filtering) and
+  per-field change history; notifications only reach users who can read the record.
+* Assignments and a "my tasks" page; approval steps reuse assignments.
+* Message templates editable per deployment, templated notification e-mail sent by
+  the worker, and a realtime notification bell (PostgreSQL NOTIFY on commit, SSE via
+  @adonisjs/transmit).
+* Outgoing webhooks signed with HMAC-SHA256, retried with backoff, HTTPS-only and
+  private-address safe, with a delivery log.
+* Personal API tokens (read or read-write) for a bearer-only `/api/v1` resource API
+  and a generated OpenAPI 3.1 document.
+* CSV import batches with column mapping, processed by the worker with per-row
+  errors (XLSX is GAP-006).
+* Generic RTL record printing with optional Gotenberg PDF conversion.
+* Document lifecycle: amend-by-copy for cancelled documents.
+* Workflows: versioned `defineWorkflow` definitions compiled to XState 5, a durable
+  engine with row locks, six step types, bounded retries, an approvals inbox, a
+  record workflow panel and a failed-runs screen.
+* Agent: generated capability catalog (`adula:capabilities`), idea-review reading it,
+  and the module, security, schema, UI and performance reviewer skills.
+* Release: public API contract report (`pnpm check:api`), a genuine upgrade test from
+  a version published on npm (`pnpm test:upgrade --published=<version>`), and a
+  Performance workflow measuring the compiled build with k6 on a GitHub runner.
+
 ## 0.2.0-alpha.4 — 2026-09-24
 
 * Login: the per-address limit is 100 attempts per minute (configurable with

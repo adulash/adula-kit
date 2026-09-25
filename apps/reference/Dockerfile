@@ -17,6 +17,9 @@ RUN pnpm --filter @adula/reference deploy --prod --legacy --frozen-lockfile /run
 # pnpm 11 legacy deployment preserves workspace links. The runtime assembles the
 # built workspace packages below, instead of retaining links to the build tree.
 RUN rm /runtime/node_modules/@adula/kit /runtime/node_modules/@adula/ui
+# The kit's own runtime dependencies are not part of the application's deployment;
+# a kit-only production deployment supplies them (framework peers stay with the app).
+RUN pnpm --filter @adula/kit deploy --prod --legacy --frozen-lockfile /kit-runtime
 
 FROM node:24-alpine3.22
 RUN apk add --no-cache postgresql17-client aws-cli bash
@@ -25,6 +28,7 @@ ENV NODE_ENV=production HOST=0.0.0.0 PORT=3333
 COPY --from=production_dependencies --chown=node:node /runtime/node_modules ./node_modules
 COPY --from=builder --chown=node:node /app/packages/kit/package.json ./node_modules/@adula/kit/package.json
 COPY --from=builder --chown=node:node /app/packages/kit/build ./node_modules/@adula/kit/build
+COPY --from=production_dependencies --chown=node:node /kit-runtime/node_modules ./node_modules/@adula/kit/node_modules
 COPY --from=builder --chown=node:node /app/packages/ui/package.json ./node_modules/@adula/ui/package.json
 COPY --from=builder --chown=node:node /app/packages/ui/build ./node_modules/@adula/ui/build
 COPY --from=builder --chown=node:node /app/apps/reference/build ./
@@ -37,7 +41,7 @@ COPY --from=builder --chown=node:node /app/apps/reference/.agents ./.agents
 COPY --from=builder --chown=node:node /app/apps/reference/inertia/components/ui ./inertia/components/ui
 COPY --from=builder --chown=node:node /app/apps/reference/inertia/pages ./inertia/pages
 COPY --from=builder --chown=node:node /app/apps/reference/deploy ./deploy
-RUN ln -s ../../.pnpm/node_modules node_modules/@adula/kit/node_modules     && mkdir -p storage/uploads && chown node:node storage storage/uploads
+RUN mkdir -p storage/uploads && chown node:node storage storage/uploads
 RUN node -e "const fs=require('node:fs'); for (const name of ['kit','ui']) { if (!fs.realpathSync('node_modules/@adula/'+name).startsWith(process.cwd()+'/')) throw new Error('Non-portable workspace dependency: '+name) }"     && node --input-type=module -e "await import('@adula/kit'); await import('@adula/ui/package.json', {with:{type:'json'}})"
 USER node
 EXPOSE 3333

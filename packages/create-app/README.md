@@ -2,11 +2,10 @@
 
 Creates a complete, project-owned AdonisJS 7 application with adula, React/Inertia,
 shadcn/ui, authentication, administration and the managed business-design skill.
-Version 0.2.0-alpha.4 is **experimental**, intended for the alpha channel.
-The owner-authorized latest alias remains on 0.2.0-alpha.1; next is absent.
+Version 1.0.0.
 
 ```sh
-npm create @adula/app@alpha my-app
+npm create @adula/app@latest my-app
 ```
 
 Requires Node.js 24+ and npm. The default provisions PostgreSQL 17 and Redis 7
@@ -59,7 +58,7 @@ output and dumb terminals use plain progress lines. Detailed child-command outpu
 is retained privately in ignored `tmp/install.log`; failures identify that log.
 
 ```sh
-npm create @adula/app@alpha my-app -- --company "My company" --admin-email admin@example.com --identity ./brand.json --yes
+npm create @adula/app@latest my-app -- --company "My company" --admin-email admin@example.com --identity ./brand.json --yes
 ```
 
 For existing services, add `--services existing --connection ./local.json`:

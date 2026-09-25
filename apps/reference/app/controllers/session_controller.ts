@@ -6,6 +6,7 @@ import { logAuthActivity, requestContext } from '#services/auth_activity'
 import { endSession, recordSession } from '#services/sessions'
 import { socialProviders } from '#services/social_accounts'
 import { loginAccountLimiter } from '#start/limiter'
+import { endImpersonation } from '#services/impersonation'
 
 export default class SessionController {
   async create({ inertia }: HttpContext) {
@@ -66,6 +67,7 @@ export default class SessionController {
     const user = auth.getUserOrFail()
     const sessionId = session.sessionId
     await auth.use('web').logout()
+    endImpersonation(session)
     await endSession(sessionId)
     await logAuthActivity({ userId: user.id, action: 'logout', changes: requestContext(ctx) })
     response.redirect().toRoute('session.create')

@@ -2,8 +2,14 @@ import type { HttpContext } from '@adonisjs/core/http'
 import { KitError, OrgUnitsAdmin, RolesAdmin, UsersAdmin, logActivity } from '@adula/kit'
 import User from '#models/user'
 import { kit } from '#services/kit'
-import { revokeUserSessions } from '#services/sessions'
-import { IMPERSONATOR_KEY, isAdministrator } from '#middleware/admin_middleware'
+import { endSession, recordSession, revokeUserSessions } from '#services/sessions'
+import { isAdministrator } from '#middleware/admin_middleware'
+import {
+  activeImpersonation,
+  beginImpersonation,
+  endImpersonation,
+  hasImpersonationMarker,
+} from '#services/impersonation'
 import { actorId, knex, mutate, optionalId, positiveId, text, wantsJson } from './support.js'
 
 const service = () => new UsersAdmin(knex())
@@ -131,7 +137,7 @@ export default class UsersController {
       ctx,
       async () => {
         if (id === admin) throw new KitError(422, 'E_SELF_IMPERSONATE', 'لا يمكنك انتحال حسابك')
-        if (ctx.session.get(IMPERSONATOR_KEY))
+        if (hasImpersonationMarker(ctx.session))
           throw new KitError(422, 'E_ALREADY_IMPERSONATING', 'أنهِ الانتحال الحالي أولاً')
         const target = await service().get(id)
         if (target.disabledAt)
@@ -146,8 +152,13 @@ export default class UsersController {
           actorId: admin,
           action: 'impersonate',
         })
-        ctx.session.put(IMPERSONATOR_KEY, admin)
+        // Login regenerates the session id; the administrator's row is closed and
+        // the impersonation session gets its own row.
+        const previous = ctx.session.sessionId
         await ctx.auth.use('web').login(user)
+        beginImpersonation(ctx.session, admin, id)
+        await endSession(previous)
+        await recordSession(ctx, id)
         return { id }
       },
       'أنت الآن تتصفح باسم المستخدم',
@@ -160,12 +171,24 @@ export default class UsersController {
     return mutate(
       ctx,
       async () => {
-        const impersonator = Number(ctx.session.get(IMPERSONATOR_KEY))
-        if (!impersonator) throw new KitError(422, 'E_NOT_IMPERSONATING', 'لا يوجد انتحال نشط')
+        // Only the impersonated user's own session may return to the administrator.
+        const impersonation = activeImpersonation(ctx)
+        if (!impersonation) throw new KitError(422, 'E_NOT_IMPERSONATING', 'لا يوجد انتحال نشط')
+        const impersonator = impersonation.adminId
+        endImpersonation(ctx.session)
+        const previous = ctx.session.sessionId
         const original = await User.find(impersonator)
-        if (!original) throw new KitError(404, 'E_USER_NOT_FOUND', 'المستخدم غير موجود')
-        ctx.session.forget(IMPERSONATOR_KEY)
+        const state = original ? await service().get(impersonator) : null
+        // A disabled administrator does not get a session back. A demoted one returns
+        // to their own account, which no longer carries administration rights.
+        if (!original || state?.disabledAt) {
+          await ctx.auth.use('web').logout()
+          await endSession(previous)
+          throw new KitError(403, 'E_IMPERSONATOR_REVOKED', 'لم يعد حساب المدير متاحاً')
+        }
         await ctx.auth.use('web').login(original)
+        await endSession(previous)
+        await recordSession(ctx, impersonator)
         await logActivity(knex(), {
           resource: RESOURCE,
           recordId: current,

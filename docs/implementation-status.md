@@ -1,4 +1,23 @@
-# Implementation status — 2026-09-23
+# Implementation status — 2026-09-25
+
+## Phases 3–5 implementation — 2026-09-25
+
+Phase 2 is accepted by owner attestation (ADR 025) with the k6 budget recorded as an
+open deviation. Phase 3 (collaboration, assignments, templates/mail/SSE, webhooks,
+API tokens/OpenAPI, CSV import, printing, conditional policies; 2FA moved to 2.0 by ADR 027) and phase 4
+(amend-by-copy, versioned XState workflows with six step types, row locks, bounded
+retries, approvals inbox and failed-runs screen) are implemented with consumers and
+real PostgreSQL tests; see docs/evidence/phase3-implementation-2026-09-25.json and
+docs/evidence/phase4-implementation-2026-09-25.json. Phase 5 adds the generated
+capability catalog, the five reviewer skills and the fourth-module agent exercise
+(docs/evidence/agent-module-exercise-2026-09-25.json).
+
+Release tooling added: `pnpm check:api` (public API contract), the genuine
+published-predecessor upgrade (`pnpm test:upgrade --published=0.2.0-alpha.1` in CI)
+and a Performance workflow that measures the compiled build with k6 on a GitHub
+runner. Human acceptance still owed: owner review of phases
+3–6, council 2, and the release authorization. No phase beyond 2 is marked accepted.
+
 
 The approved v4 plan is preserved as a historical baseline; [ADR 021](decisions/021-optional-oauth.md) records the owner-approved exclusion of OAuth from base release requirements. The kit/UI/creator packages are published as **experimental 0.2.0-alpha.3** on the `alpha` tag (`latest` still names 0.2.0-alpha.1), not an accepted 1.0 kit. Publication does not prove an independently upgraded, restored and production-operated release.
 

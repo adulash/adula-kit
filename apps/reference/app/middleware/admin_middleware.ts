@@ -3,6 +3,7 @@ import type { NextFn } from '@adonisjs/core/types/http'
 import db from '@adonisjs/lucid/services/db'
 import { NotificationsAdmin, UserInvitations, buildAbility, isBackupStale } from '@adula/kit'
 import { IMPERSONATOR_KEY, kit } from '#services/kit'
+import { activeImpersonation } from '#services/impersonation'
 
 export { IMPERSONATOR_KEY }
 
@@ -27,7 +28,7 @@ export async function sharedAdminProps(ctx: HttpContext) {
     unreadNotifications: ctx.inertia.always(
       userId ? await new NotificationsAdmin(knex).unreadCount(userId) : 0
     ),
-    impersonating: ctx.inertia.always(Boolean(session?.get(IMPERSONATOR_KEY))),
+    impersonating: ctx.inertia.always(Boolean(activeImpersonation({ session, auth }))),
   }
 }
 
