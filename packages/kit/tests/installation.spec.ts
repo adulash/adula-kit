@@ -21,6 +21,12 @@ test.group('Independent installation contracts', () => {
     assert.equal(await readFile(join(root, 'AGENTS.md'), 'utf8'), installed)
     const lock = JSON.parse(await readFile(join(root, 'adula.lock.json'), 'utf8'))
     assert.match(lock.skills['.agents/skills/adula-idea-review/SKILL.md'], /^[a-f0-9]{64}$/)
+    // The five on-demand reviewers ship with the managed skills (plan section 11).
+    for (const reviewer of ['module', 'security', 'schema', 'ui', 'perf']) {
+      const path = `.agents/skills/adula-${reviewer}-review/SKILL.md`
+      assert.match(lock.skills[path], /^[a-f0-9]{64}$/)
+      assert.match(await readFile(join(root, path), 'utf8'), new RegExp(`name: ${reviewer}-review`))
+    }
     const malformed = '<!-- adula-kit:start -->\nUser content without an end marker'
     await writeFile(join(root, 'AGENTS.md'), malformed)
     await assert.rejects(() => syncAgentAssets(root), /Malformed/)

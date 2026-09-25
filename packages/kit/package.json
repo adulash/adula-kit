@@ -27,7 +27,8 @@
     "build": "node ../../scripts/clean-kit-build.mjs && tsc -p tsconfig.build.json && node ../../scripts/copy-kit-assets.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --import=@poppinss/ts-exec bin/test.ts",
-    "lint": "eslint src providers commands database tests index.ts"
+    "lint": "eslint src providers commands database tests index.ts",
+    "capabilities": "node --import=@poppinss/ts-exec bin/generate_capabilities.ts"
   },
   "keywords": [
     "adonisjs",

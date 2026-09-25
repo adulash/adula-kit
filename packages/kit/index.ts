@@ -198,3 +198,9 @@ export type {
 export { MailDeliveryTest, MAIL_TEST_KEY, type MailTestState } from './src/core/mail_test.js'
 export { InitialSetup, type SetupCheck } from './src/core/setup.js'
 export { KIT_VERSION } from './src/version.js'
+export {
+  capabilityCatalog,
+  SERVICES as CAPABILITY_SERVICES,
+  FIELD_TYPES,
+  WORKFLOW_STEPS,
+} from './src/commands/capabilities.js'
