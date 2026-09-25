@@ -10,6 +10,7 @@
 import { middleware } from '#start/kernel'
 import { controllers } from '#generated/controllers'
 import router from '@adonisjs/core/services/router'
+import transmit from '@adonisjs/transmit/services/main'
 import db from '@adonisjs/lucid/services/db'
 import { Settings } from '@adula/kit'
 import redis from '@adonisjs/redis/services/main'
@@ -41,8 +42,28 @@ const AdminJobsController = () => import('#controllers/admin/jobs_controller')
 const AdminSettingsController = () => import('#controllers/admin/settings_controller')
 const SetupController = () => import('#controllers/admin/setup_controller')
 const NotificationsController = () => import('#controllers/admin/notifications_controller')
+const AdminTemplatesController = () => import('#controllers/admin/templates_controller')
 
 router.on('/').renderInertia('home', {}).as('home')
+
+// Realtime notification signals: every Transmit route requires a signed-in user.
+transmit.registerRoutes((route) => {
+  route.middleware(middleware.auth())
+  // Upstream controllers throw (500) on missing input; answer 400 before they run.
+  const needsChannel = route.getPattern() !== '__transmit/events'
+  route.middleware(async (ctx, next) => {
+    const uid = String(ctx.request.input('uid') ?? '')
+    const channel = ctx.request.input('channel')
+    if (
+      !/^[\w-]{8,64}$/.test(uid) ||
+      (needsChannel && (typeof channel !== 'string' || !/^[\w/-]{1,120}$/.test(channel)))
+    )
+      return ctx.response.badRequest({
+        error: { code: 'E_STREAM_REQUEST', message: 'طلب الاتصال الفوري غير صالح' },
+      })
+    return next()
+  })
+})
 
 router.mcp().use([middleware.auth(), apiThrottle, middleware.mcp()])
 
@@ -183,6 +204,9 @@ router
     router.get('jobs', [AdminJobsController, 'index'])
     router.post('jobs/:id/retry', [AdminJobsController, 'retry'])
     router.get('settings', [AdminSettingsController, 'index'])
+    router.get('templates', [AdminTemplatesController, 'index'])
+    router.put('templates/:key', [AdminTemplatesController, 'update'])
+    router.delete('templates/:key', [AdminTemplatesController, 'reset'])
     router.get('setup', [SetupController, 'index'])
     router.post('setup/check/:service', [SetupController, 'check'])
     router.post('setup/identity', [SetupController, 'confirmIdentity'])

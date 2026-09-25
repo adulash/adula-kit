@@ -61,7 +61,7 @@ test.group('Assignments and my tasks over HTTP', (group) => {
       .header('Accept', 'text/html')
       .withInertia()
     page.assertStatus(200)
-    assert.equal(page.body().component, 'tasks/index')
+    assert.equal(page.body().component, 'work/my_tasks')
     assert.equal(page.body().props.assignments.open, 1)
     assert.equal(page.body().props.assignments.data[0].title, 'مراجعة البيانات')
 

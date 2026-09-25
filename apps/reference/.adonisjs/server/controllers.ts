@@ -15,6 +15,7 @@ export const controllers = {
     Settings: () => import('#controllers/admin/settings_controller'),
     Setup: () => import('#controllers/admin/setup_controller'),
     Support: () => import('#controllers/admin/support'),
+    Templates: () => import('#controllers/admin/templates_controller'),
     Users: () => import('#controllers/admin/users_controller'),
   },
   Assignments: () => import('#controllers/assignments_controller'),

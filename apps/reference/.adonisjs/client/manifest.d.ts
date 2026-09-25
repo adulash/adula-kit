@@ -16,3 +16,4 @@
 /// <reference path="../../config/mcp.ts" />
 /// <reference path="../../config/queue.ts" />
 /// <reference path="../../config/redis.ts" />
+/// <reference path="../../config/transmit.ts" />

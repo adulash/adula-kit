@@ -29,7 +29,23 @@ export {
   createSavedViewsSchema,
   createCollaborationSchema,
   createAssignmentsSchema,
+  createMessagingSchema,
 } from './src/database/schema.js'
+export {
+  MessageTemplates,
+  DEFAULT_TEMPLATES,
+  renderTemplate,
+  notifyWithTemplate,
+  deliverNotificationMail,
+  listenForNotifications,
+} from './src/core/message_templates.js'
+export type {
+  TemplateDefinition,
+  MessageTemplate,
+  RenderedMessage,
+  MailSender,
+  NotificationSignal,
+} from './src/core/message_templates.js'
 export { Assignments } from './src/collaboration/assignments.js'
 export type {
   Assignment,

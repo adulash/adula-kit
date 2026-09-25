@@ -12,7 +12,7 @@ export default class AssignmentsController {
         cursor: ctx.request.input('cursor'),
       })
       if (wantsJson(ctx)) return page
-      return ctx.inertia.render('tasks/index', {
+      return ctx.inertia.render('work/my_tasks', {
         assignments: page,
         status: ['done', 'all'].includes(ctx.request.input('status'))
           ? (ctx.request.input('status') as 'done' | 'all')

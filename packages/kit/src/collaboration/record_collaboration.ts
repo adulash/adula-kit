@@ -6,6 +6,7 @@ import type { JsonValue, RecordData, Resource } from '../resource/types.js'
 import type { DomainEvent, Listener } from '../events/outbox.js'
 import { jsonValue } from '../admin/contracts.js'
 import { KitError } from '../admin/errors.js'
+import { notifyWithTemplate } from '../core/message_templates.js'
 
 export type ActorLoader = { load(id: number): Promise<Actor> }
 
@@ -194,10 +195,11 @@ export class RecordCollaboration {
       const authorName = author?.full_name ? String(author.full_name) : `مستخدم #${actor.id}`
       const label = this.label(name)
       for (const userId of mentioned)
-        await trx('notifications').insert({
-          user_id: userId,
-          title: `أشار إليك ${authorName}`,
-          body: `في ${label} #${id}: ${body.slice(0, 200)}`,
+        await notifyWithTemplate(trx, userId, 'comment.mentioned', {
+          author: authorName,
+          resource: label,
+          id,
+          excerpt: body.slice(0, 200),
         })
       const followers = await trx('followers')
         .where({ resource: name, record_id: id })
@@ -206,10 +208,11 @@ export class RecordCollaboration {
         .pluck('user_id')
       for (const userId of followers) {
         if (!(await this.canView(name, id, Number(userId)))) continue
-        await trx('notifications').insert({
-          user_id: userId,
-          title: `تعليق جديد على ${label} #${id}`,
-          body: `${authorName}: ${body.slice(0, 200)}`,
+        await notifyWithTemplate(trx, Number(userId), 'comment.created', {
+          author: authorName,
+          resource: label,
+          id,
+          excerpt: body.slice(0, 200),
         })
       }
       const names = mentioned.length
@@ -373,10 +376,10 @@ export class RecordCollaboration {
         }
         for (const userId of followers) {
           if (event !== 'deleted' && !(await this.canView(resource, id, Number(userId)))) continue
-          await trx('notifications').insert({
-            user_id: userId,
-            title: `${verbs[event] ?? 'تحديث'} ${this.label(resource)} #${id}`,
-            body: 'سجل تتابعه تغيّر.',
+          await notifyWithTemplate(trx, Number(userId), 'record.changed', {
+            change: verbs[event] ?? 'تحديث',
+            resource: this.label(resource),
+            id,
           })
         }
       },

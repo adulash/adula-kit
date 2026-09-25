@@ -343,3 +343,34 @@ export async function createAssignmentsSchema(db: Knex) {
     t.index(['workflow_run_id'])
   })
 }
+
+/**
+ * Message templates, notification e-mail delivery state and the realtime signal.
+ * The trigger's NOTIFY is delivered only when the inserting transaction commits.
+ */
+export async function createMessagingSchema(db: Knex) {
+  await db.schema.createTable('message_templates', (t) => {
+    t.string('key', 100).primary()
+    t.string('subject', 255).notNullable()
+    t.text('body').notNullable()
+    t.boolean('mail').notNullable().defaultTo(false)
+    t.integer('updated_by').references('id').inTable('users').onDelete('SET NULL')
+    t.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+  })
+  await db.schema.alterTable('notifications', (t) => {
+    t.string('template_key', 100)
+    t.string('mail_state', 20)
+    t.integer('mail_attempts').notNullable().defaultTo(0)
+    t.string('mail_error', 500)
+    t.timestamp('mailed_at', { useTz: true })
+  })
+  await db.raw(
+    "CREATE INDEX notifications_mail_pending ON notifications (id) WHERE mail_state = 'pending'"
+  )
+  await db.raw(
+    `CREATE FUNCTION kit_notification_signal() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM pg_notify('kit_notifications', json_build_object('userId', NEW.user_id, 'id', NEW.id)::text); RETURN NULL; END $$`
+  )
+  await db.raw(
+    'CREATE TRIGGER kit_notification_signal AFTER INSERT ON notifications FOR EACH ROW EXECUTE FUNCTION kit_notification_signal()'
+  )
+}

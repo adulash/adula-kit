@@ -76,6 +76,7 @@ export default defineConfig({
     () => import('@jrmc/adonis-attachment/attachment_provider'),
     () => import('@adonisjs/ally/ally_provider'),
     () => import('@adonisjs/drive/drive_provider'),
+    () => import('@adonisjs/transmit/transmit_provider'),
   ],
 
   /*
@@ -91,6 +92,7 @@ export default defineConfig({
     () => import('#start/kernel'),
     () => import('#start/validator'),
     { file: () => import('#start/scheduler'), environment: ['console'] },
+    { file: () => import('#start/realtime'), environment: ['web', 'test'] },
   ],
 
   /*

@@ -3,6 +3,7 @@ import type { Actor } from '../auth/ability.js'
 import type { ResourceService } from '../admin/resource_service.js'
 import type { ActorLoader } from './record_collaboration.js'
 import { KitError } from '../admin/errors.js'
+import { notifyWithTemplate } from '../core/message_templates.js'
 
 export type AssignmentStatus = 'open' | 'done' | 'cancelled'
 export type Assignment = {
@@ -138,11 +139,17 @@ export class Assignments {
           workflow_step: input.workflowStep ?? null,
         })
         .returning('id')
-      await trx('notifications').insert({
-        user_id: input.assigneeId,
-        title: input.kind === 'approval' ? 'موافقة مطلوبة منك' : 'مهمة جديدة مسندة إليك',
-        body: `${input.title} — ${this.label(input.resource)} #${input.recordId}`,
-      })
+      await notifyWithTemplate(
+        trx,
+        input.assigneeId,
+        input.kind === 'approval' ? 'assignment.approval' : 'assignment.created',
+        {
+          title: input.title,
+          resource: this.label(input.resource),
+          id: input.recordId,
+          due: input.dueOn ?? '',
+        }
+      )
       return this.query(trx).where('a.id', row.id).first()
     }
     return 'isTransaction' in db && db.isTransaction ? insert(db) : this.db.transaction(insert)
@@ -219,11 +226,12 @@ export class Assignments {
         .update({ status: outcome, completed_at: trx.fn.now(), completed_by: actor.id })
       const notify = outcome === 'done' ? row.assigned_by : row.assignee_id
       if (notify && notify !== actor.id)
-        await trx('notifications').insert({
-          user_id: notify,
-          title: outcome === 'done' ? 'أُنجزت مهمة أسندتها' : 'أُلغيت مهمة مسندة إليك',
-          body: `${row.title} — ${this.label(row.resource)} #${row.record_id}`,
-        })
+        await notifyWithTemplate(
+          trx,
+          notify,
+          outcome === 'done' ? 'assignment.done' : 'assignment.cancelled',
+          { title: row.title, resource: this.label(row.resource), id: row.record_id }
+        )
     })
   }
 
