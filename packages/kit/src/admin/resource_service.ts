@@ -29,6 +29,11 @@ import type {
   ResourceField,
 } from './presentation.js'
 
+/** Per-process cache of planner row estimates for identical list queries. */
+const estimates = new Map<string, { rows: number; at: number }>()
+const ESTIMATE_TTL_MS = 30_000
+const ESTIMATE_CACHE_LIMIT = 500
+
 export type ListOptions = {
   limit?: number
   cursor?: string
@@ -333,10 +338,19 @@ export class ResourceService {
     let estimatedTotal: number | undefined
     if (options.estimate !== false && !options.cursor) {
       const compiled = query.clone().clearSelect().select('r.id').toSQL()
-      const estimate = await this.db.raw(`EXPLAIN (FORMAT JSON) ${compiled.sql}`, [
-        ...compiled.bindings,
-      ])
-      estimatedTotal = Number(estimate.rows[0]['QUERY PLAN'][0].Plan['Plan Rows'])
+      // The planner estimate is approximate by nature; reuse it briefly for the same
+      // authorized, filtered query instead of planning it on every first page.
+      const key = `${compiled.sql}\u0000${JSON.stringify(compiled.bindings)}`
+      const cached = estimates.get(key)
+      if (cached && cached.at > Date.now() - ESTIMATE_TTL_MS) estimatedTotal = cached.rows
+      else {
+        const estimate = await this.db.raw(`EXPLAIN (FORMAT JSON) ${compiled.sql}`, [
+          ...compiled.bindings,
+        ])
+        estimatedTotal = Number(estimate.rows[0]['QUERY PLAN'][0].Plan['Plan Rows'])
+        if (estimates.size >= ESTIMATE_CACHE_LIMIT) estimates.delete(estimates.keys().next().value!)
+        estimates.set(key, { rows: estimatedTotal, at: Date.now() })
+      }
     }
     if (options.cursor) {
       let cursor: { id: number; value: unknown; sort: string; direction: string }
