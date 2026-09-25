@@ -26,5 +26,25 @@
     "user invitations sent while impersonating do not record the administrator (code reading only)",
     "impersonation has no time limit beyond the normal session"
   ],
-  "humanReview": "pending (managed rule 11)"
+  "humanReview": "pending (managed rule 11)",
+  "independentBlackBox": {
+    "date": "2026-09-25",
+    "revision": "6272d97",
+    "tester": "separate automated agent, black-box, without access to the earlier tests",
+    "method": "running reference app (development mode, cookie sessions, own database), curl with cookie jars and headless Chromium; administrators created through signup plus adula:install",
+    "results": {
+      "sharedBrowserTakeover": "secure: stop 401/422, admin area 403, replayed pre-logout cookie 401",
+      "forgedCookies": "secure: tampered data or session cookie 401",
+      "whileImpersonating": "secure: /admin 403, nested impersonation 403, token mint 403 E_IMPERSONATING, invite 403, CSRF-less 403",
+      "targetRules": "secure: self 422, administrator 403, disabled 422, administrator disabled mid-impersonation 403 E_IMPERSONATOR_REVOKED",
+      "audit": "every start, stop, profile and password action identifies the real administrator",
+      "ui": "banner and stop control only in the impersonating session"
+    },
+    "confirmedVulnerabilities": 0,
+    "residualRisks": [
+      "the display name can be changed while impersonating (audited)",
+      "replay defence relies on server-side session tracking on every authenticated route"
+    ],
+    "verdict": "fix effective; the human review of managed rule 11 is still required"
+  }
 }
