@@ -202,6 +202,7 @@ await stage('http', async () => {
   const server = await startServer('source-server')
   try { await httpExercise('source', server) } finally { await server.stop() }
 })
+// The budget is plan section 13: list with two relations p95 < 300 ms, save p95 < 200 ms.
 if (process.env.K6_BINARY) await stage('performance', async () => {
   const server = await startServer('performance-server', { LOG_LEVEL: 'warn' }, { compiled: true })
   try {

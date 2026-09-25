@@ -255,7 +255,7 @@ test.group('Workflow engine', (group) => {
     assert.equal(run.attempts, 1)
     const unchanged = await db('orders').where('id', id).first()
     assert.notEqual(unchanged.status, 'closed')
-    await db('workflow_runs').where('id', run.id).update({ wake_at: new Date() })
+    await db('workflow_runs').where('id', run.id).update({ wake_at: new Date(Date.now() - 1000) })
     await workflows.tick()
     run = await workflows.run(run.id, admin)
     assert.equal(run.status, 'completed')
@@ -313,7 +313,7 @@ test.group('Workflow engine', (group) => {
     const [run] = await engine().runsFor('orders', id, admin)
     await db('workflow_runs')
       .where('id', run.id)
-      .update({ status: 'running', wake_at: db.fn.now() })
+      .update({ status: 'running', wake_at: new Date(Date.now() - 1000) })
     const withoutV1 = engine([
       defineWorkflow({
         name: 'order_approval',
