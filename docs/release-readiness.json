@@ -44,8 +44,7 @@
       "id": 3,
       "status": "pending",
       "evidence": [
-        "docs/evidence/phase3-implementation-2026-09-25.json",
-        "docs/security/two-factor-asvs-review.md"
+        "docs/evidence/phase3-implementation-2026-09-25.json"
       ],
       "remaining": "All phase 3 features are implemented with consumers and PostgreSQL tests (2026-09-25). Acceptance waits on the written human ASVS review of 2FA and a green GitHub CI run. XLSX import is GAP-006."
     },
