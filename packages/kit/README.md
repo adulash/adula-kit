@@ -1,6 +1,6 @@
 # @adula/kit
 
-Experimental 0.2.0-alpha.4 resource framework for AdonisJS 7 and PostgreSQL 17. Node 24 or later is required. MIT licensed. The target is the complete approved 1.0 scope; it has not passed acceptance.
+Resource framework for AdonisJS 7 and PostgreSQL 17, version 1.0.0 (accepted by the owner, ADR 028). Node 24 or later is required. MIT licensed. The public API in `api/kit-api.json` follows semantic versioning.
 
 ## Install into a consumer
 

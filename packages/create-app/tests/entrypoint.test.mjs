@@ -11,7 +11,7 @@ const cli = fileURLToPath(new URL('../src/cli.mjs', import.meta.url))
 test('direct creator executable prints help without starting installation', () => {
   const result = spawnSync(process.execPath, [cli, '--help'], { encoding: 'utf8' })
   assert.equal(result.status, 0, result.stderr)
-  assert.match(result.stdout, /npm create @adula\/app@alpha my-app/)
+  assert.match(result.stdout, /npm create @adula\/app@latest my-app/)
 })
 
 test('npm-style symlink executable invokes the creator on Unix', {
@@ -24,7 +24,7 @@ test('npm-style symlink executable invokes the creator on Unix', {
     const result = spawnSync(process.execPath, [bin, '--help'], { encoding: 'utf8' })
     assert.equal(result.status, 0, result.stderr)
     assert.match(result.stdout, /Create a new business application/)
-    assert.match(result.stdout, /npm create @adula\/app@alpha my-app/)
+    assert.match(result.stdout, /npm create @adula\/app@latest my-app/)
   } finally {
     await rm(directory, { recursive: true, force: true })
   }

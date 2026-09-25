@@ -1,8 +1,11 @@
 # Changelog
 
-## Unreleased — toward 1.0.0
+## 1.0.0 — 2026-09-25
 
-Phase 2 accepted by owner attestation (ADR 025). The k6 budget now passes on a
+The complete approved 1.0 scope, accepted by the owner with release authorization
+(ADR 028; scope decisions in ADR 027). Two-factor authentication is not included
+and returns in 2.0; impersonation was reviewed by automated tests, with its human
+review due in 2.0. Phase 2 was accepted by owner attestation (ADR 025). The k6 budget now passes on a
 GitHub runner with the compiled build (list p95 152 ms, save p95 135 ms;
 docs/evidence/phase5-performance-2026-09-25.json). Phases 3–6 implemented with consumers and PostgreSQL tests.
 All new kit tables arrive through additive migrations (`kit_collaboration`,

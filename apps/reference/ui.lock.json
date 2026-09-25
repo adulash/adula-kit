@@ -1,6 +1,6 @@
 {
   "version": "0.2.0-alpha.1",
-  "kitCompatibility": "0.2",
+  "kitCompatibility": "1.0",
   "files": {
     "inertia/components/ui/button.tsx": {
       "hash": "79dd6f75f8136394442202d6b8b922fb269eaad0a5dba579397c9d5b41f893bb",

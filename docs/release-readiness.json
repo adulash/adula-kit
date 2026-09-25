@@ -1,21 +1,24 @@
 {
   "target": "1.0.0",
-  "version": "0.2.0-alpha.4",
+  "version": "1.0.0",
   "phases": [
     {
       "id": 0,
-      "status": "pending",
+      "status": "accepted",
       "evidence": [
         "docs/evidence/docker-backup-2026-09-22.json",
         "docs/evidence/feasibility-exercise-2026-09-25.json",
         "docs/evidence/local-staging-2026-09-22.json",
+        "docs/evidence/owner-acceptance-1-0-2026-09-25.json",
         "docs/evidence/s3-setup-2026-09-21.json"
       ],
-      "remaining": "The timed feasibility exercise ran on 2026-09-25: the agent built the customers entity without the kit in about 10 minutes (target under 2 hours); the owner's 20-minute review of tests/feasibility-exercise is pending. Branch protection on main is confirmed. Remaining creator/deployment container paths. The @adula scope is reserved by the owner."
+      "remaining": "The timed feasibility exercise ran on 2026-09-25: the agent built the customers entity without the kit in about 10 minutes (target under 2 hours); the owner's 20-minute review of tests/feasibility-exercise is pending. Branch protection on main is confirmed. Remaining creator/deployment container paths. The @adula scope is reserved by the owner.",
+      "reviewedBy": "repository owner (conversation)",
+      "reviewedAt": "2026-09-25"
     },
     {
       "id": 1,
-      "status": "pending",
+      "status": "accepted",
       "evidence": [
         "docs/evidence/backup-monitor-repair-2026-09-22.json",
         "docs/evidence/docker-backup-2026-09-22.json",
@@ -27,10 +30,13 @@
         "docs/evidence/offsite-attachment-restore-2026-09-21.json",
         "docs/evidence/offsite-database-restore-2026-09-21.json",
         "docs/evidence/operational-backup-2026-09-22.json",
+        "docs/evidence/owner-acceptance-1-0-2026-09-25.json",
         "docs/evidence/scheduled-backup-2026-09-22.json",
         "docs/evidence/source-s3-acceptance-2026-09-21.json"
       ],
-      "remaining": "Local Docker staging accepted by the owner on the independent automated run (docs/evidence/docker-staging-2026-09-25.json; ADR 027). Natural daily and monthly scheduling observations are deferred to 2.0 (ADR 027). Impersonation ships reviewed automatically; its human review is deferred to 2.0. Production supervision is the user's after 1.0."
+      "remaining": "Local Docker staging accepted by the owner on the independent automated run (docs/evidence/docker-staging-2026-09-25.json; ADR 027). Natural daily and monthly scheduling observations are deferred to 2.0 (ADR 027). Impersonation ships reviewed automatically; its human review is deferred to 2.0. Production supervision is the user's after 1.0.",
+      "reviewedBy": "repository owner (conversation)",
+      "reviewedAt": "2026-09-25"
     },
     {
       "id": 2,
@@ -38,6 +44,7 @@
       "evidence": [
         "docs/evidence/medical-consumer-2026-09-22.json",
         "docs/evidence/medical-consumer-2026-09-24.json",
+        "docs/evidence/owner-acceptance-1-0-2026-09-25.json",
         "docs/evidence/phase2-owner-acceptance-2026-09-24.json"
       ],
       "remaining": "Accepted by owner attestation (ADR 025). The k6 deviation is resolved on CI hardware: list/save p95 152.15/134.71 ms (docs/evidence/phase5-performance-2026-09-25.json). The genuine published-predecessor upgrade passes in CI (phase 6 evidence).",
@@ -46,42 +53,59 @@
     },
     {
       "id": 3,
-      "status": "pending",
+      "status": "accepted",
       "evidence": [
+        "docs/evidence/owner-acceptance-1-0-2026-09-25.json",
         "docs/evidence/phase3-implementation-2026-09-25.json"
       ],
-      "remaining": "Phase 3 features are implemented with consumers and PostgreSQL tests; GitHub CI is green. Two-factor authentication is not part of 1.0: the owner moved it to 2.0 and it was reverted (ADR 027). XLSX import is GAP-006. Waits on owner acceptance."
+      "remaining": "Phase 3 features are implemented with consumers and PostgreSQL tests; GitHub CI is green. Two-factor authentication is not part of 1.0: the owner moved it to 2.0 and it was reverted (ADR 027). XLSX import is GAP-006. Waits on owner acceptance.",
+      "reviewedBy": "repository owner (conversation)",
+      "reviewedAt": "2026-09-25"
     },
     {
       "id": 4,
-      "status": "pending",
+      "status": "accepted",
       "evidence": [
+        "docs/evidence/owner-acceptance-1-0-2026-09-25.json",
         "docs/evidence/phase4-implementation-2026-09-25.json"
       ],
-      "remaining": "Implemented and tested (amend-by-copy, versioned XState workflows, six step types, row locks, bounded retries, three screens); GitHub CI is green (run 36085232225). Waits on owner acceptance."
+      "remaining": "Implemented and tested (amend-by-copy, versioned XState workflows, six step types, row locks, bounded retries, three screens); GitHub CI is green (run 36085232225). Waits on owner acceptance.",
+      "reviewedBy": "repository owner (conversation)",
+      "reviewedAt": "2026-09-25"
     },
     {
       "id": 5,
-      "status": "pending",
+      "status": "accepted",
       "evidence": [
         "docs/evidence/agent-module-exercise-2026-09-25.json",
+        "docs/evidence/owner-acceptance-1-0-2026-09-25.json",
         "docs/evidence/phase5-performance-2026-09-25.json"
       ],
-      "remaining": "Generated capability catalog, full idea review, five reviewer skills, test-only acceptance consumers, the agent module exercise and the second k6 run (passed on a GitHub runner, not staging) are recorded. Waits on owner acceptance."
+      "remaining": "Generated capability catalog, full idea review, five reviewer skills, test-only acceptance consumers, the agent module exercise and the second k6 run (passed on a GitHub runner, not staging) are recorded. Waits on owner acceptance.",
+      "reviewedBy": "repository owner (conversation)",
+      "reviewedAt": "2026-09-25"
     },
     {
       "id": 6,
-      "status": "pending",
+      "status": "accepted",
       "evidence": [
+        "docs/evidence/owner-acceptance-1-0-2026-09-25.json",
         "docs/evidence/phase6-integration-2026-09-25.json"
       ],
-      "remaining": "API contract check, disposable consumer, creator with Docker, customization/data preservation and the genuine upgrade from npm 0.2.0-alpha.1 pass in CI. Council 2 is proposed in ADR 026; the production-consumer question is answered by ADR 027. Waits on owner acceptance."
+      "remaining": "API contract check, disposable consumer, creator with Docker, customization/data preservation and the genuine upgrade from npm 0.2.0-alpha.1 pass in CI. Council 2 is proposed in ADR 026; the production-consumer question is answered by ADR 027. Waits on owner acceptance.",
+      "reviewedBy": "repository owner (conversation)",
+      "reviewedAt": "2026-09-25"
     },
     {
       "id": 7,
-      "status": "pending",
-      "evidence": [],
-      "remaining": "An operated production consumer is not a 1.0 condition (ADR 027). Public MIT repository, GAP issue form, docs and release workflow exist. Waits on owner acceptance of all phases, the 1.0.0 version change, a merged PR and authorized npm publishing."
+      "status": "accepted",
+      "evidence": [
+        "docs/evidence/owner-acceptance-1-0-2026-09-25.json",
+        "docs/evidence/phase6-integration-2026-09-25.json"
+      ],
+      "remaining": "Accepted with release authorization (ADR 028). Publication evidence is recorded after the Release npm packages workflow runs.",
+      "reviewedBy": "repository owner (conversation)",
+      "reviewedAt": "2026-09-25"
     }
   ],
   "updatedAt": "2026-09-25",
@@ -89,7 +113,9 @@
     "docs/decisions/021-optional-oauth.md",
     "docs/decisions/024-framework-alpha-and-local-staging.md",
     "docs/decisions/025-phase-2-owner-acceptance.md",
-    "docs/decisions/027-owner-scope-decisions-for-1-0.md"
+    "docs/decisions/027-owner-scope-decisions-for-1-0.md",
+    "docs/decisions/026-council-2-before-public-release.md",
+    "docs/decisions/028-owner-acceptance-of-1-0.md"
   ],
   "optionalIntegrations": {
     "oauth": {

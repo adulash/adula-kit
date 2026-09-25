@@ -1,7 +1,6 @@
 # ADR 026 — Council 2: does the framework work outside its owner's head?
 
-Date: 2026-09-25. Status: **proposed** by the implementing agent. It becomes a
-decision only when the owner accepts it; until then it authorizes nothing.
+Date: 2026-09-25. Status: **accepted** by the owner on 2026-09-25 (ADR 028).
 
 Plan rule 8 calls the council twice: after phase 2 (ADR 025) and before public
 release. The second question is whether someone other than the owner (a developer

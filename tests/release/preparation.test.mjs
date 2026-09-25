@@ -8,11 +8,12 @@ import { fileURLToPath } from 'node:url'
 import { releaseStatus } from '../../scripts/release-status.mjs'
 import { requireSyntheticRehearsal, upgradeMode } from '../../scripts/upgrade-mode.mjs'
 
-test('release report exposes all pending phases even when version fails first', async () => {
+test('release report exposes every phase and only the accepted stable channel passes', async () => {
   const report = await releaseStatus()
-  assert.equal(report.channels.alpha.guardPassed, true)
+  // 1.0.0 is accepted (ADR 028): a stable version is never an alpha or next prerelease.
+  assert.equal(report.channels.alpha.guardPassed, false)
   assert.equal(report.channels.next.guardPassed, false)
-  assert.equal(report.channels.latest.guardPassed, false)
+  assert.equal(report.channels.latest.guardPassed, true)
   assert.equal(report.phases.length, 8)
   assert.deepEqual(report.phases[1].requiredFor, ['next', 'latest'])
   assert.deepEqual(report.phases[2].requiredFor, ['latest'])

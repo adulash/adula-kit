@@ -1,6 +1,6 @@
 # Preparing and publishing packages
 
-**Experimental 0.2.0-alpha.1 is published.** The owner authorized reviewed PRs, passing CI and merge, then alpha publication. On 2026-09-23 the owner also approved retaining `latest` as an alias of this experimental version; `next` remains absent. This does not accept stable 1.0. See ADR 024 and the [publication evidence](evidence/alpha-publication-2026-09-23.json).
+**1.0.0 is accepted and authorized for `latest` (ADR 028).** Publication follows the same path as the alphas: a reviewed PR merged after CI, a `v1.0.0` tag on the merge commit, then the release workflow. Earlier alphas are recorded in ADR 024 and the [alpha publication evidence](evidence/alpha-publication-2026-09-23.json).
 
 ## Destination
 
@@ -12,7 +12,7 @@
 | Workflow | `release.yml` |
 | GitHub environment | `npm`; restricted to protected branches; `main` requires PR and CI |
 | Authentication | npm trusted publishing, GitHub-hosted runner, OIDC |
-| Current version / target | 0.2.0-alpha.1 published experimental / complete 1.0.0 pending |
+| Current version / target | 1.0.0 accepted and authorized (ADR 028) |
 
 Trusted publishers were configured for **all three packages**: owner `adulash`, repository `adula-kit`, workflow `release.yml`, environment `npm`, with publishing permission. The first publication used [signed bootstrap archives](alpha-bootstrap.md) and an authenticated owner session. The workflow does not establish account setup or supply credentials.
 
@@ -33,7 +33,7 @@ pnpm check:release --artifacts=.work
 pnpm check:release --channel=latest
 ```
 
-The last command **must fail today**: 0.2.0-alpha.1 is not complete 1.0. The owner's one-version registry alias exception does not authorize a stable release or disable future acceptance gates. Packaging checks validate versions, provenance metadata, licensing, skills/commands, exports, UI assets and absence of private/test files, then write `.work/SHA256SUMS`. They do not establish product stability.
+The last command passes only when every phase in `release-readiness.json` is accepted with a reviewer, a date and evidence, as it is for 1.0.0 (ADR 028). Packaging checks validate versions, provenance metadata, licensing, skills/commands, exports, UI assets and absence of private/test files, then write `.work/SHA256SUMS`. They do not establish product stability.
 
 When acceptance justifies a candidate, update all three package versions, workspace/reference versions, agent/UI lock versions, changelog and `release-readiness.json`; rebuild and repeat both consumer tests. The creator pins matching kit/UI versions in its bundled template. Keep migrations additive. Previews use an explicit prerelease such as `1.0.0-rc.1` on `next`; stable uses `v1.0.0` on `latest`. These are future examples, not existing releases.
 
