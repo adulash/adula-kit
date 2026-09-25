@@ -1,6 +1,6 @@
 # Kit gaps
 
-Updated 2026-09-23. Resolved items are recorded in docs/implementation-status.md. This file lists remaining work only.
+Updated 2026-09-25. Resolved items are recorded in docs/implementation-status.md. This file lists remaining work only.
 
 The [2026-09-22 npm acceptance review](docs/npm-acceptance-review-2026-09-22.md)
 records the current operational/phase 2 audit and the concrete acceptance sequence.
@@ -48,21 +48,17 @@ publishing (docs/evidence/alpha-publication-2026-09-23.json).
 Remaining: natural scheduled backup/restore evidence on staging. No external
 production-capacity or public TLS claim is made.
 
-## GAP-004 — Phase 2 performance budget and the vertical slice
+## GAP-004 — Performance on staging hardware
 
-Needed by: the gate before phase 3.
-Implemented: the generic ResourcePage/DataTable/ResourceForm/ResourceShow with every field control, belongsTo search, inline rows, virtualization above 200 rows, CSV export, deferred activity and children, the page override rule, the fixed core administration screens, the route scan, and browser coverage of all of it with RTL screenshots in `.work/screenshots/`.
-Verified locally: a separate archive-installed disposable medical consumer, four generated resources, 61 HTTP tests, preserved component/page customizations and real database-plus-bound-file recovery. The owner waived company identity for this test. The 100000-row, 50-user k6 run completed 5805 successful lists and saves with no HTTP failures; actor/Ability cache timing and invalidation passed.
-Remaining: list p95 504.83ms and save p95 463.00ms exceed the <300/<200ms budgets. A 2026-09-24 rerun after the audit hardening was worse (1140/1060ms, 3713 samples; docs/evidence/medical-consumer-2026-09-24.json); pool size, host load and Node version changed together, so the cause is not yet attributed. Staging measurement, human RTL approval (including localized date order on the detail view), a genuine published minor-version upgrade and council 1 remain outstanding.
-Next: profile request/query/pool contention and rerun on actual staging hardware, hold visual review, and exercise the genuine upgrade. No threshold was relaxed. Local installation/restore and green functional tests do not accept the phase.
+Needed by: 2.0 (the 1.0 budget passed on CI hardware).
+Resolved for 1.0: the 100000-row, 50-user k6 workload passes on a GitHub runner with the compiled build: list p95 152.15 ms, save p95 134.71 ms, 16476 checks without failure ([evidence](docs/evidence/phase5-performance-2026-09-25.json)). Earlier failures (504.83/463.00 ms and 1140/1060 ms) measured the development server.
+Remaining: a run on staging hardware with `NODE_ENV=production`, and a scheduled weekly k6 run (the Performance workflow runs on demand and when the harness changes).
 
-## GAP-005 — Later approved roadmap
+## GAP-005 — Items deferred to 2.0
 
-Needed by: the plan's 1.0 completion criterion.
-Remaining: phases 3–7 business features, the XState engine, the five reviewer skills, independent framework-consumer integration/runtime acceptance and public release (ADR 024 removes a permanent medical product).
-Scope: the owner explicitly selected full 1.0 acceptance. Deleted educational modules must stay out of normal operation; isolated fixtures or independent applications provide feature consumers. See docs/acceptance-1.0.md and docs/release-readiness.json.
-Constraint: the plan explicitly forbids phase 3 before the independently upgraded and restored phase 2 slice passes.
-Next: follow the framework gates in order under ADR 024. The owner authorized the experimental alpha channel (currently 0.2.0-alpha.4); latest remains on 0.2.0-alpha.1 by the ADR 024 amendment and next remains absent.
+Needed by: 2.0.
+Deferred by the owner (ADR 027): the 2FA human ASVS review (including the 2.8.5 notification gap), the natural monthly restore-test observation and an operated production consumer.
+Also open: impersonation human review, an admin policy that enforces 2FA, natural daily backup observation, the timed feasibility exercise, the weekly agent test, an independent repetition of the fourth-module exercise from published packages, killing a real worker process in the workflow crash test, and API contract coverage for the `./mcp`, `./provider`, `./commands` and `./eslint` exports.
 
 ## Schedule follow-up — 2026-09-22
 

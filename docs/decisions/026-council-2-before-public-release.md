@@ -16,12 +16,16 @@ the capability catalog and the docs.
   from one Arabic sentence in a disposable consumer, using only `adula:resource`,
   idea-review and the generated capability catalog. Automatic checks caught three
   mistakes that the agent corrected; lint, typecheck and the functional suite
-  passed (`docs/evidence/agent-module-exercise-2026-09-25.json`).
+  passed (`docs/evidence/agent-module-exercise-2026-09-25.json`). Limit: the same
+  agent that wrote the kit ran the exercise, inside a copy of the reference app
+  using the workspace kit, and recorded no timings. An independent repetition from
+  the published packages is a 2.0 item.
 - **Independent consumers:** CI builds packed archives and runs a disposable
-  consumer (`pnpm test:consumer`), a creator-generated application with and
-  without Docker (`pnpm test:create`), and the medical consumer with four
-  generated resources, backup, restore and reconciliation (`pnpm test:medical`).
-  None of them imports repository sources.
+  consumer (`pnpm test:consumer`) and a creator-generated application with and
+  without Docker (`pnpm test:create`). The medical consumer with four generated
+  resources, backup, restore and reconciliation (`pnpm test:medical`) runs in the
+  Performance workflow, which is not a merge gate. None of them imports
+  repository sources.
 - **Genuine upgrade:** CI installs the published `0.2.0-alpha.1` from npm, adds
   consumer data, a customized component and an overridden page, then upgrades to
   the current source. Data, customizations and additive migrations are verified

@@ -26,8 +26,9 @@ to 2.0.
 
 Still open:
 
-1. **Phase 0:** branch protection on `main` (configured by the owner in GitHub
-   settings) and the timed feasibility exercise, or a written deferral.
+1. **Phase 0:** confirm that branch protection on `main` is still on (recorded in
+   `docs/evidence/alpha-publication-2026-09-23.json`), and defer or run the timed
+   feasibility exercise.
 2. **Phase 1:** local Docker staging (ADR 024) and two natural daily backup runs,
    attested by the owner or deferred.
 3. **Phases 3, 4, 5 and 6:** accept on the recorded evidence, or name what to fix.

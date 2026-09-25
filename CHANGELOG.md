@@ -2,8 +2,9 @@
 
 ## Unreleased — toward 1.0.0
 
-Phase 2 accepted by owner attestation (ADR 025; the k6 budget remains an open,
-recorded deviation). Phases 3–5 implemented with consumers and PostgreSQL tests.
+Phase 2 accepted by owner attestation (ADR 025). The k6 budget now passes on a
+GitHub runner with the compiled build (list p95 152 ms, save p95 135 ms;
+docs/evidence/phase5-performance-2026-09-25.json). Phases 3–6 implemented with consumers and PostgreSQL tests.
 All new kit tables arrive through additive migrations (`kit_collaboration`,
 `kit_assignments`, `kit_messaging`, `kit_webhooks`, `kit_imports`,
 `kit_two_factor`, `kit_workflows`).
