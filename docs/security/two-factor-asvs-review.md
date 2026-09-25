@@ -1,6 +1,6 @@
 # Two-factor authentication — ASVS review record
 
-Status: **implementation self-assessed; human review deferred to 2.0 by the owner (ADR 027).** 2FA ships in 1.0 without an independent human security review. The plan (phase 3) and
+Status: **not part of 1.0.** The owner moved 2FA to 2.0 (ADR 027); the implementation was reverted from 1.0 and remains in Git history (commit f7c68b6). This checklist is kept for the 2.0 review. The plan (phase 3) and
 the managed AGENTS rule 11 require a written human review of 2FA before acceptance.
 This file is the checklist for that review. It does not claim the review happened.
 

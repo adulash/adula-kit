@@ -679,30 +679,6 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/session_controller').default['store']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'two_factor_challenge.create': {
-    methods: ["GET","HEAD"]
-    pattern: '/login/two-factor'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/two_factor_challenge_controller').default['create']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/two_factor_challenge_controller').default['create']>>>
-    }
-  }
-  'two_factor_challenge.store': {
-    methods: ["POST"]
-    pattern: '/login/two-factor'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/two_factor_challenge_controller').default['store']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/two_factor_challenge_controller').default['store']>>>
-    }
-  }
   'password_reset.forgot': {
     methods: ["GET","HEAD"]
     pattern: '/password/forgot'
@@ -845,66 +821,6 @@ export interface Registry {
       query: ExtractQuery<InferInput<(typeof import('#validators/user').changePasswordValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/profile_controller').default['password']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/profile_controller').default['password']>>> | { status: 422; response: { errors: SimpleError[] } }
-    }
-  }
-  'two_factor.show': {
-    methods: ["GET","HEAD"]
-    pattern: '/account/two-factor'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/two_factor_controller').default['show']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/two_factor_controller').default['show']>>>
-    }
-  }
-  'two_factor.begin': {
-    methods: ["POST"]
-    pattern: '/account/two-factor'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/two_factor_controller').default['begin']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/two_factor_controller').default['begin']>>>
-    }
-  }
-  'two_factor.confirm': {
-    methods: ["POST"]
-    pattern: '/account/two-factor/confirm'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/two_factor_controller').default['confirm']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/two_factor_controller').default['confirm']>>>
-    }
-  }
-  'two_factor.recovery': {
-    methods: ["POST"]
-    pattern: '/account/two-factor/recovery-codes'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/two_factor_controller').default['recovery']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/two_factor_controller').default['recovery']>>>
-    }
-  }
-  'two_factor.disable': {
-    methods: ["POST"]
-    pattern: '/account/two-factor/disable'
-    types: {
-      body: {}
-      paramsTuple: []
-      params: {}
-      query: {}
-      response: ExtractResponse<Awaited<ReturnType<import('#controllers/two_factor_controller').default['disable']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/two_factor_controller').default['disable']>>>
     }
   }
   'api_tokens.index': {

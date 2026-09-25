@@ -21,14 +21,12 @@ accepted with a reviewer, a date and evidence.
 ## Owner decisions
 
 Decided 2026-09-25 (ADR 027): no operated production consumer is required for
-1.0; the 2FA human review and the natural monthly restore-test observation move
-to 2.0.
+1.0; two-factor authentication and the natural monthly restore-test observation
+move to 2.0; branch protection on `main` is confirmed.
 
 Still open:
 
-1. **Phase 0:** confirm that branch protection on `main` is still on (recorded in
-   `docs/evidence/alpha-publication-2026-09-23.json`), and defer or run the timed
-   feasibility exercise.
+1. **Phase 0:** defer or run the timed feasibility exercise.
 2. **Phase 1:** local Docker staging (ADR 024) and two natural daily backup runs,
    attested by the owner or deferred.
 3. **Phases 3, 4, 5 and 6:** accept on the recorded evidence, or name what to fix.

@@ -436,18 +436,6 @@ export async function createImportsSchema(db: Knex) {
   })
 }
 
-/** TOTP two-factor state per user: sealed secret, replay guard and hashed recovery codes. */
-export async function createTwoFactorSchema(db: Knex) {
-  await db.schema.createTable('user_two_factor', (t) => {
-    t.integer('user_id').primary().references('id').inTable('users').onDelete('CASCADE')
-    t.text('secret').notNullable()
-    t.jsonb('recovery_codes').notNullable()
-    t.bigInteger('last_used_step')
-    t.timestamp('enabled_at', { useTz: true })
-    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
-  })
-}
-
 /**
  * Workflow engine state (phase 4): the submission envelope rows gain execution
  * columns, and every transition is appended to workflow_events.

@@ -196,10 +196,6 @@
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>) => Promise<void>"
     },
-    "createTwoFactorSchema": {
-      "kind": "FunctionDeclaration",
-      "type": "(db: Knex<any, any[]>) => Promise<void>"
-    },
     "createWebhooksSchema": {
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>) => Promise<void>"
@@ -747,18 +743,6 @@
     "TemplateDefinition": {
       "kind": "TypeAliasDeclaration",
       "type": "{ label: string; subject: string; body: string; variables: string[]; mail: boolean; }"
-    },
-    "TwoFactor": {
-      "kind": "ClassDeclaration",
-      "type": "typeof TwoFactor"
-    },
-    "TwoFactorEnrollment": {
-      "kind": "TypeAliasDeclaration",
-      "type": "{ otpauthUrl: string; secret: string; }"
-    },
-    "TwoFactorStatus": {
-      "kind": "TypeAliasDeclaration",
-      "type": "{ enabled: boolean; pending: boolean; recoveryRemaining: number; }"
     },
     "UI_PREFERENCES_KEY": {
       "kind": "VariableDeclaration",

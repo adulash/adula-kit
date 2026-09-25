@@ -12,7 +12,6 @@ import {
   createMessagingSchema,
   createWebhooksSchema,
   createImportsSchema,
-  createTwoFactorSchema,
   createWorkflowSchema,
   createResourceTable,
 } from '../index.js'
@@ -166,7 +165,6 @@ export async function setup() {
   await createMessagingSchema(db)
   await createWebhooksSchema(db)
   await createImportsSchema(db)
-  await createTwoFactorSchema(db)
   await createWorkflowSchema(db)
   await db('org_units').insert([
     { id: 1, name: 'Root', type: 'root', path: '1' },

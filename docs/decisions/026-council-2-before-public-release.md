@@ -73,5 +73,6 @@ decides), and performance measured on CI rather than staging hardware.
 ## Owner answers, 2026-09-25
 
 ADR 027 answers two limits above: 1.0 needs no operated production consumer
-(users run production after 1.0), and the 2FA human review moves to 2.0. Acceptance
+(users run production after 1.0), and 2FA is removed from 1.0 and moves to 2.0
+with its human review. Acceptance
 of this council record itself remains open.

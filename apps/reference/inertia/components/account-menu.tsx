@@ -1,13 +1,6 @@
 import { usePage } from '@inertiajs/react'
 import { Form, Link } from '@adonisjs/inertia/react'
-import {
-  ChevronsUpDown,
-  KeySquare,
-  LogOut,
-  MonitorSmartphone,
-  ShieldCheck,
-  UserRound,
-} from 'lucide-react'
+import { ChevronsUpDown, KeySquare, LogOut, MonitorSmartphone, UserRound } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,12 +46,6 @@ export function AccountMenu() {
           <Link route="account_sessions.index">
             <MonitorSmartphone />
             الجلسات
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link route="two_factor.show">
-            <ShieldCheck />
-            التحقق الثنائي
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

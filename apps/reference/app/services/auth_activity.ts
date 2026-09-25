@@ -13,11 +13,6 @@ export type AuthAction =
   | 'oauth_login'
   | 'profile_updated'
   | 'password_changed'
-  | 'two_factor_enabled'
-  | 'two_factor_disabled'
-  | 'two_factor_failed'
-  | 'two_factor_recovery_used'
-  | 'two_factor_recovery_regenerated'
 
 export type AuthActivityEntry = {
   /** The user the event is about; also the record id of the activity row. */

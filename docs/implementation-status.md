@@ -4,7 +4,7 @@
 
 Phase 2 is accepted by owner attestation (ADR 025) with the k6 budget recorded as an
 open deviation. Phase 3 (collaboration, assignments, templates/mail/SSE, webhooks,
-API tokens/OpenAPI, CSV import, printing, 2FA, conditional policies) and phase 4
+API tokens/OpenAPI, CSV import, printing, conditional policies; 2FA moved to 2.0 by ADR 027) and phase 4
 (amend-by-copy, versioned XState workflows with six step types, row locks, bounded
 retries, approvals inbox and failed-runs screen) are implemented with consumers and
 real PostgreSQL tests; see docs/evidence/phase3-implementation-2026-09-25.json and
@@ -15,7 +15,7 @@ capability catalog, the five reviewer skills and the fourth-module agent exercis
 Release tooling added: `pnpm check:api` (public API contract), the genuine
 published-predecessor upgrade (`pnpm test:upgrade --published=0.2.0-alpha.1` in CI)
 and a Performance workflow that measures the compiled build with k6 on a GitHub
-runner. Human acceptance still owed: the ASVS review of 2FA, owner review of phases
+runner. Human acceptance still owed: owner review of phases
 3–6, council 2, and the release authorization. No phase beyond 2 is marked accepted.
 
 

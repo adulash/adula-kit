@@ -34,7 +34,7 @@ Workflow steps: condition, update, notify, approval, delay, http, end.
 - **Documents and workflows:** `defineWorkflow`, `WorkflowEngine`, `workflowListeners`
 - **Notifications and messages:** `notify`, `notifyWithTemplate`, `MessageTemplates`, `deliverNotificationMail`, `listenForNotifications`, `NotificationsAdmin`
 - **Integration:** `Webhooks`, `signWebhook`, `openApiDocument`, `ImportBatches`, `renderPrintHtml`, `htmlToPdf`
-- **Security:** `TwoFactor`, `UserInvitations`, `UsersAdmin`, `RolesAdmin`
+- **Security:** `UserInvitations`, `UsersAdmin`, `RolesAdmin`
 - **Data and operations:** `sequence`, `Settings`, `SettingsAdmin`, `publishOutbox`, `consumeEvent`, `recordMutation`, `moveOrgUnit`, `migrateStorage`, `verifyBackup`, `runtimeHealth`
 
 ## Extension points

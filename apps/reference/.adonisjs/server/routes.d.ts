@@ -60,8 +60,6 @@ export type ScannedRoutes = {
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.create': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
-    'two_factor_challenge.create': { paramsTuple?: []; params?: {} }
-    'two_factor_challenge.store': { paramsTuple?: []; params?: {} }
     'password_reset.forgot': { paramsTuple?: []; params?: {} }
     'password_reset.send': { paramsTuple?: []; params?: {} }
     'password_reset.reset': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
@@ -74,11 +72,6 @@ export type ScannedRoutes = {
     'profile.show': { paramsTuple?: []; params?: {} }
     'profile.update': { paramsTuple?: []; params?: {} }
     'profile.password': { paramsTuple?: []; params?: {} }
-    'two_factor.show': { paramsTuple?: []; params?: {} }
-    'two_factor.begin': { paramsTuple?: []; params?: {} }
-    'two_factor.confirm': { paramsTuple?: []; params?: {} }
-    'two_factor.recovery': { paramsTuple?: []; params?: {} }
-    'two_factor.disable': { paramsTuple?: []; params?: {} }
     'api_tokens.index': { paramsTuple?: []; params?: {} }
     'api_tokens.store': { paramsTuple?: []; params?: {} }
     'api_tokens.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -162,14 +155,12 @@ export type ScannedRoutes = {
     'new_account.create': { paramsTuple?: []; params?: {} }
     'user_invitations.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'session.create': { paramsTuple?: []; params?: {} }
-    'two_factor_challenge.create': { paramsTuple?: []; params?: {} }
     'password_reset.forgot': { paramsTuple?: []; params?: {} }
     'password_reset.reset': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'oauth.redirect': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
     'oauth.callback': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
     'user_invitations.create': { paramsTuple?: []; params?: {} }
     'profile.show': { paramsTuple?: []; params?: {} }
-    'two_factor.show': { paramsTuple?: []; params?: {} }
     'api_tokens.index': { paramsTuple?: []; params?: {} }
     'account_sessions.index': { paramsTuple?: []; params?: {} }
     'admin_sessions.index': { paramsTuple?: []; params?: {} }
@@ -213,14 +204,12 @@ export type ScannedRoutes = {
     'new_account.create': { paramsTuple?: []; params?: {} }
     'user_invitations.show': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'session.create': { paramsTuple?: []; params?: {} }
-    'two_factor_challenge.create': { paramsTuple?: []; params?: {} }
     'password_reset.forgot': { paramsTuple?: []; params?: {} }
     'password_reset.reset': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'oauth.redirect': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
     'oauth.callback': { paramsTuple: [ParamValue]; params: {'provider': ParamValue} }
     'user_invitations.create': { paramsTuple?: []; params?: {} }
     'profile.show': { paramsTuple?: []; params?: {} }
-    'two_factor.show': { paramsTuple?: []; params?: {} }
     'api_tokens.index': { paramsTuple?: []; params?: {} }
     'account_sessions.index': { paramsTuple?: []; params?: {} }
     'admin_sessions.index': { paramsTuple?: []; params?: {} }
@@ -263,16 +252,11 @@ export type ScannedRoutes = {
     'user_invitations.accept': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'new_account.store': { paramsTuple?: []; params?: {} }
     'session.store': { paramsTuple?: []; params?: {} }
-    'two_factor_challenge.store': { paramsTuple?: []; params?: {} }
     'password_reset.send': { paramsTuple?: []; params?: {} }
     'password_reset.update': { paramsTuple: [ParamValue]; params: {'token': ParamValue} }
     'session.destroy': { paramsTuple?: []; params?: {} }
     'user_invitations.store': { paramsTuple?: []; params?: {} }
     'profile.password': { paramsTuple?: []; params?: {} }
-    'two_factor.begin': { paramsTuple?: []; params?: {} }
-    'two_factor.confirm': { paramsTuple?: []; params?: {} }
-    'two_factor.recovery': { paramsTuple?: []; params?: {} }
-    'two_factor.disable': { paramsTuple?: []; params?: {} }
     'api_tokens.store': { paramsTuple?: []; params?: {} }
     'notifications.read_all': { paramsTuple?: []; params?: {} }
     'notifications.read': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

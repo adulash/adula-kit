@@ -10,7 +10,6 @@ const SKIPPED = [
   /^\/health$/,
   /^\/mcp(\/|$)/,
   /^\/(login|signup|logout)$/,
-  /^\/login\/two-factor$/,
   /^\/password\//,
   /^\/invitations\//,
   /^\/oauth\//,

@@ -29,15 +29,11 @@ Doctor measures the deployment's `storage/uploads` directory and warns above 5 d
 ## Current limitations
 
 Phases 3 and 4 (collaboration, assignments, templates and realtime notifications,
-CSV import, printing, webhooks, API tokens/OpenAPI, 2FA, amend-by-copy and
-versioned XState workflows) are implemented with PostgreSQL tests; see the
+CSV import, printing, webhooks, API tokens/OpenAPI, amend-by-copy and versioned
+XState workflows) are implemented with PostgreSQL tests; see the
 [business features guide](https://github.com/adulash/adula-kit/blob/main/docs/business-features.md).
 
-- **Two-factor authentication has not had an independent human security review.**
-  The owner deferred that review to 2.0 (ADR 027). It is opt-in per user; no
-  policy forces it. Secrets are encrypted with `APP_KEY`; after a key rotation
-  enrolled users cannot pass the second factor until an operator removes their
-  enrollment (`TwoFactor.disable(userId)`) and they enroll again.
+- Two-factor authentication is not included; it is planned for 2.0 (ADR 027).
 - Impersonation has not had an independent human security review.
 - XLSX import is not available (GAP-006); CSV is.
 

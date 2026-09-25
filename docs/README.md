@@ -6,7 +6,7 @@ The approved [v4 plan](../adula-kit-plan.md) records the intended architecture a
 |---|---|
 | How do I install the current kit? | [Installation](installation.md) |
 | How do I run and test the source? | [Development](development.md) |
-| How do I use collaboration, webhooks, API tokens, imports, printing, 2FA and workflows? | [Business features](business-features.md) |
+| How do I use collaboration, webhooks, API tokens, imports, printing and workflows? | [Business features](business-features.md) |
 | What works, and what was tested? | [Implementation status](implementation-status.md) |
 | What still prevents acceptance? | [Kit gaps](../KIT_GAPS.md) |
 | What must pass for 1.0? | [1.0 acceptance](acceptance-1.0.md), with status in [release-readiness.json](release-readiness.json) |

@@ -77,7 +77,7 @@ export const SERVICES: Record<string, string[]> = {
     'renderPrintHtml',
     'htmlToPdf',
   ],
-  'Security': ['TwoFactor', 'UserInvitations', 'UsersAdmin', 'RolesAdmin'],
+  'Security': ['UserInvitations', 'UsersAdmin', 'RolesAdmin'],
   'Data and operations': [
     'sequence',
     'Settings',

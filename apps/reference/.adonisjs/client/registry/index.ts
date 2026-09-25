@@ -342,18 +342,6 @@ const routes = {
     tokens: [{"old":"/login","type":0,"val":"login","end":""}],
     types: placeholder as Registry['session.store']['types'],
   },
-  'two_factor_challenge.create': {
-    methods: ["GET","HEAD"],
-    pattern: '/login/two-factor',
-    tokens: [{"old":"/login/two-factor","type":0,"val":"login","end":""},{"old":"/login/two-factor","type":0,"val":"two-factor","end":""}],
-    types: placeholder as Registry['two_factor_challenge.create']['types'],
-  },
-  'two_factor_challenge.store': {
-    methods: ["POST"],
-    pattern: '/login/two-factor',
-    tokens: [{"old":"/login/two-factor","type":0,"val":"login","end":""},{"old":"/login/two-factor","type":0,"val":"two-factor","end":""}],
-    types: placeholder as Registry['two_factor_challenge.store']['types'],
-  },
   'password_reset.forgot': {
     methods: ["GET","HEAD"],
     pattern: '/password/forgot',
@@ -425,36 +413,6 @@ const routes = {
     pattern: '/account/password',
     tokens: [{"old":"/account/password","type":0,"val":"account","end":""},{"old":"/account/password","type":0,"val":"password","end":""}],
     types: placeholder as Registry['profile.password']['types'],
-  },
-  'two_factor.show': {
-    methods: ["GET","HEAD"],
-    pattern: '/account/two-factor',
-    tokens: [{"old":"/account/two-factor","type":0,"val":"account","end":""},{"old":"/account/two-factor","type":0,"val":"two-factor","end":""}],
-    types: placeholder as Registry['two_factor.show']['types'],
-  },
-  'two_factor.begin': {
-    methods: ["POST"],
-    pattern: '/account/two-factor',
-    tokens: [{"old":"/account/two-factor","type":0,"val":"account","end":""},{"old":"/account/two-factor","type":0,"val":"two-factor","end":""}],
-    types: placeholder as Registry['two_factor.begin']['types'],
-  },
-  'two_factor.confirm': {
-    methods: ["POST"],
-    pattern: '/account/two-factor/confirm',
-    tokens: [{"old":"/account/two-factor/confirm","type":0,"val":"account","end":""},{"old":"/account/two-factor/confirm","type":0,"val":"two-factor","end":""},{"old":"/account/two-factor/confirm","type":0,"val":"confirm","end":""}],
-    types: placeholder as Registry['two_factor.confirm']['types'],
-  },
-  'two_factor.recovery': {
-    methods: ["POST"],
-    pattern: '/account/two-factor/recovery-codes',
-    tokens: [{"old":"/account/two-factor/recovery-codes","type":0,"val":"account","end":""},{"old":"/account/two-factor/recovery-codes","type":0,"val":"two-factor","end":""},{"old":"/account/two-factor/recovery-codes","type":0,"val":"recovery-codes","end":""}],
-    types: placeholder as Registry['two_factor.recovery']['types'],
-  },
-  'two_factor.disable': {
-    methods: ["POST"],
-    pattern: '/account/two-factor/disable',
-    tokens: [{"old":"/account/two-factor/disable","type":0,"val":"account","end":""},{"old":"/account/two-factor/disable","type":0,"val":"two-factor","end":""},{"old":"/account/two-factor/disable","type":0,"val":"disable","end":""}],
-    types: placeholder as Registry['two_factor.disable']['types'],
   },
   'api_tokens.index': {
     methods: ["GET","HEAD"],

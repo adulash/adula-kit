@@ -89,10 +89,6 @@ export interface ApiDefinition {
     store: typeof routes['session.store']
     destroy: typeof routes['session.destroy']
   }
-  twoFactorChallenge: {
-    create: typeof routes['two_factor_challenge.create']
-    store: typeof routes['two_factor_challenge.store']
-  }
   passwordReset: {
     forgot: typeof routes['password_reset.forgot']
     send: typeof routes['password_reset.send']
@@ -107,13 +103,6 @@ export interface ApiDefinition {
     show: typeof routes['profile.show']
     update: typeof routes['profile.update']
     password: typeof routes['profile.password']
-  }
-  twoFactor: {
-    show: typeof routes['two_factor.show']
-    begin: typeof routes['two_factor.begin']
-    confirm: typeof routes['two_factor.confirm']
-    recovery: typeof routes['two_factor.recovery']
-    disable: typeof routes['two_factor.disable']
   }
   apiTokens: {
     index: typeof routes['api_tokens.index']

@@ -34,3 +34,22 @@ The owner stated in conversation (Arabic):
 - These decisions do not accept any phase. Phase acceptance, council 2 (ADR 026),
   the remaining phase 0 and 1 items not deferred here, and the authorization to
   publish 1.0.0 remain separate owner decisions.
+
+## Amendment, 2026-09-25: 2FA is not part of 1.0
+
+The owner then stated: "دعم 2FA سيكون في الإصدار 2 ولن يدعم في هذا الإصدار"
+(2FA support will come in version 2 and is not supported in this release).
+
+Two-factor authentication is therefore removed from 1.0 instead of shipping
+unreviewed. Commit f7c68b6 was reverted: the `TwoFactor` service and export, the
+unreleased `1770000000009_kit_two_factor` migration (never published, so removing
+it breaks no installation), the `otpauth` dependency, the reference routes,
+controllers, pages and tests. The tests that f7c68b6 also adjusted for framework
+listeners were kept. The implementation stays in Git history for 2.0, where it
+returns with the human ASVS review. A later 2.0 migration must use a new name.
+
+Branch protection on `main` was confirmed on 2026-09-25: the owner referred to a
+screenshot of the repository's branch protection rule 83547320 (a local file this
+session could not open), and the GitHub API reports `main` as protected. The
+rule's individual settings were last recorded in
+`docs/evidence/alpha-publication-2026-09-23.json`.

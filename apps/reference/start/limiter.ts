@@ -87,10 +87,3 @@ export const apiThrottle = limiter.define('api', (ctx) =>
     .usingKey(ctx.auth.user ? `user:${ctx.auth.user.id}` : `ip:${ctx.request.ip()}`)
     .limitExceeded(withMessage)
 )
-
-/** Second-factor attempts per account: failures only, cleared by a success. */
-export const twoFactorAccountLimiter = limiter.use({
-  requests: 5,
-  duration: '15 minutes',
-  blockDuration: '15 minutes',
-})

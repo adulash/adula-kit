@@ -6,7 +6,6 @@ import { logAuthActivity, requestContext } from '#services/auth_activity'
 import { endSession, recordSession } from '#services/sessions'
 import { socialProviders } from '#services/social_accounts'
 import { loginAccountLimiter } from '#start/limiter'
-import { beginChallenge, twoFactor } from '#services/two_factor'
 
 export default class SessionController {
   async create({ inertia }: HttpContext) {
@@ -54,15 +53,6 @@ export default class SessionController {
         changes: { ...requestContext(ctx), reason: 'disabled' },
       })
       return this.refuse(ctx, 'هذا الحساب معطّل. تواصل مع مدير النظام.')
-    }
-
-    // A password alone never signs in an account with two-factor authentication.
-    const service = await twoFactor()
-    if (await service.enabled(user.id)) {
-      beginChallenge(ctx, user.id, 'password')
-      if (request.accepts(['html', 'json']) === 'json')
-        return response.accepted({ twoFactorRequired: true })
-      return response.redirect().toPath('/login/two-factor')
     }
 
     await auth.use('web').login(user)

@@ -33,8 +33,6 @@ export const controllers = {
   Resources: () => import('#controllers/resources_controller'),
   SavedViews: () => import('#controllers/saved_views_controller'),
   Session: () => import('#controllers/session_controller'),
-  TwoFactorChallenge: () => import('#controllers/two_factor_challenge_controller'),
-  TwoFactor: () => import('#controllers/two_factor_controller'),
   UserInvitations: () => import('#controllers/user_invitations_controller'),
   Workflows: () => import('#controllers/workflows_controller'),
 }
