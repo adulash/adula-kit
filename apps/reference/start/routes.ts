@@ -43,6 +43,7 @@ const AdminSettingsController = () => import('#controllers/admin/settings_contro
 const SetupController = () => import('#controllers/admin/setup_controller')
 const NotificationsController = () => import('#controllers/admin/notifications_controller')
 const AdminTemplatesController = () => import('#controllers/admin/templates_controller')
+const AdminWebhooksController = () => import('#controllers/admin/webhooks_controller')
 
 router.on('/').renderInertia('home', {}).as('home')
 
@@ -207,6 +208,12 @@ router
     router.get('templates', [AdminTemplatesController, 'index'])
     router.put('templates/:key', [AdminTemplatesController, 'update'])
     router.delete('templates/:key', [AdminTemplatesController, 'reset'])
+    router.get('webhooks', [AdminWebhooksController, 'index'])
+    router.post('webhooks', [AdminWebhooksController, 'store'])
+    router.put('webhooks/:id', [AdminWebhooksController, 'update'])
+    router.delete('webhooks/:id', [AdminWebhooksController, 'destroy'])
+    router.get('webhooks/:id/deliveries', [AdminWebhooksController, 'deliveries'])
+    router.post('webhooks/deliveries/:delivery/retry', [AdminWebhooksController, 'retry'])
     router.get('setup', [SetupController, 'index'])
     router.post('setup/check/:service', [SetupController, 'check'])
     router.post('setup/identity', [SetupController, 'confirmIdentity'])

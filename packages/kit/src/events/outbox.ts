@@ -3,6 +3,7 @@ import type { Knex } from 'knex'
 export type DomainEvent = { id: string; event: string; payload: Record<string, unknown> }
 export type Listener = {
   name: string
+  /** The exact event name, or '*' for a catch-all listener (for example webhooks). */
   event: string
   handle(event: DomainEvent, trx: Knex.Transaction): Promise<void>
 }
@@ -29,7 +30,7 @@ export async function publishOutbox(db: Knex, jobs: Jobs, limit = 100) {
   })
 }
 export async function consumeEvent(db: Knex, listener: Listener, event: DomainEvent) {
-  if (listener.event !== event.event) return false
+  if (listener.event !== '*' && listener.event !== event.event) return false
   return db.transaction(async (trx) => {
     const inserted = await trx('processed_events')
       .insert({ event_id: event.id, listener: listener.name })

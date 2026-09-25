@@ -11,6 +11,7 @@ import {
   UserCog,
   Users,
   Mail,
+  Webhook,
 } from 'lucide-react'
 import { calendarDisplay } from '~/components/ui/calendar_date'
 import { useUiPreferences } from '~/components/ui/ui-preferences'
@@ -25,6 +26,7 @@ export const adminLinks = [
   { href: '/admin/jobs', label: 'تشغيل النظام', icon: Activity },
   { href: '/admin/settings', label: 'الإعدادات', icon: Settings },
   { href: '/admin/templates', label: 'قوالب الرسائل', icon: Mail },
+  { href: '/admin/webhooks', label: 'الربط الخارجي', icon: Webhook },
   { href: '/admin/sessions', label: 'الجلسات', icon: KeyRound },
 ]
 

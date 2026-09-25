@@ -374,3 +374,40 @@ export async function createMessagingSchema(db: Knex) {
     'CREATE TRIGGER kit_notification_signal AFTER INSERT ON notifications FOR EACH ROW EXECUTE FUNCTION kit_notification_signal()'
   )
 }
+
+/** Outgoing webhooks and their delivery log (exactly one row per webhook and event). */
+export async function createWebhooksSchema(db: Knex) {
+  await db.schema.createTable('webhooks', (t) => {
+    t.increments('id')
+    t.string('name', 100).notNullable()
+    t.string('url', 2000).notNullable()
+    t.text('secret').notNullable()
+    t.jsonb('events').notNullable()
+    t.boolean('active').notNullable().defaultTo(true)
+    t.integer('failing').notNullable().defaultTo(0)
+    t.integer('created_by').references('id').inTable('users').onDelete('SET NULL')
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('last_delivery_at', { useTz: true })
+  })
+  await db.raw('CREATE INDEX webhooks_events_gin ON webhooks USING gin(events)')
+  await db.schema.createTable('webhook_deliveries', (t) => {
+    t.uuid('id').primary()
+    t.integer('webhook_id').notNullable().references('id').inTable('webhooks').onDelete('CASCADE')
+    t.uuid('event_id').notNullable()
+    t.string('event').notNullable()
+    t.jsonb('payload').notNullable()
+    t.string('status', 20).notNullable().defaultTo('pending')
+    t.integer('attempts').notNullable().defaultTo(0)
+    t.integer('last_status')
+    t.string('last_error', 500)
+    t.timestamp('next_attempt_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('delivered_at', { useTz: true })
+    t.unique(['webhook_id', 'event_id'])
+    t.index(['webhook_id', 'created_at'])
+  })
+  await db.raw(
+    "CREATE INDEX webhook_deliveries_due ON webhook_deliveries (next_attempt_at) WHERE status = 'pending'"
+  )
+}

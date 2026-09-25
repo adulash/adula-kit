@@ -17,6 +17,7 @@ export const controllers = {
     Support: () => import('#controllers/admin/support'),
     Templates: () => import('#controllers/admin/templates_controller'),
     Users: () => import('#controllers/admin/users_controller'),
+    Webhooks: () => import('#controllers/admin/webhooks_controller'),
   },
   Assignments: () => import('#controllers/assignments_controller'),
   Attachments: () => import('#controllers/attachments_controller'),

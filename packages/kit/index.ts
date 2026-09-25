@@ -30,7 +30,16 @@ export {
   createCollaborationSchema,
   createAssignmentsSchema,
   createMessagingSchema,
+  createWebhooksSchema,
 } from './src/database/schema.js'
+export { Webhooks, signWebhook, WEBHOOK_MAX_ATTEMPTS } from './src/integrations/webhooks.js'
+export type {
+  SecretBox,
+  Webhook,
+  WebhookDelivery,
+  WebhookOptions,
+  HttpPoster,
+} from './src/integrations/webhooks.js'
 export {
   MessageTemplates,
   DEFAULT_TEMPLATES,

@@ -10,6 +10,7 @@ import {
   createCollaborationSchema,
   createAssignmentsSchema,
   createMessagingSchema,
+  createWebhooksSchema,
   createResourceTable,
 } from '../index.js'
 import type { Actor, RecordData } from '../index.js'
@@ -160,6 +161,7 @@ export async function setup() {
   await createCollaborationSchema(db)
   await createAssignmentsSchema(db)
   await createMessagingSchema(db)
+  await createWebhooksSchema(db)
   await db('org_units').insert([
     { id: 1, name: 'Root', type: 'root', path: '1' },
     { id: 2, parent_id: 1, name: 'A', type: 'unit', path: '1.2' },

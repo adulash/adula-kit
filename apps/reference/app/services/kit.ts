@@ -5,7 +5,10 @@ import {
   RecordCollaboration,
   ResourceService,
   SavedViews,
+  Webhooks,
 } from '@adula/kit'
+import app from '@adonisjs/core/services/app'
+import encryption from '@adonisjs/core/services/encryption'
 import { registry } from '#start/modules'
 import cache from '@adonisjs/cache/services/main'
 import type { Actor } from '@adula/kit'
@@ -30,6 +33,16 @@ export function kit() {
     actors,
     collaboration: new RecordCollaboration(knex, resources, actors),
     assignments: new Assignments(knex, resources, actors),
+    webhooks: new Webhooks(
+      knex,
+      registry,
+      {
+        seal: (value) => encryption.encrypt(value),
+        open: (value) => encryption.decrypt<string>(value),
+      },
+      // Private and plain-HTTP targets are only reachable outside production.
+      { allowPrivateTargets: !app.inProduction }
+    ),
   }
 }
 
