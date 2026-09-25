@@ -24,14 +24,16 @@ Decided 2026-09-25 (ADR 027): no operated production consumer is required for
 1.0; two-factor authentication and the natural monthly restore-test observation
 move to 2.0; branch protection on `main` is confirmed.
 
+Also decided (ADR 027): impersonation ships reviewed automatically (human review
+in 2.0); local Docker staging is accepted on the automated run; natural daily
+scheduling moves to 2.0. The timed feasibility exercise ran (about 10 minutes)
+and its review was delegated to an automated browser run.
+
 Still open:
 
-1. **Phase 0:** defer or run the timed feasibility exercise.
-2. **Phase 1:** local Docker staging (ADR 024) and two natural daily backup runs,
-   attested by the owner or deferred.
-3. **Phases 3, 4, 5 and 6:** accept on the recorded evidence, or name what to fix.
-4. **Council 2:** accept ADR 026 as amended by ADR 027.
-5. **Phase 7 and publication:** authorize `1.0.0` on `latest`.
+1. **Phases 0 to 7:** accept on the recorded evidence with the named limits.
+2. **Council 2:** accept ADR 026 as amended by ADR 027.
+3. **Publication:** authorize `1.0.0` on `latest`.
 
 ## Steps after the decisions
 

@@ -30,7 +30,7 @@
         "docs/evidence/scheduled-backup-2026-09-22.json",
         "docs/evidence/source-s3-acceptance-2026-09-21.json"
       ],
-      "remaining": "Local staging rerun 2026-09-25: the Docker image could not be built in the agent container (Alpine packages blocked by its network policy); the compiled production build passed backup, verification, restore, reconcile, byte-exact download and denials. Docker staging on the owner's machine (ADR 024) needs the owner's attestation. Natural daily runs are open; the monthly observation is deferred to 2.0 (ADR 027). Impersonation was hardened after an adversarial test (41bb4fd) and confirmed by an independent black-box test; it ships reviewed automatically, with the human review deferred to 2.0 (ADR 027)."
+      "remaining": "Local Docker staging accepted by the owner on the independent automated run (docs/evidence/docker-staging-2026-09-25.json; ADR 027). Natural daily and monthly scheduling observations are deferred to 2.0 (ADR 027). Impersonation ships reviewed automatically; its human review is deferred to 2.0. Production supervision is the user's after 1.0."
     },
     {
       "id": 2,

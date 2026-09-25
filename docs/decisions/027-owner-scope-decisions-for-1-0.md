@@ -65,3 +65,15 @@ PostgreSQL, and a separate black-box agent found no remaining vulnerability
 (`docs/evidence/impersonation-security-2026-09-25.json`). The human review that
 managed rule 11 requires is deferred to 2.0; rule 11 itself is unchanged, so any
 later change to impersonation still needs a human review.
+
+## Amendment, 2026-09-25: staging and daily scheduling
+
+The owner stated: "staging: اكتفاء بالدليل الآلي، وتأجيل الجدولة اليومية إلى V2"
+(staging: the automated evidence suffices; defer daily scheduling to V2).
+
+Local Docker staging for 1.0 is accepted on the independent automated run in
+`docs/evidence/docker-staging-2026-09-25.json` (Compose stack, backup, restore,
+restart and supervision; the Docker build and `make setup` verified at 45a7701),
+with the recorded deviation that three Alpine OS tools came from other images in
+the agent container. The natural daily backup observation joins the monthly one
+as a 2.0 item.
