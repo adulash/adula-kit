@@ -32,6 +32,16 @@ test.group('Operational snapshot safety', () => {
     assert.include(dockerfile, 'deploy --prod --legacy --frozen-lockfile /runtime')
     assert.include(dockerfile, 'Non-portable workspace dependency')
     assert.include(dockerfile, '/runtime/node_modules ./node_modules')
+    // The kit's own runtime dependencies are deployed next to its build output.
+    assert.include(
+      dockerfile,
+      'pnpm --filter @adula/kit deploy --prod --legacy --frozen-lockfile /kit-runtime'
+    )
+    assert.include(dockerfile, '/kit-runtime/node_modules ./node_modules/@adula/kit/node_modules')
+    const makefile = await readFile(app.makePath('Makefile'), 'utf8')
+    const setup = makefile.split('setup:')[1].split('deploy:')[0]
+    assert.include(setup, 'migration:run')
+    assert.notInclude(setup, 'adula:doctor')
     assert.notInclude(dockerfile, 'chown -R node:node /app')
   })
   test('publishes COMPLETE last and refuses failed, corrupted or already complete transfers', async ({

@@ -29,3 +29,13 @@ Run `make restore FILE=/backups/<UTC timestamp>` only against the selected deplo
 See [successful local Docker acceptance](evidence/docker-backup-2026-09-22.json). Container acceptance is recorded separately from staging, a natural daily/monthly timer firing, and production recovery. No public domain, external deployment or release acceptance follows from a successful local Docker run.
 
 The hourly backup:verify command uses the same BACKUP_S3_PREFIX as backup creation and requires COMPLETE with the three payload/checksum objects in one recent snapshot. Objects under sibling or nested deployment prefixes cannot satisfy another deployment. Changing the prefix invalidates prior setup inspection evidence.
+
+## First deployment
+
+`make deploy` is the upgrade path: it runs `adula:doctor` before anything changes, and
+doctor fails on an empty database. For the first deployment run `make setup` (build,
+migrate, start, wait for health), sign up the first account in the browser, then run
+`docker compose -f docker-compose.prod.yml run --rm web node ace.js adula:install`
+with `ADULA_ADMIN_EMAIL` set to that account. Run one backup and one restore test;
+from then on `make doctor` should pass and upgrades use `make deploy`.
+
