@@ -101,14 +101,15 @@
       "status": "accepted",
       "evidence": [
         "docs/evidence/owner-acceptance-1-0-2026-09-25.json",
-        "docs/evidence/phase6-integration-2026-09-25.json"
+        "docs/evidence/phase6-integration-2026-09-25.json",
+        "docs/evidence/publication-1-0-0-2026-09-26.json"
       ],
-      "remaining": "Accepted with release authorization (ADR 028). Publication evidence is recorded after the Release npm packages workflow runs.",
+      "remaining": "Accepted with release authorization (ADR 028) and published: 1.0.0 of the three packages is on npm latest with provenance (docs/evidence/publication-1-0-0-2026-09-26.json).",
       "reviewedBy": "repository owner (conversation)",
       "reviewedAt": "2026-09-25"
     }
   ],
-  "updatedAt": "2026-09-25",
+  "updatedAt": "2026-09-26",
   "scopeAmendments": [
     "docs/decisions/021-optional-oauth.md",
     "docs/decisions/024-framework-alpha-and-local-staging.md",
