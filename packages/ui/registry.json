@@ -537,7 +537,9 @@
         "label",
         "textarea",
         "dialog",
-        "select"
+        "select",
+        "ui-preferences",
+        "resource-value"
       ],
       "dependencies": [
         "lucide-react@1.47.0",

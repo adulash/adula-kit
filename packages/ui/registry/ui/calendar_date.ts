@@ -58,9 +58,13 @@ export function calendarDisplay(
     return `${calendarDisplay(value, 'gregory', withTime)} · ${calendarDisplay(value, 'islamic-umalqura', withTime)}`
   const date = new Date(String(value))
   if (Number.isNaN(date.getTime())) return String(value)
+  // ICU wraps Arabic separators in bidi marks, which scramble the digits in any
+  // container whose direction differs from the text; callers isolate the value instead.
   return new Intl.DateTimeFormat('ar-u-nu-latn', {
     calendar,
     dateStyle: 'medium',
     ...(withTime ? { timeStyle: 'short' as const } : { timeZone: 'UTC' }),
-  }).format(date)
+  })
+    .format(date)
+    .replace(/[\u200e\u200f\u061c]/g, '')
 }

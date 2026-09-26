@@ -174,7 +174,11 @@ test.group('Generic resource browser acceptance', (group) => {
     await page.assertVisible(page.getByText('1,234.50'))
     await page.assertVisible(page.getByText('مفتوح', { exact: true }))
     await page.assertVisible(page.getByText(customerName, { exact: true }))
-    await page.assertVisible(page.locator('dd', { hasText: /18.{0,2}\/09.{0,2}\/2026/ }).first())
+    // Dates render in reading order: no bidi marks and no forced LTR container (issue #19).
+    const day = page.locator('dd bdi', { hasText: '18/09/2026' }).first()
+    await page.assertVisible(day)
+    assert.notMatch((await day.textContent()) ?? '', /[\u200e\u200f]/)
+    assert.equal(await day.locator('xpath=ancestor::*[@dir="ltr"]').count(), 0)
     await page.assertVisible(page.locator('pre', { hasText: '"a": 1' }))
     await page.assertVisible(page.getByText('نعم', { exact: true }))
     await page.getByText('صنف أول', { exact: true }).waitFor()

@@ -9,6 +9,8 @@ import { useDateTimeFormatter } from '~/components/admin-nav'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
+import { formatDate } from '~/components/ui/resource-value'
+import { useUiPreferences } from '~/components/ui/ui-preferences'
 
 type Props = { assignments: AssignmentPage; status: 'open' | 'done' | 'all' }
 
@@ -20,6 +22,7 @@ const statusLabel: Record<Assignment['status'], string> = {
 
 export default function MyTasks({ assignments, status }: Props) {
   const formatDateTime = useDateTimeFormatter()
+  const { calendar } = useUiPreferences()
   const [rows, setRows] = useState(assignments.data)
   const [cursor, setCursor] = useState(assignments.nextCursor)
   const [busy, setBusy] = useState<number | null>(null)
@@ -114,7 +117,7 @@ export default function MyTasks({ assignments, status }: Props) {
                     }
                   >
                     <CalendarClock size={13} />
-                    الاستحقاق {item.dueOn}
+                    الاستحقاق <bdi className="tabular-nums">{formatDate(item.dueOn, calendar)}</bdi>
                   </span>
                 )}
               </p>
