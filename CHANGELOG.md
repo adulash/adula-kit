@@ -64,6 +64,13 @@ Minor release: additive APIs and one additive kit migration
   about references that match only a display name. The starter role screens show and
   set the key (#25). Projects with copied `admin/roles` pages need the updated pages.
 
+* Modules: `lookups` (rows by group) and `defaultRoles` (key, name, permission level,
+  rules) on a module definition. `adula:install` applies them through `seedModules`:
+  missing lookup rows are inserted, a default role is created when no role holds its
+  key, and a keyless role with the same name adopts the key. Existing rows and roles
+  are never changed, so administrator edits survive. Rules are validated like the roles
+  screen, and the registry refuses invalid or duplicate keys (#26).
+
 ## 1.0.1 — unreleased
 
 Patch release: fixes reported against 1.0.0, with no public API or schema change.

@@ -21,7 +21,7 @@ export default defineWorkflow({
     manager: {
       type: 'approval',
       label: 'موافقة مدير القسم',
-      assignees: { role: 'مدير القسم' },
+      assignees: { role: 'department_manager' },
       dueInDays: 2,
       approve: 'director',
       reject: 'rejected',
@@ -29,7 +29,7 @@ export default defineWorkflow({
     director: {
       type: 'approval',
       label: 'موافقة المدير العام',
-      assignees: { role: 'المدير العام' },
+      assignees: { role: 'general_manager' },
       dueInDays: 2,
       approve: 'mark',
       reject: 'rejected',

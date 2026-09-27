@@ -162,6 +162,8 @@ export type {
   ActivityRow,
 } from './src/core/activity.js'
 export { RolesAdmin, ALL_SUBJECT_LABEL } from './src/core/roles.js'
+export { seedModules } from './src/core/module_seed.js'
+export type { ModuleSeedResult } from './src/core/module_seed.js'
 export type {
   RoleSummary,
   RoleDetail,

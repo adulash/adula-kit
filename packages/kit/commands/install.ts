@@ -1,6 +1,8 @@
 import { BaseCommand } from '@adonisjs/core/ace'
 import { readFile, writeFile, access } from 'node:fs/promises'
 import { Settings } from '../src/services/settings.js'
+import { seedModules } from '../src/core/module_seed.js'
+import type { ResourceRegistry } from '../src/resource/registry.js'
 import { syncAgentAssets } from '../src/commands/agent_assets.js'
 import { KIT_VERSION } from '../src/version.js'
 import { fileURLToPath } from 'node:url'
@@ -66,6 +68,19 @@ export default class Install extends BaseCommand {
         .ignore()
       await new Settings(trx).set('kit.version', KIT_VERSION)
     })
+    // Module lookups and default roles: added when missing, never overwritten.
+    let registry: ResourceRegistry | undefined
+    try {
+      ;({ registry } = await this.app.import('#start/modules'))
+    } catch (error) {
+      this.logger.warning(`Module defaults skipped: ${(error as Error).message}`)
+    }
+    if (registry) {
+      const seeded = await seedModules(knex, registry, user.id)
+      this.logger.info(
+        `Module defaults: ${seeded.lookups} lookup rows added; roles created: ${seeded.created.join(', ') || 'none'}; adopted by name: ${seeded.adopted.join(', ') || 'none'}`
+      )
+    }
     for (const [name, content] of [
       ['CLAUDE.md', 'Read and follow AGENTS.md.\nThe project rules are maintained there.\n'],
       [

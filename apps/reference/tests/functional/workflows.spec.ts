@@ -1,6 +1,7 @@
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
-import { consumeEvent, type DomainEvent } from '@adula/kit'
+import { consumeEvent, seedModules, type DomainEvent } from '@adula/kit'
+import { registry } from '#start/modules'
 import User from '#models/user'
 import { kit } from '#services/kit'
 import { listeners } from '#start/listeners'
@@ -19,17 +20,14 @@ async function drainOutbox() {
   }
 }
 
-async function roleMember(name: string, orgUnitId: number, fullName: string) {
+/** A member of a module default role (created by seedModules, as adula:install does). */
+async function roleMember(key: string, orgUnitId: number, fullName: string) {
   const user = await User.create({
     fullName,
-    email: `${name.length}-${Date.now()}-${Math.random()}@example.test`,
+    email: `${key}-${Date.now()}-${Math.random()}@example.test`,
     password: 'workflow-test-password-123',
   })
-  let role = await knex()('roles').where('name', name).first()
-  if (!role) {
-    ;[role] = await knex()('roles').insert({ name, permission_level: 1 }).returning('*')
-    await knex()('role_rules').insert({ role_id: role.id, subject: 'orders', action: 'view' })
-  }
+  const role = await knex()('roles').where('key', key).first()
   await knex()('user_roles').insert({ user_id: user.id, role_id: role.id })
   await knex()('user_org_units').insert({ user_id: user.id, org_unit_id: orgUnitId })
   return user
@@ -44,12 +42,10 @@ test.group('Two-level order approval workflow over HTTP', (group) => {
       fullName: 'مقدم الطلب',
       level: 1,
     })
-    manager = await roleMember('مدير القسم', clerk.orgUnitId, 'مدير القسم')
-    director = await roleMember('المدير العام', clerk.orgUnitId, 'المدير العام')
-    await knex()('lookups')
-      .insert({ group: 'order_status', key: 'approved', label_ar: 'معتمد', label_en: 'Approved' })
-      .onConflict(['group', 'key'])
-      .ignore()
+    // The orders module declares its lookups and approver roles; install applies them.
+    await seedModules(knex(), registry, clerk.user.id)
+    manager = await roleMember('department_manager', clerk.orgUnitId, 'مدير القسم')
+    director = await roleMember('general_manager', clerk.orgUnitId, 'المدير العام')
   })
 
   async function submit(client: any, total: string) {
