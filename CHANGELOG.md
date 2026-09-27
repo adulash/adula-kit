@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.0.1 — unreleased
+
+Patch release: fixes reported against 1.0.0, with no public API or schema change.
+Copied UI files changed; review them with `node ace adula:ui add all --preview`.
+
+* Dates: Arabic Gregorian dates no longer render scrambled in lists and details,
+  and due dates in My tasks and the record assignments panel use the calendar
+  preference (#19, #33).
+* UI: filters and the starter admin pages use the registry Select instead of native
+  lists, and the relation filter is searchable (#39). Closing a record dialog returns
+  to the list view it was opened from, with its query, scroll and focus, and the row
+  actions column stays pinned (#31). Hidden tabs release their realtime stream, so
+  more than six tabs work over HTTP/1.1; deploy behind HTTP/2 (#36).
+* Theme: `brand.css` can now override the focus ring, destructive color, primary text
+  color and font (`--ring`, `--destructive`, `--primary-foreground`, `--brand-font`)
+  (#23).
+* Generators: module and resource marker lists are written in the layout Prettier
+  keeps, so a new module passes lint (#21). `adula:resource` explains that the
+  generated migration embeds the definition, and the new `resources.snapshots` doctor
+  check reports a pending migration that differs from its resource (#20).
+* Workflows: naming errors state the rule and suggest a valid name (#24). An approval
+  addressed to a missing role, or to no eligible user, fails at once instead of
+  retrying for hours, and the `workflows.roles` doctor check lists role names that
+  match no role (#25).
+* Starter: `npm test -- <args>` reaches the test runner; the test teardown formats
+  `database/schema.ts` (#22). Existing projects can set their `test` script to
+  `node ace test` and add the same teardown.
+
 ## 1.0.0 — 2026-09-25
 
 The complete approved 1.0 scope, accepted by the owner with release authorization
