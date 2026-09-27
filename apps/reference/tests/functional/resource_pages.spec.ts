@@ -70,7 +70,8 @@ test.group('Generic resource page integration', (group) => {
       if (mode === 'show') {
         assert.equal(page.props.view.result.data.id, customerId)
         assert.deepEqual(page.props.view.childResources, {})
-        assert.deepEqual(page.deferredProps, { children: ['childrenData'], activity: ['activity'] })
+        // Both sections arrive in one deferred request (#31).
+        assert.deepEqual(page.deferredProps, { details: ['childrenData', 'activity'] })
         assert.notProperty(page.props, 'activity')
       }
     }
@@ -298,6 +299,45 @@ test.group('Generic pages for scoped and versioned resources', (group) => {
       .withInertia()
     assert.equal(index.body().props.canCreate, true)
     assert.isArray(index.body().props.result.data)
+  })
+
+  test('the record view endpoint serves list dialogs with one read and respects overrides', async ({
+    client,
+    assert,
+  }) => {
+    const json = { Accept: 'application/json' }
+    const shown = await client
+      .get(`/resources/ui_samples/${sampleId}/view`)
+      .loginAs(admin.user)
+      .headers(json)
+    shown.assertStatus(200)
+    assert.equal(shown.body().view.mode, 'show')
+    assert.equal(shown.body().view.result.data.id, sampleId)
+    assert.equal(shown.body().view.childResources.lines.name, 'ui_sample_lines')
+    assert.equal(shown.body().childrenData.lines.rows[0].item, 'بند العينة')
+    assert.isArray(shown.body().activity)
+    const edit = await client
+      .get(`/resources/ui_samples/${sampleId}/view`)
+      .qs({ mode: 'edit' })
+      .loginAs(admin.user)
+      .headers(json)
+    edit.assertStatus(200)
+    assert.equal(edit.body().view.mode, 'form')
+    assert.equal(edit.body().view.editor.record.id, sampleId)
+    assert.isTrue(edit.body().view.permissions.update)
+    // Orders have their own form page; the list navigates there instead of a dialog.
+    const override = await client
+      .get(`/resources/orders/${orderId}/view`)
+      .qs({ mode: 'edit' })
+      .loginAs(admin.user)
+      .headers(json)
+    override.assertStatus(409)
+    const outsider = await seedActor([{ subject: 'all', action: 'manage' }])
+    const hidden = await client
+      .get(`/resources/orders/${orderId}/view`)
+      .loginAs(outsider.user)
+      .headers(json)
+    hidden.assertStatus(404)
   })
 
   test('the deferred activity route re-authorizes the record', async ({ client }) => {

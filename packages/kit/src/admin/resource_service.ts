@@ -699,6 +699,17 @@ export class ResourceService {
     const ability = this.authorizeAction(resource, actor, 'view')
     const parent = await this.find(this.db, resource, actor, ability, id)
     this.requireRecord(ability, actor, resource, 'view', parent)
+    return this.childrenOf(resource, parent, actor, ability)
+  }
+  /** Inline children of an already authorized parent record. */
+  private async childrenOf(
+    resource: Resource,
+    parent: RecordData,
+    actor: Actor,
+    ability: KitAbility
+  ) {
+    const name = resource.name
+    const id = Number(parent.id)
     const result: Record<string, { rows: SerializedRecord[]; hasMore: boolean }> = {}
     for (const key of resource.show) {
       const field = resource.fields[key]
@@ -754,6 +765,41 @@ export class ResourceService {
     const ability = this.authorizeAction(resource, actor, 'view')
     const record = await this.find(this.db, resource, actor, ability, id)
     this.requireRecord(ability, actor, resource, 'view', record)
+    return this.activityOf(name, id)
+  }
+
+  /**
+   * Inline children and recent activity of one record, authorized with a single record
+   * read (for deferred page props that would otherwise read the record twice).
+   */
+  async details(name: string, id: number, actor: Actor) {
+    const resource = this.registry.get(name)
+    const ability = this.authorizeAction(resource, actor, 'view')
+    const record = await this.find(this.db, resource, actor, ability, id)
+    this.requireRecord(ability, actor, resource, 'view', record)
+    return {
+      children: await this.childrenOf(resource, record, actor, ability),
+      activity: await this.activityOf(name, id),
+    }
+  }
+
+  /** show(), children() and activity() of one record from a single record read. */
+  async record(name: string, id: number, actor: Actor) {
+    const resource = this.registry.get(name)
+    const ability = this.authorizeAction(resource, actor, 'view')
+    const record = await this.find(this.db, resource, actor, ability, id)
+    this.requireRecord(ability, actor, resource, 'view', record)
+    const [hydrated] = await this.hydrate(this.db, resource, [record])
+    return {
+      data: serialize(resource, hydrated, ability, actor),
+      permissions: this.permissions(resource, record, actor, ability),
+      related: await this.preload(resource, [record], actor),
+      children: await this.childrenOf(resource, record, actor, ability),
+      activity: await this.activityOf(name, id),
+    }
+  }
+
+  private async activityOf(name: string, id: number) {
     const rows = await this.db('activities as a')
       .leftJoin('users as u', 'u.id', 'a.actor_id')
       .where({ 'a.resource': name, 'a.record_id': id })

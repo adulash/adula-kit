@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2.0 — unreleased
+
+Minor release: workspace and realtime changes decided in ADR 034 and later.
+
+* UI: records open in a dialog over the mounted list (#31). The list's view and edit
+  links call `openRecord()` (new registry component `resource-surface`), which reads the
+  record once from `GET /resources/:resource/:id/view`; closing returns to the same list
+  with its query, loaded rows and scroll, and refreshes rows only when the record
+  changed. Saving an edit shows the details in the same dialog. On a direct record URL,
+  children and activity arrive in one deferred request (`ResourceService.details()`);
+  `ResourceService.record()` serves show, children and activity together. See ADR 035.
+  Projects with copied `data-table`, `resource-form`, `resource-page` or `resource-show`
+  need the updated components.
+
 ## 1.1.0 — unreleased
 
 Minor release: additive APIs and one additive kit migration
