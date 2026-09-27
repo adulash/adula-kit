@@ -87,6 +87,10 @@ test.group('Authorized aggregates', (group) => {
       service().aggregate('orders', admin, { where: { createdBy: 1 } })
     )
     assert.equal(creator.code, 'E_FIELD_FORBIDDEN')
+    const inherited = await failure(() =>
+      service().aggregate('orders', admin, { groupBy: ['constructor'] })
+    )
+    assert.equal(inherited.code, 'E_FIELD_FORBIDDEN')
     const text = await failure(() => service().aggregate('orders', admin, { sum: ['notes'] }))
     assert.equal(text.code, 'E_FIELD_FORBIDDEN')
     const many = await failure(() =>

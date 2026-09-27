@@ -473,6 +473,8 @@ export class ResourceService {
     const queryable = (key: unknown, kinds?: string[]) => {
       if (typeof key !== 'string') return false
       if (standard.has(key)) return !kinds
+      // Own keys only: names such as "constructor" are not fields.
+      if (!Object.hasOwn(resource.fields, key)) return false
       const field = resource.fields[key]
       return (
         Boolean(field) &&
