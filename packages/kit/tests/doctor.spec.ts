@@ -11,6 +11,11 @@ import {
 } from '../src/commands/doctor.js'
 import { defineWorkflow } from '../src/workflows/define_workflow.js'
 import { generateResource } from '../src/commands/generator.js'
+import {
+  embeddedResource,
+  resourceSnapshot,
+  rewriteResourceSnapshot,
+} from '../src/commands/snapshot.js'
 import { digest } from '../src/commands/agent_assets.js'
 import { KIT_VERSION } from '../src/version.js'
 
@@ -264,6 +269,52 @@ test.group('Doctor resource migration snapshots', () => {
     assert.equal(diagnoseResourceSnapshots(pending, () => undefined).status, 'pass')
     const manual = [{ file, source: 'await createResourceTable(db, resource)' }]
     assert.equal(diagnoseResourceSnapshots(manual, () => filled).status, 'pass')
+  })
+
+  test('adula:resource:snapshot rewrites a pending migration from the current definition', async ({
+    assert,
+  }) => {
+    const root = await mkdtemp(join(tmpdir(), 'adula-snapshot-'))
+    await mkdir(join(root, 'start'))
+    await writeFile(
+      join(root, 'start/modules.ts'),
+      '// adula:imports\nexport const modules = [/* adula:modules */]\n'
+    )
+    const files = await generateResource(root, 'task', 'projects')
+    const file = files.find((path) => path.includes('/migrations/'))!
+    const source = await readFile(join(root, file), 'utf8')
+    assert.equal(embeddedResource(source), 'task')
+    const label = { ar: 'حقل', en: 'Field' }
+    const filled = {
+      name: 'task',
+      scoped: true,
+      submittable: true,
+      version: true,
+      fields: {
+        title: { type: 'string', label, required: true, searchable: true },
+        project: { type: 'belongsTo', resource: 'project', label, required: true },
+        status: { type: 'lookup', group: 'task_status', label },
+        code: { type: 'string', label, sequence: 'TSK', unique: true },
+        notes: { type: 'hasMany', resource: 'note', foreignKey: 'taskId', label },
+      },
+    } as never
+    const rewritten = rewriteResourceSnapshot(source, resourceSnapshot(filled))
+    // Only the embedded definition changes; the migration class around it stays.
+    assert.include(rewritten, "import { createResourceTable } from '@adula/kit'")
+    assert.include(rewritten, 'async down()')
+    assert.notInclude(rewritten, '"notes"')
+    const pending = [{ file, source: rewritten }]
+    assert.equal(diagnoseResourceSnapshots(pending, () => filled).status, 'pass')
+    assert.throws(
+      () =>
+        rewriteResourceSnapshot(
+          source,
+          resourceSnapshot({ ...(filled as object), name: 'other' } as never)
+        ),
+      /does not embed the other definition/
+    )
+    assert.isUndefined(embeddedResource('await createResourceTable(db, resource)'))
+    await rm(root, { recursive: true, force: true })
   })
 })
 

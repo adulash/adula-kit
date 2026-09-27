@@ -1,4 +1,5 @@
 import Resource from './resource.js'
+import ResourceSnapshot from './resource_snapshot.js'
 import Doctor from './doctor.js'
 import Install from './install.js'
 import Capabilities from './capabilities.js'
@@ -9,6 +10,7 @@ import StorageMigrate from './storage_migrate.js'
 import Gaps from './gaps.js'
 const commands = [
   Resource,
+  ResourceSnapshot,
   Doctor,
   Install,
   Capabilities,

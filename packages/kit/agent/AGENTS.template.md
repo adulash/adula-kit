@@ -13,7 +13,7 @@ Structure
 5. A module writes only its own tables; dependency direction follows start/modules.ts, never backwards.
 6. Modules talk through events, never by importing each other's controllers. Heavy listeners go to jobs.
 7. Every resource declares `scoped` explicitly. Standard columns are generated; never edit them. Migrations follow expand/contract: never drop or rename a column in the same release that stops using it.
-8. Deletes are soft. Changeable lists come from lookups. Approvable documents use `submittable: true`.
+8. Deletes are soft. Changeable lists come from lookups; a module declares its lookups and default roles on its Module definition (adula:install adds them), never by writing kit tables. Approvable documents use `submittable: true`; workflows address roles by key.
 9. Notify via notify(), number via sequence, configure via settings. Nothing else.
 
 Security 10. Every route passes the authorize middleware. Every transformer uses `serialize` (explicit pick). 11. Never write crypto, sessions, or auth flows; use kit. 2FA and impersonation changes need a human review. 12. Never delete or weaken a test to make the build pass.
