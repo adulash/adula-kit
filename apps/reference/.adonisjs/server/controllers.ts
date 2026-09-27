@@ -30,6 +30,7 @@ export const controllers = {
   Print: () => import('#controllers/print_controller'),
   Profile: () => import('#controllers/profile_controller'),
   RecordCollaboration: () => import('#controllers/record_collaboration_controller'),
+  RecordViews: () => import('#controllers/record_views_controller'),
   Resources: () => import('#controllers/resources_controller'),
   SavedViews: () => import('#controllers/saved_views_controller'),
   Session: () => import('#controllers/session_controller'),

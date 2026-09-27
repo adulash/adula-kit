@@ -24,6 +24,7 @@ import {
   signupThrottle,
 } from '#start/limiter'
 const ResourcesController = () => import('#controllers/resources_controller')
+const RecordViewsController = () => import('#controllers/record_views_controller')
 const AttachmentsController = () => import('#controllers/attachments_controller')
 const SavedViewsController = () => import('#controllers/saved_views_controller')
 const AssignmentsController = () => import('#controllers/assignments_controller')
@@ -129,6 +130,7 @@ router
     router.get('/my-tasks', [AssignmentsController, 'mine'])
     router.post('/my-tasks/:assignment/complete', [AssignmentsController, 'complete'])
     router.post('/my-tasks/:assignment/cancel', [AssignmentsController, 'cancel'])
+    router.get('/resources/:resource/:id/view', [RecordViewsController, 'show'])
     router.get('/resources/:resource/:id/edit', [ResourcesController, 'edit'])
     router.get('/resources/:resource/:id', [ResourcesController, 'show'])
     router.post('/resources/:resource', [ResourcesController, 'store'])

@@ -47,7 +47,7 @@ async function actorOf(ctx: HttpContext) {
   return requestActor(ctx)
 }
 
-function childDescriptions(description: ResourceDescription, actor: Actor) {
+export function childDescriptions(description: ResourceDescription, actor: Actor) {
   const children: Record<string, ResourceDescription> = {}
   for (const field of description.fields) {
     if (field.type !== 'hasMany') continue
@@ -106,6 +106,8 @@ export default createResourceController(
     const actor = await actorOf(ctx)
     const id = Number(result.data.id)
     const description = runtime.resources.describe(resource.name, actor)
+    let pending: ReturnType<typeof runtime.resources.details> | undefined
+    const details = () => (pending ??= runtime.resources.details(resource.name, id, actor))
     return ctx.inertia.render(generic(pageFor(resource.name, 'show')), {
       view: async () => ({
         mode: 'show' as const,
@@ -114,14 +116,9 @@ export default createResourceController(
         lookups: await runtime.resources.lookups(resource.name, actor),
         childResources: childDescriptions(description, actor),
       }),
-      childrenData: ctx.inertia.defer(
-        () => runtime.resources.children(resource.name, id, actor),
-        'children'
-      ),
-      activity: ctx.inertia.defer(
-        () => runtime.resources.activity(resource.name, id, actor),
-        'activity'
-      ),
+      // One deferred request and one record read serve both sections (#31).
+      childrenData: ctx.inertia.defer(() => details().then((loaded) => loaded.children), 'details'),
+      activity: ctx.inertia.defer(() => details().then((loaded) => loaded.activity), 'details'),
     })
   }
 )

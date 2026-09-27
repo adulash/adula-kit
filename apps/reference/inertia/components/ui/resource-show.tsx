@@ -41,6 +41,8 @@ export function ResourceShow({
   childResources = {},
   childrenData,
   activity,
+  onEdit,
+  onAction,
 }: {
   resource: ResourceDescription
   result: Show
@@ -48,6 +50,10 @@ export function ResourceShow({
   childResources?: Record<string, ResourceDescription>
   childrenData?: ResourceChildren
   activity?: ResourceActivity
+  /** Replaces the edit link (record dialogs switch to the form in place). */
+  onEdit?: () => void
+  /** Called after a record action instead of reloading or leaving the page. */
+  onAction?: (action: string) => void
 }) {
   const { calendar } = useUiPreferences()
   const base = `/resources/${resource.name}/${result.data.id}`
@@ -64,12 +70,19 @@ export function ResourceShow({
     <div className="max-w-5xl space-y-6">
       <div className="flex flex-wrap items-center gap-3">
         <Can permissions={result.permissions} action="update">
-          <Button asChild>
-            <Link href={`${base}/edit`}>
+          {onEdit ? (
+            <Button onClick={onEdit}>
               <Pencil size={15} />
               تعديل السجل
-            </Link>
-          </Button>
+            </Button>
+          ) : (
+            <Button asChild>
+              <Link href={`${base}/edit`}>
+                <Pencil size={15} />
+                تعديل السجل
+              </Link>
+            </Button>
+          )}
         </Can>
         <Button variant="outline" asChild>
           <a href={`${base}/print`} target="_blank" rel="noopener">
@@ -83,7 +96,11 @@ export function ResourceShow({
           version={result.data.version ?? undefined}
           permissions={result.permissions}
           onDone={(action) =>
-            action === 'delete' ? router.visit(`/resources/${resource.name}`) : router.reload()
+            onAction
+              ? onAction(action)
+              : action === 'delete'
+                ? router.visit(`/resources/${resource.name}`)
+                : router.reload()
           }
         />
         {resource.submittable && (
