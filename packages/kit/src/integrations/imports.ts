@@ -50,7 +50,8 @@ export function importCell(field: Field, raw: string, lookups: Map<string, strin
   const latin = value.replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 0x0660))
   switch (field.type) {
     case 'integer':
-    case 'belongsTo': {
+    case 'belongsTo':
+    case 'user': {
       if (!/^-?\d+$/.test(latin)) throw new Error('رقم صحيح مطلوب')
       return Number(latin)
     }

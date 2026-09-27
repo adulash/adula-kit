@@ -159,6 +159,7 @@ export function FieldControl(props: FieldProps) {
   }
   switch (field.type) {
     case 'belongsTo':
+    case 'user':
       return <RelationCombobox {...props} />
     case 'lookup':
       return (
@@ -679,14 +680,23 @@ function RelationCombobox({
           disabled={disabled}
           className={`h-10 w-full justify-between font-normal ${current ? '' : 'text-muted-foreground'}`}
         >
-          <span className="truncate">{current?.label ?? (value ? `#${value}` : 'اختر سجلاً')}</span>
+          <span className="truncate">
+            {current?.label ??
+              (value ? `#${value}` : field.type === 'user' ? 'اختر مستخدماً' : 'اختر سجلاً')}
+          </span>
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-(--radix-popover-trigger-width) min-w-64 p-0" align="start">
         <Command shouldFilter={!searchable}>
           <CommandInput
-            placeholder={searchable ? 'ابحث في السجلات المرتبطة' : 'تصفية الخيارات'}
+            placeholder={
+              field.type === 'user'
+                ? 'ابحث بالاسم'
+                : searchable
+                  ? 'ابحث في السجلات المرتبطة'
+                  : 'تصفية الخيارات'
+            }
             aria-label={`البحث في ${label ?? field.label.ar}`}
             value={search}
             onValueChange={(term) => {
@@ -866,10 +876,10 @@ export function InlineRows({
                           error={rowErrors[child.key]}
                           resource={resource}
                           relation={
-                            child.type === 'belongsTo'
+                            child.type === 'belongsTo' || child.type === 'user'
                               ? {
                                   url: `/resources/${(field as { resource?: string }).resource}/options/${child.key}`,
-                                  searchable: false,
+                                  searchable: child.type === 'user',
                                 }
                               : undefined
                           }

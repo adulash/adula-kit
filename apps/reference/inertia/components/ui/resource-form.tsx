@@ -248,7 +248,8 @@ export function ResourceForm({
             const stored = editor.record?.[field.key]
             return (
               <ResourceField
-                key={field.key}
+                // User choices depend on the unit: a new unit reloads them.
+                key={field.type === 'user' ? `${field.key}:${unit}` : field.key}
                 field={field}
                 id={field.key}
                 value={values[field.key] ?? ''}
@@ -264,7 +265,15 @@ export function ResourceForm({
                         url: `${base}/options/${field.key}${editor.record ? `?id=${editor.record.id}` : ''}`,
                         searchable: editor.relationSearch[field.key] ?? false,
                       }
-                    : undefined
+                    : field.type === 'user'
+                      ? {
+                          url: `${base}/options/${field.key}?${new URLSearchParams({
+                            ...(editor.record ? { id: String(editor.record.id) } : {}),
+                            ...(editor.scoped && unit ? { orgUnitId: unit } : {}),
+                          })}`,
+                          searchable: true,
+                        }
+                      : undefined
                 }
               />
             )

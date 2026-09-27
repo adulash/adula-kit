@@ -107,7 +107,7 @@
       "component": "resource-page"
     },
     "inertia/components/ui/data-table.tsx": {
-      "hash": "9e51f41789ee73833627e765f2b94b78fb3c654e1881dbf0291b8d0f5c719f1d",
+      "hash": "bdace5becbecad7323a8ff9a4ef44dcd34e33513f92a625c0b42b28b5176e733",
       "component": "data-table"
     },
     "inertia/components/ui/can.tsx": {
@@ -115,15 +115,15 @@
       "component": "can"
     },
     "inertia/components/ui/resource-value.tsx": {
-      "hash": "bb519fa92643877b790f99b27c12628099d1696570674bb8aa5a09eecc1b0b8a",
+      "hash": "a638ed523f39936d875277e9183b8b68b87d56cc96bcddc4c0e511ae6ec7be78",
       "component": "resource-value"
     },
     "inertia/components/ui/resource-form.tsx": {
-      "hash": "36c9a1087068ce9ef46bcb1d8a84adca8c3655630e5fc0413e11e3d1f7c0f5a0",
+      "hash": "8f8687eea2fe2fbe48b7b5e5131d802d7e770f2697724ef4753c5f1ade708503",
       "component": "resource-form"
     },
     "inertia/components/ui/resource-field.tsx": {
-      "hash": "aa8f140983f36c93be75d091ac9e35d0ae80e509c79eff2d84e2396e9463a0d9",
+      "hash": "87bf69318cbf19123979416d0954754cee7a6b445123bd613a7a81eb4ec507ac",
       "component": "resource-field"
     },
     "inertia/components/ui/resource-show.tsx": {

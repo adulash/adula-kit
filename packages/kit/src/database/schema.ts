@@ -211,6 +211,10 @@ export async function createResourceTable(
           column = t.integer(name)
           column.references('id').inTable('attachments').onDelete('RESTRICT').index()
           break
+        case 'user':
+          column = t.integer(name)
+          column.references('id').inTable('users').onDelete('RESTRICT').index()
+          break
         case 'integer':
           column = t.integer(name)
           break

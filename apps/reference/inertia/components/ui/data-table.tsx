@@ -261,6 +261,7 @@ export function DataTable({
           {filterable.map((field) => (
             <Filter
               key={field.key}
+              resource={resource.name}
               field={field}
               value={query.get(`filters[${field.key}]`) ?? ''}
               options={lookups[field.key]}
@@ -661,12 +662,14 @@ function Cell({
 }
 
 function Filter({
+  resource,
   field,
   value,
   options,
   related,
   onApply,
 }: {
+  resource: string
   field: ResourceField
   value: string
   options?: Option[]
@@ -695,8 +698,14 @@ function Filter({
           { value: 'true', label: 'نعم' },
           { value: 'false', label: 'لا' },
         ])
-      ) : field.type === 'belongsTo' ? (
-        <RelationFilter field={field} value={value} related={related} onApply={onApply} />
+      ) : field.type === 'belongsTo' || field.type === 'user' ? (
+        <RelationFilter
+          resource={resource}
+          field={field}
+          value={value}
+          related={related}
+          onApply={onApply}
+        />
       ) : field.type === 'date' ? (
         <div className="w-56">
           <FieldControl
@@ -734,14 +743,19 @@ function Filter({
   )
 }
 
-/** Filters by a related record through the target list route, which enforces the target's own rules. */
+/**
+ * Filters by a related record through the target list route, which enforces the target's
+ * own rules. User fields list users through the field's options route instead.
+ */
 function RelationFilter({
+  resource,
   field,
   value,
   related = [],
   onApply,
 }: {
-  field: ResourceField & { type: 'belongsTo' }
+  resource: string
+  field: ResourceField & { type: 'belongsTo' | 'user' }
   value: string
   /** Related rows already loaded with the list; they label the active filter after a reload. */
   related?: SerializedRecord[]
@@ -757,6 +771,17 @@ function RelationFilter({
   const load = async (search: string) => {
     setBusy(true)
     try {
+      if (field.type === 'user') {
+        const users = await axios.get<{ data: Option[] }>(
+          `/resources/${resource}/options/${field.key}`,
+          {
+            params: { purpose: 'filter', ...(search ? { search } : {}) },
+            headers: { Accept: 'application/json' },
+          }
+        )
+        setChoices(users.data.data)
+        return
+      }
       const response = await axios.get<ResourceList>(`/resources/${field.resource}`, {
         params: {
           limit: 50,

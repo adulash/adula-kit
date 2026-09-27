@@ -32,7 +32,8 @@ export function conditionSql(conditions: Conditions | undefined, resource: Resou
       const expected =
         ['id', 'orgUnitId', 'createdBy', 'updatedBy', 'version', 'docStatus'].includes(field) ||
         type === 'integer' ||
-        type === 'belongsTo'
+        type === 'belongsTo' ||
+        type === 'user'
           ? 'number'
           : type === 'boolean'
             ? 'boolean'
