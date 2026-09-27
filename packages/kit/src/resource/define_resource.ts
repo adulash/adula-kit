@@ -48,9 +48,13 @@ export function defineResource<const F extends Record<string, Field>>(
     input.show,
     input.hidden ?? [],
     input.serialize ?? [],
+    input.title ?? [],
   ]) {
     for (const key of keys) if (!(key in input.fields)) throw new Error(`Unknown field: ${key}`)
   }
+  for (const key of input.title ?? [])
+    if (['hasMany', 'json', 'attachment'].includes(input.fields[key].type))
+      throw new Error(`${input.name}: title field ${key} cannot be a ${input.fields[key].type}`)
   if (!input.submittable && input.actions.some((a) => ['submit', 'cancel', 'amend'].includes(a)))
     throw new Error('Document actions require submittable')
   return Object.freeze({ ...input, version: input.version ?? input.submittable ?? false })

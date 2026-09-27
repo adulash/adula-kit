@@ -102,7 +102,7 @@ export default function MyTasks({ assignments, status }: Props) {
                 href={`/resources/${item.resource}/${item.recordId}`}
                 className="text-sm text-primary underline-offset-4 hover:underline"
               >
-                {item.resourceLabel} #{item.recordId}
+                {item.resourceLabel}: <bdi>{item.recordTitle}</bdi>
               </Link>
               {item.note && <p className="text-sm text-muted-foreground">{item.note}</p>}
               <p className="flex flex-wrap gap-3 text-xs text-muted-foreground">

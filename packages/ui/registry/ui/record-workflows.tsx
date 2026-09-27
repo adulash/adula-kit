@@ -106,7 +106,7 @@ export function WorkflowDecision({
           <DialogHeader>
             <DialogTitle>{decision === 'approve' ? 'تأكيد الموافقة' : 'تأكيد الرفض'}</DialogTitle>
             <DialogDescription>
-              {run.myApproval.title} — {run.resourceLabel} #{run.recordId}
+              {run.myApproval.title} — {run.resourceLabel}: <bdi>{run.recordTitle}</bdi>
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">

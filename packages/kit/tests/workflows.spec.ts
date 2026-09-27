@@ -202,6 +202,8 @@ test.group('Workflow engine', (group) => {
       inbox.map((entry) => entry.id),
       [run.id]
     )
+    const { number } = await db('orders').where('id', id).first('number')
+    assert.equal(inbox[0].recordTitle, number)
     run = await workflows.decide(run.id, manager, 'approve', 'الأسعار مطابقة')
     assert.equal(run.step, 'director')
     run = await workflows.decide(run.id, director, 'approve')

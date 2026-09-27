@@ -11,6 +11,8 @@ export type Assignment = {
   resource: string
   resourceLabel: string
   recordId: number
+  /** How people know the record (for example «TSK-000123 · إصلاح تكرار الحجز»), else «#id». */
+  recordTitle: string
   assigneeId: number
   assigneeName: string | null
   assignedBy: number | null
@@ -59,7 +61,8 @@ export class Assignments {
       .where({ 'a.resource': name, 'a.record_id': id })
       .orderByRaw("(a.status = 'open') DESC, a.id DESC")
       .limit(100)
-    return rows.map((row) => this.present(row, actor))
+    const title = await this.resources.recordTitle(name, id, actor)
+    return rows.map((row) => this.present(row, actor, title))
   }
 
   async assign(
@@ -102,7 +105,9 @@ export class Assignments {
       title,
       note,
       dueOn,
-    }).then((created) => this.present(created, actor))
+    }).then(async (created) =>
+      this.present(created, actor, await this.resources.recordTitle(name, id, actor))
+    )
   }
 
   /**
@@ -197,6 +202,16 @@ export class Assignments {
     const [{ count }] = await this.db('assignments')
       .where({ assignee_id: actor.id, status: 'open' })
       .count<{ count: string }[]>('* as count')
+    // One title read per resource on the page, under the actor's own access.
+    const byResource = new Map<string, number[]>()
+    for (const item of data)
+      byResource.set(item.resource, [...(byResource.get(item.resource) ?? []), item.recordId])
+    for (const [resource, ids] of byResource) {
+      const titles = await this.resources.recordTitles(resource, ids, actor)
+      for (const item of data)
+        if (item.resource === resource)
+          item.recordTitle = titles.get(item.recordId) ?? item.recordTitle
+    }
     return {
       data,
       nextCursor: more && last !== null ? String(last) : null,
@@ -246,13 +261,14 @@ export class Assignments {
       .select('a.*', 'u.full_name as assignee_name', 'b.full_name as assigned_by_name')
   }
 
-  private present(row: Record<string, any>, actor: Actor): Assignment {
+  private present(row: Record<string, any>, actor: Actor, title?: string): Assignment {
     const open = row.status === 'open'
     return {
       id: Number(row.id),
       resource: String(row.resource),
       resourceLabel: this.label(row.resource),
       recordId: Number(row.record_id),
+      recordTitle: title ?? `#${row.record_id}`,
       assigneeId: Number(row.assignee_id),
       assigneeName: row.assignee_name ? String(row.assignee_name) : null,
       assignedBy: row.assigned_by === null ? null : Number(row.assigned_by),

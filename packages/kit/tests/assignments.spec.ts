@@ -73,6 +73,10 @@ test.group('Assignments', (group) => {
     assert.lengthOf(mine.data, 1)
     assert.isTrue(mine.data[0].canComplete)
     assert.equal(mine.data[0].resourceLabel, 'الطلبات')
+    // People know the order by its number, not by the database id (#32).
+    const [stored] = await db('orders').where('id', orderId).select('number')
+    assert.equal(mine.data[0].recordTitle, stored.number)
+    assert.equal(created.recordTitle, stored.number)
 
     await assignments().complete(created.id, viewer)
     const done = await assignments().mine(viewer, { status: 'done' })

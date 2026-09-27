@@ -600,6 +600,83 @@ export class ResourceService {
       .distinct()
   }
 
+  /**
+   * People-facing names of records, such as «TSK-000123 · إصلاح تكرار الحجز», read under
+   * the actor's record and field access. A record or field the actor cannot read falls
+   * back to «#id»; this never reveals more than the list page would.
+   */
+  async recordTitles(name: string, ids: readonly number[], actor: Actor) {
+    const titles = new Map<number, string>(ids.map((id) => [id, `#${id}`]))
+    let resource: Resource
+    try {
+      resource = this.registry.get(name)
+    } catch {
+      return titles
+    }
+    const ability = buildAbility(actor.rules, this.registry.all())
+    const wanted = [...new Set(ids.filter((id) => Number.isSafeInteger(id) && id > 0))]
+    if (!wanted.length || !resource.actions.includes('view') || !ability.can('view', name))
+      return titles
+    const keys = (
+      resource.title ?? [
+        ...Object.keys(resource.fields).filter((key) => resource.fields[key].sequence),
+        ...resource.list.slice(0, 1),
+      ]
+    ).filter(
+      (key, index, all) =>
+        all.indexOf(key) === index &&
+        !['hasMany', 'json', 'attachment'].includes(resource.fields[key]?.type)
+    )
+    if (!keys.length) return titles
+    const query = accessibleBy(
+      this.db(`${name} as r`).whereIn('r.id', wanted).whereNull('r.deleted_at'),
+      ability,
+      actor,
+      'view',
+      resource
+    ).select(this.columns(resource, ability, false, keys))
+    if (resource.scoped) query.select('ou.path as org_path')
+    const rows: RecordData[] = await query
+    const records = rows.map((row) => fromRow(row, resource))
+    const labels = new Map<string, string>()
+    for (const key of keys) {
+      const field = resource.fields[key]
+      if (field.type === 'lookup')
+        for (const row of await this.db('lookups')
+          .where('group', field.group)
+          .select('key', 'label_ar'))
+          labels.set(`${key}\u0000${row.key}`, String(row.label_ar))
+    }
+    const users = new Map<number, string>()
+    const userIds = records.flatMap((record) =>
+      keys.filter((key) => resource.fields[key].type === 'user').map((key) => Number(record[key]))
+    )
+    if (userIds.some(Boolean))
+      for (const row of await this.db('users')
+        .whereIn('id', userIds.filter(Boolean))
+        .select('id', 'full_name'))
+        users.set(Number(row.id), String(row.full_name ?? ''))
+    for (const record of records) {
+      const visible = serialize(resource, record, ability, actor)
+      const parts = keys.flatMap((key) => {
+        const value = visible[key]
+        if (value === null || value === undefined || value === '') return []
+        const field = resource.fields[key]
+        if (field.type === 'lookup') return [labels.get(`${key}\u0000${value}`) ?? String(value)]
+        if (field.type === 'user') return [users.get(Number(value)) || `#${value}`]
+        return [String(value)]
+      })
+      if (parts.length) titles.set(Number(record.id), parts.join(' · '))
+    }
+    return titles
+  }
+
+  /** recordTitles() for one record. */
+  async recordTitle(name: string, id: number, actor: Actor) {
+    const titles = await this.recordTitles(name, [id], actor)
+    return titles.get(id) ?? `#${id}`
+  }
+
   /** Deferred relation reads re-authorize the parent and each child on every request. */
   async children(name: string, id: number, actor: Actor) {
     const resource = this.registry.get(name)

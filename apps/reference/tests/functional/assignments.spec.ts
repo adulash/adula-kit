@@ -64,6 +64,8 @@ test.group('Assignments and my tasks over HTTP', (group) => {
     assert.equal(page.body().component, 'work/my_tasks')
     assert.equal(page.body().props.assignments.open, 1)
     assert.equal(page.body().props.assignments.data[0].title, 'مراجعة البيانات')
+    // The record is named by its title, not by the database id (#32).
+    assert.equal(page.body().props.assignments.data[0].recordTitle, 'عينة الإسناد')
 
     const cancelByClerk = await client
       .post(`/my-tasks/${assignmentId}/cancel`)

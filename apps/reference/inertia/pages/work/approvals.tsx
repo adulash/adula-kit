@@ -32,7 +32,7 @@ export default function Approvals({ runs }: Props) {
                 href={`/resources/${run.resource}/${run.recordId}`}
                 className="text-sm text-primary underline-offset-4 hover:underline"
               >
-                {run.resourceLabel} #{run.recordId}
+                {run.resourceLabel}: <bdi>{run.recordTitle}</bdi>
               </Link>
               <p className="text-xs text-muted-foreground">
                 {run.label} · بدأ {formatDateTime(run.createdAt)}

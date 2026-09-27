@@ -26,6 +26,8 @@ export type WorkflowRun = {
   resource: string
   resourceLabel: string
   recordId: number
+  /** How people know the record (for example «2.0.0 · منصة الحجوزات»), else «#id». */
+  recordTitle: string
   definition: string
   label: string
   version: number
@@ -514,14 +516,16 @@ export class WorkflowEngine {
       .whereNot('status', 'pending_definition')
       .orderBy('created_at', 'desc')
       .limit(20)
-    return Promise.all(rows.map((row) => this.present(row, actor)))
+    const title = await this.resources.recordTitle(name, id, actor)
+    return Promise.all(rows.map((row) => this.present(row, actor, title)))
   }
 
   async run(runId: string, actor: Actor) {
     const row = await this.db('workflow_runs').where('id', runId).first()
     if (!row || !(await this.resources.permits(row.resource, Number(row.record_id), actor)))
       throw new KitError(404, 'E_WORKFLOW_NOT_FOUND', 'التدفق غير موجود')
-    return this.present(row, actor)
+    const title = await this.resources.recordTitle(row.resource, Number(row.record_id), actor)
+    return this.present(row, actor, title)
   }
 
   /** Runs waiting for the actor's decision, newest first, on records they can still read. */
@@ -533,10 +537,21 @@ export class WorkflowEngine {
       .orderBy('a.id', 'desc')
       .limit(100)
       .select('r.*')
-    const runs: WorkflowRun[] = []
+    const visible = []
     for (const row of rows)
       if (await this.resources.permits(row.resource, Number(row.record_id), actor))
-        runs.push(await this.present(row, actor))
+        visible.push(row)
+    const titles = new Map<string, string>()
+    for (const resource of new Set(visible.map((row) => String(row.resource)))) {
+      const ids = visible
+        .filter((row) => row.resource === resource)
+        .map((row) => Number(row.record_id))
+      for (const [id, title] of await this.resources.recordTitles(resource, ids, actor))
+        titles.set(`${resource}:${id}`, title)
+    }
+    const runs: WorkflowRun[] = []
+    for (const row of visible)
+      runs.push(await this.present(row, actor, titles.get(`${row.resource}:${row.record_id}`)))
     return runs
   }
 
@@ -548,7 +563,11 @@ export class WorkflowEngine {
     return Promise.all(rows.map((row) => this.present(row)))
   }
 
-  private async present(row: Record<string, any>, actor?: Actor): Promise<WorkflowRun> {
+  private async present(
+    row: Record<string, any>,
+    actor?: Actor,
+    title?: string
+  ): Promise<WorkflowRun> {
     let definition: WorkflowDefinition | undefined
     try {
       definition = this.definition(row.definition, row.definition_version)
@@ -579,6 +598,7 @@ export class WorkflowEngine {
       resource: String(row.resource),
       resourceLabel,
       recordId: Number(row.record_id),
+      recordTitle: title ?? `#${row.record_id}`,
       definition: String(row.definition),
       label: definition?.label ?? String(row.definition),
       version: Number(row.definition_version),

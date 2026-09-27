@@ -82,6 +82,7 @@ test.group('Two-level order approval workflow over HTTP', (group) => {
     assert.equal(inbox.body().component, 'work/approvals')
     const [run] = inbox.body().props.runs
     assert.equal(run.recordId, id)
+    assert.match(run.recordTitle, /^ORD-\d{6}$/)
     assert.equal(run.myApproval.title, 'موافقة مدير القسم')
     // The director has nothing to decide yet.
     const early = await client

@@ -63,6 +63,12 @@ export type Resource = {
   list: readonly string[]
   form: readonly string[]
   show: readonly string[]
+  /**
+   * Fields that name a record for people (for example ['number', 'title']), used in
+   * task lists, approvals and notifications. Defaults to the sequence field, if any,
+   * followed by the first list field.
+   */
+  title?: readonly string[]
   serialize?: readonly string[]
   hidden?: readonly string[]
   actions: readonly Action[]
@@ -111,9 +117,10 @@ export type Module = {
 }
 export type ResourceInput<F extends Record<string, Field>> = Omit<
   Resource,
-  'fields' | 'list' | 'form' | 'show' | 'hidden' | 'serialize'
+  'fields' | 'list' | 'form' | 'show' | 'hidden' | 'serialize' | 'title'
 > & {
   fields: F
+  title?: readonly (keyof F & string)[]
   list: readonly (keyof F & string)[]
   form: readonly (keyof F & string)[]
   show: readonly (keyof F & string)[]
