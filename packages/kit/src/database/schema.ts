@@ -479,3 +479,14 @@ export async function createWorkflowSchema(db: Knex) {
     t.index(['run_id', 'id'])
   })
 }
+
+/**
+ * Notifications may name the record they are about (1.1). Links are authorized when
+ * opened, by the record page itself, never when the notification is written.
+ */
+export async function createNotificationTargetsSchema(db: Knex) {
+  await db.schema.alterTable('notifications', (t) => {
+    t.string('resource', 100)
+    t.integer('record_id')
+  })
+}

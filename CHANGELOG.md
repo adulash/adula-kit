@@ -56,6 +56,15 @@ Minor release: additive APIs and one additive kit migration
   unresolved and the rule is refused. Hosts that build actors themselves call
   `resolveActorConditions` (#29).
 
+* Notifications: an optional `{ resource, recordId }` target (additive migration
+  `1770000000013_kit_notification_targets`). `notify()` and `notifyWithTemplate()`
+  accept it, and the kit's collaboration, assignment and workflow notifications pass
+  it. `NotificationsAdmin` returns the target with its link only while the resource is
+  registered, and `open()` marks the notification read and returns the link; the
+  record page authorizes the reader. Notification e-mail receives the target so the
+  host can append an absolute link (#38). `Notification` gains the nullable `target`,
+  so code that builds it needs the member; the new parameters are optional.
+
 ## 1.0.1 — unreleased
 
 Patch release: fixes reported against 1.0.0, with no public API or schema change.

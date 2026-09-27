@@ -1,5 +1,6 @@
 import type { Knex } from 'knex'
 import { KitError } from '../admin/errors.js'
+import { targetColumns, type NotificationTarget } from '../services/settings.js'
 
 export type TemplateDefinition = {
   label: string
@@ -207,7 +208,8 @@ export async function notifyWithTemplate(
   userId: number,
   key: string,
   variables: Record<string, unknown>,
-  templates = new MessageTemplates(db)
+  templates = new MessageTemplates(db),
+  target?: NotificationTarget | null
 ) {
   const message = await templates.render(key, variables, db)
   await db('notifications').insert({
@@ -216,6 +218,7 @@ export async function notifyWithTemplate(
     body: message.body,
     template_key: key,
     mail_state: message.mail ? 'pending' : null,
+    ...targetColumns(target),
   })
 }
 
@@ -224,6 +227,8 @@ export type MailSender = (message: {
   name: string | null
   subject: string
   text: string
+  /** The record the notification is about; build an absolute link from the application URL. */
+  target?: NotificationTarget | null
 }) => Promise<void>
 
 /**
@@ -246,6 +251,8 @@ export async function deliverNotificationMail(db: Knex, send: MailSender, limit 
         'n.title',
         'n.body',
         'n.mail_attempts',
+        'n.resource',
+        'n.record_id',
         'u.email',
         'u.full_name',
         'u.disabled_at'
@@ -261,6 +268,10 @@ export async function deliverNotificationMail(db: Knex, send: MailSender, limit 
           name: row.full_name ? String(row.full_name) : null,
           subject: String(row.title),
           text: String(row.body),
+          target:
+            row.resource && row.record_id !== null
+              ? { resource: String(row.resource), recordId: Number(row.record_id) }
+              : null,
         })
         await trx('notifications')
           .where('id', row.id)

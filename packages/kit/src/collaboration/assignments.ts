@@ -174,7 +174,9 @@ export class Assignments {
           resource: this.label(input.resource),
           id: input.recordId,
           due: input.dueOn ?? '',
-        }
+        },
+        undefined,
+        { resource: input.resource, recordId: input.recordId }
       )
       return this.query(trx).where('a.id', row.id).first()
     }
@@ -290,7 +292,9 @@ export class Assignments {
           trx,
           notify,
           outcome === 'done' ? 'assignment.done' : 'assignment.cancelled',
-          { title: row.title, resource: this.label(row.resource), id: row.record_id }
+          { title: row.title, resource: this.label(row.resource), id: row.record_id },
+          undefined,
+          { resource: String(row.resource), recordId: Number(row.record_id) }
         )
     })
   }
@@ -352,7 +356,9 @@ export class Assignments {
             trx,
             notify,
             outcome === 'done' ? 'assignment.done' : 'assignment.cancelled',
-            { title: row.title, resource: this.label(row.resource), id: row.record_id }
+            { title: row.title, resource: this.label(row.resource), id: row.record_id },
+            undefined,
+            { resource: String(row.resource), recordId: Number(row.record_id) }
           )
       }
       return rows.length
