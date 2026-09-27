@@ -1,5 +1,6 @@
 import type { ResourceRegistry } from '../resource/registry.js'
 import { KIT_VERSION } from '../version.js'
+import { WORKFLOW_NAME_RULE } from '../workflows/define_workflow.js'
 
 /** Field kinds accepted by defineResource, with their storage. */
 export const FIELD_TYPES: Record<string, string> = {
@@ -128,7 +129,7 @@ export function capabilityCatalog(
     '',
     `Role rule conditions: ${CONDITION_OPERATORS.join(', ')} on scalar fields; unsupported conditions are refused. Organization scope is always added with AND.`,
     '',
-    `Workflow steps: ${WORKFLOW_STEPS.join(', ')}.`,
+    `Workflow steps: ${WORKFLOW_STEPS.join(', ')}. Workflow and step names: ${WORKFLOW_NAME_RULE} (for example release_approval, notify_approved).`,
     '',
     '## Services',
     '',

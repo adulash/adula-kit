@@ -25,7 +25,7 @@ Resource options: scoped (required), submittable (docStatus, submit/cancel/amend
 
 Role rule conditions: $eq, $ne, $in, $lt, $gt, $like on scalar fields; unsupported conditions are refused. Organization scope is always added with AND.
 
-Workflow steps: condition, update, notify, approval, delay, http, end.
+Workflow steps: condition, update, notify, approval, delay, http, end. Workflow and step names: use lower-case letters, digits and underscores, starting with a letter (for example release_approval, notify_approved).
 
 ## Services
 

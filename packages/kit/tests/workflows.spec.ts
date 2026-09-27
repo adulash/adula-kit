@@ -150,6 +150,25 @@ test.group('Workflow engine', (group) => {
         }),
       /unknown step missing/
     )
+    // Naming errors state the rule and a valid spelling (issue #24).
+    const named = (name: string, step: string) => () =>
+      defineWorkflow({
+        name,
+        version: 1,
+        resource: 'orders',
+        label: 'x',
+        start: step,
+        steps: { [step]: { type: 'end', outcome: 'completed' } },
+      })
+    assert.throws(
+      named('projects.release.approval', 'done'),
+      'Invalid workflow name "projects.release.approval": use lower-case letters, digits and underscores, starting with a letter (for example projects_release_approval).'
+    )
+    assert.throws(
+      named('release_approval', 'notifyApproved'),
+      'Invalid step name "notifyApproved": use lower-case letters, digits and underscores, starting with a letter (for example notify_approved).'
+    )
+    assert.throws(named('2fast', 'done'), /\(for example fast\)/)
     assert.throws(() => engine([approval(), approval()]), /Duplicate workflow version/)
     assert.throws(
       () =>
