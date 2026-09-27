@@ -28,6 +28,7 @@ export interface ResourceController {
   create(ctx: HttpContext): Promise<unknown>
   edit(ctx: HttpContext): Promise<unknown>
   options(ctx: HttpContext): Promise<unknown>
+  aggregate(ctx: HttpContext): Promise<unknown>
 }
 
 /** The host supplies its authenticated actor; ResourceService authorizes every action. */
@@ -96,6 +97,39 @@ export function createResourceController(
           purpose: ctx.request.input('purpose') === 'filter' ? 'filter' : 'form',
         })
       )
+    }
+    /**
+     * GET …/aggregate?groupBy=status,priority&sum=total&filters[x]=…&where={json}
+     * Counts and totals over the records the actor may view (ResourceService.aggregate).
+     */
+    async aggregate(ctx: HttpContext) {
+      return this.#execute(ctx, async ({ resources, actor }, resource) => {
+        const list = (value: unknown) =>
+          value === undefined || value === ''
+            ? []
+            : Array.isArray(value)
+              ? value.map(String)
+              : String(value).split(',').filter(Boolean)
+        let where: unknown
+        const raw = ctx.request.input('where')
+        if (typeof raw === 'string' && raw) {
+          try {
+            where = JSON.parse(raw)
+          } catch {
+            throw new KitError(422, 'E_FILTER', 'where must be a JSON object')
+          }
+        } else if (raw && typeof raw === 'object') where = raw
+        return {
+          data: await resources.aggregate(resource.name, actor, {
+            groupBy: list(ctx.request.input('groupBy')),
+            sum: list(ctx.request.input('sum')),
+            count: ctx.request.input('count') !== 'false',
+            filters: ctx.request.input('filters'),
+            where: where as never,
+            search: ctx.request.input('search'),
+          }),
+        }
+      })
     }
     async store(ctx: HttpContext) {
       return this.#execute(ctx, async ({ resources, actor }, resource) =>
