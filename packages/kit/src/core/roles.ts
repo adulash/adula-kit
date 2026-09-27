@@ -1,6 +1,6 @@
 import type { Knex } from 'knex'
 import type { ResourceRegistry } from '../resource/registry.js'
-import type { Action, Label, Resource } from '../resource/types.js'
+import type { Action, Label, ModuleRole, Resource } from '../resource/types.js'
 import type { Conditions } from '../auth/conditions.js'
 import { conditionSql } from '../auth/sql.js'
 import { KitError } from '../admin/errors.js'
@@ -365,6 +365,81 @@ export class RolesAdmin {
         changes: { rule: toRule(row) },
       })
     })
+  }
+
+  /**
+   * Creates module default roles that no role holds the key of yet, with their rules
+   * validated exactly like setRule. Existing roles are never modified. A keyless role
+   * with the same display name is adopted by receiving the key, rules untouched.
+   */
+  async ensureDefaults(actorId: number, roles: readonly ModuleRole[]) {
+    const prepared = roles.map((role) => {
+      const key = roleKey(role.key)
+      const name = roleName(role.name)
+      const level = permissionLevel(role.permissionLevel)
+      const rules = role.rules.map((rule) => {
+        try {
+          return this.validateRule(rule)
+        } catch (error) {
+          throw new Error(`Default role ${key}: ${(error as Error).message}`)
+        }
+      })
+      return { key, name, level, rules }
+    })
+    const result = { created: [] as string[], adopted: [] as string[], kept: [] as string[] }
+    await this.db.transaction(async (trx) => {
+      for (const role of prepared) {
+        if (await trx('roles').where('key', role.key).first('id')) {
+          result.kept.push(role.key)
+          continue
+        }
+        const named = await trx('roles').where('name', role.name).first()
+        if (named) {
+          // A role with this name but another key belongs to the administrator.
+          if (named.key) {
+            result.kept.push(role.key)
+            continue
+          }
+          await trx('roles').where('id', named.id).update({ key: role.key })
+          await logActivity(trx, {
+            resource: RESOURCE,
+            recordId: named.id,
+            actorId,
+            action: 'set_key',
+            changes: { key: role.key, source: 'module default' },
+          })
+          result.adopted.push(role.key)
+          continue
+        }
+        const [created] = await trx('roles')
+          .insert({ key: role.key, name: role.name, permission_level: role.level })
+          .returning('id')
+        for (const rule of role.rules)
+          await trx('role_rules').insert({
+            role_id: created.id,
+            subject: rule.subject,
+            action: rule.action,
+            inverted: rule.inverted,
+            conditions: rule.conditions ? JSON.stringify(rule.conditions) : null,
+            fields: rule.fields ? JSON.stringify(rule.fields) : null,
+          })
+        await logActivity(trx, {
+          resource: RESOURCE,
+          recordId: created.id,
+          actorId,
+          action: 'create',
+          changes: {
+            name: role.name,
+            key: role.key,
+            permissionLevel: role.level,
+            rules: role.rules.length,
+            source: 'module default',
+          },
+        })
+        result.created.push(role.key)
+      }
+    })
+    return result
   }
 
   private validateRule(input: RuleInput) {

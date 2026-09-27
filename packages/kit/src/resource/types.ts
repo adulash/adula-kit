@@ -1,6 +1,7 @@
 import type { Knex } from 'knex'
 import type { LucidModel } from '@adonisjs/lucid/types/model'
 import type { WorkflowDefinition } from '../workflows/define_workflow.js'
+import type { Conditions } from '../auth/conditions.js'
 
 export type Label = { ar: string; en: string }
 export type Action = 'view' | 'create' | 'update' | 'delete' | 'submit' | 'cancel' | 'amend'
@@ -59,6 +60,23 @@ export type Resource = {
   }
 }
 export type HookContext = { trx: Knex.Transaction; userId: number; action: Action }
+/** A changeable list value a module needs before its records can be saved. */
+export type ModuleLookup = { key: string; label: Label; sort?: number }
+/** A role a module ships; its rules go through the same validation as the roles screen. */
+export type ModuleRole = {
+  /** Stable key that workflows address ({ role: key }); see roles.key. */
+  key: string
+  /** Arabic display name; administrators may rename it later. */
+  name: string
+  permissionLevel?: number
+  rules: readonly {
+    subject: string
+    action: string
+    inverted?: boolean
+    conditions?: Conditions | null
+    fields?: string[] | null
+  }[]
+}
 export type Module = {
   name: string
   reference?: boolean
@@ -67,6 +85,16 @@ export type Module = {
   resources: readonly Resource[]
   /** Versioned workflows of this module's submittable resources (phase 4). */
   workflows?: readonly WorkflowDefinition[]
+  /**
+   * Lookup rows by group. adula:install inserts missing rows and never changes or
+   * removes existing ones, so administrator edits survive upgrades.
+   */
+  lookups?: Readonly<Record<string, readonly ModuleLookup[]>>
+  /**
+   * Roles created by adula:install when no role has their key yet. An existing role
+   * is never modified, so administrators own every role after installation.
+   */
+  defaultRoles?: readonly ModuleRole[]
 }
 export type ResourceInput<F extends Record<string, Field>> = Omit<
   Resource,

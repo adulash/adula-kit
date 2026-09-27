@@ -1,7 +1,8 @@
 import { test } from '@japa/runner'
 import { join } from 'node:path'
 import db from '@adonisjs/lucid/services/db'
-import { consumeEvent, type DomainEvent } from '@adula/kit'
+import { consumeEvent, seedModules, type DomainEvent } from '@adula/kit'
+import { registry } from '#start/modules'
 import User from '#models/user'
 import { kit } from '#services/kit'
 import { listeners } from '#start/listeners'
@@ -15,25 +16,20 @@ test.group('Workflow approvals browser acceptance', (group) => {
   let id: number
   group.setup(async () => {
     clerk = await seedActor([{ subject: 'orders', action: 'manage' }], { fullName: 'مقدمة الطلب' })
-    const member = async (roleName: string, fullName: string) => {
+    await seedModules(knex(), registry, clerk.user.id)
+    const member = async (key: string, fullName: string) => {
       const user = await User.create({
         fullName,
-        email: `browser-${roleName.length}-${Date.now()}@example.test`,
+        email: `browser-${key}-${Date.now()}@example.test`,
         password: 'browser-workflow-password-123',
       })
-      let role = await knex()('roles').where('name', roleName).first()
-      if (!role) {
-        ;[role] = await knex()('roles')
-          .insert({ name: roleName, permission_level: 1 })
-          .returning('*')
-        await knex()('role_rules').insert({ role_id: role.id, subject: 'orders', action: 'view' })
-      }
+      const role = await knex()('roles').where('key', key).first()
       await knex()('user_roles').insert({ user_id: user.id, role_id: role.id })
       await knex()('user_org_units').insert({ user_id: user.id, org_unit_id: clerk.orgUnitId })
       return user
     }
-    manager = await member('مدير القسم', 'مدير القسم للمتصفح')
-    await member('المدير العام', 'المدير العام للمتصفح')
+    manager = await member('department_manager', 'مدير القسم للمتصفح')
+    await member('general_manager', 'المدير العام للمتصفح')
     const actor = await kit().actors.load(clerk.user.id)
     const order = await kit().resources.save('orders', actor, {
       notes: 'طلب يحتاج موافقة',
