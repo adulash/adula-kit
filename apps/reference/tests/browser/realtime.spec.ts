@@ -90,4 +90,59 @@ test.group('Realtime notification bell', (group) => {
     await page.getByTestId('unread-count').filter({ hasText: '1' }).waitFor()
     await until('window.__streams.length === 2 && window.__streams[1].readyState !== 2')
   })
+
+  test('tabs share one stream; another tab takes over when the leader closes', async ({
+    browserContext,
+    assert,
+  }) => {
+    await db.from('notifications').where('user_id', member.user.id).delete()
+    await browserContext.loginAs(member.user)
+    const track = `{
+      const Native = window.EventSource
+      window.__streams = []
+      window.EventSource = class extends Native {
+        constructor(...args) { super(...args); window.__streams.push(this) }
+      }
+    }`
+    const openStreams = (target: typeof first) =>
+      target.evaluate<number>('window.__streams.filter((s) => s.readyState !== 2).length')
+    const until = async (check: () => Promise<boolean>, label: string) => {
+      for (const started = Date.now(); Date.now() - started < 20_000;) {
+        if (await check()) return
+        await new Promise((resolve) => setTimeout(resolve, 250))
+      }
+      throw new Error(`Timed out waiting for ${label}`)
+    }
+    const first = await browserContext.newPage()
+    await first.addInitScript(track)
+    const subscribed = first.waitForResponse(
+      (response) => response.url().includes('/__transmit/subscribe') && response.ok()
+    )
+    await first.goto('/notifications')
+    await subscribed
+    const second = await browserContext.newPage()
+    await second.addInitScript(track)
+    await second.goto('/notifications')
+    await second.getByRole('heading', { name: 'الإشعارات' }).waitFor()
+    // Seven tabs would otherwise hold seven HTTP/1.1 connections (#36).
+    await until(async () => (await openStreams(first)) === 1, 'the leader stream')
+    assert.equal(await openStreams(second), 0)
+    const knex = db.connection().getWriteClient()
+    await notifyWithTemplate(knex, member.user.id, 'assignment.created', {
+      title: 'للتبويبين',
+      resource: 'الطلبات',
+      id: 1,
+    })
+    // The leader relays the signal: both bells update.
+    await first.getByTestId('unread-count').filter({ hasText: '1' }).waitFor()
+    await second.getByTestId('unread-count').filter({ hasText: '1' }).waitFor()
+    await first.close()
+    await until(async () => (await openStreams(second)) === 1, 'the stream to move over')
+    await notifyWithTemplate(knex, member.user.id, 'assignment.created', {
+      title: 'بعد إغلاق القائد',
+      resource: 'الطلبات',
+      id: 1,
+    })
+    await second.getByTestId('unread-count').filter({ hasText: '2' }).waitFor()
+  })
 })
