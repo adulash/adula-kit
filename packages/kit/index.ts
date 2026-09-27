@@ -35,6 +35,7 @@ export {
   createImportsSchema,
   createWorkflowSchema,
   createManagedAssignmentsSchema,
+  createInboundWebhooksSchema,
 } from './src/database/schema.js'
 export { defineWorkflow, nextStep } from './src/workflows/define_workflow.js'
 export type {
@@ -64,6 +65,17 @@ export { openApiDocument } from './src/integrations/openapi.js'
 export { renderPrintHtml, htmlToPdf } from './src/integrations/print.js'
 export type { PrintIdentity, PrintInput } from './src/integrations/print.js'
 export { Webhooks, signWebhook, WEBHOOK_MAX_ATTEMPTS } from './src/integrations/webhooks.js'
+export {
+  InboundWebhooks,
+  inboundEventName,
+  INBOUND_BODY_LIMIT,
+} from './src/integrations/inbound_webhooks.js'
+export type {
+  InboundSource,
+  InboundSourceInput,
+  InboundDelivery,
+  InboundReceipt,
+} from './src/integrations/inbound_webhooks.js'
 export type {
   SecretBox,
   Webhook,

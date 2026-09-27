@@ -34,7 +34,7 @@ Workflow steps: condition, update, notify, approval, decision, delay, http, end.
 - **Records and collaboration:** `RecordCollaboration`, `followerListeners`, `Assignments`, `SavedViews`, `logActivity`
 - **Documents and workflows:** `defineWorkflow`, `WorkflowEngine`, `workflowListeners`
 - **Notifications and messages:** `notify`, `notifyWithTemplate`, `MessageTemplates`, `deliverNotificationMail`, `listenForNotifications`, `NotificationsAdmin`
-- **Integration:** `Webhooks`, `signWebhook`, `openApiDocument`, `ImportBatches`, `renderPrintHtml`, `htmlToPdf`
+- **Integration:** `Webhooks`, `signWebhook`, `InboundWebhooks`, `openApiDocument`, `ImportBatches`, `renderPrintHtml`, `htmlToPdf`
 - **Security:** `UserInvitations`, `UsersAdmin`, `RolesAdmin`
 - **Data and operations:** `sequence`, `Settings`, `SettingsAdmin`, `publishOutbox`, `consumeEvent`, `recordMutation`, `moveOrgUnit`, `migrateStorage`, `verifyBackup`, `runtimeHealth`
 
@@ -49,6 +49,7 @@ Workflow steps: condition, update, notify, approval, decision, delay, http, end.
 - Module workflows (Module.workflows) with versioned definitions
 - Message templates edited per deployment
 - Outgoing webhooks and the bearer-token /api/v1 API
+- Signed inbound webhooks raising inbound.<source>.<event> through the outbox
 
 ## Outside the kit
 

@@ -16,6 +16,7 @@ import { Settings } from '@adula/kit'
 import redis from '@adonisjs/redis/services/main'
 import {
   apiThrottle,
+  inboundThrottle,
   loginAddressThrottle,
   loginThrottle,
   oauthThrottle,
@@ -49,6 +50,7 @@ const SetupController = () => import('#controllers/admin/setup_controller')
 const NotificationsController = () => import('#controllers/admin/notifications_controller')
 const AdminTemplatesController = () => import('#controllers/admin/templates_controller')
 const AdminWebhooksController = () => import('#controllers/admin/webhooks_controller')
+const InboundWebhooksController = () => import('#controllers/inbound_webhooks_controller')
 
 router.on('/').renderInertia('home', {}).as('home')
 
@@ -72,6 +74,9 @@ transmit.registerRoutes((route) => {
 })
 
 router.mcp().use([middleware.auth(), apiThrottle, middleware.mcp()])
+
+// Signed inbound webhooks: no session or CSRF; the source secret authenticates (#30).
+router.post('/webhooks/in/:source', [InboundWebhooksController, 'receive']).use(inboundThrottle)
 
 router.get('/health', async ({ response }) => {
   try {
@@ -250,6 +255,15 @@ router
     router.delete('webhooks/:id', [AdminWebhooksController, 'destroy'])
     router.get('webhooks/:id/deliveries', [AdminWebhooksController, 'deliveries'])
     router.post('webhooks/deliveries/:delivery/retry', [AdminWebhooksController, 'retry'])
+    router.post('inbound-webhooks', [AdminWebhooksController, 'storeInbound'])
+    router.put('inbound-webhooks/:id', [AdminWebhooksController, 'updateInbound'])
+    router.post('inbound-webhooks/:id/rotate', [AdminWebhooksController, 'rotateInbound'])
+    router.delete('inbound-webhooks/:id', [AdminWebhooksController, 'destroyInbound'])
+    router.get('inbound-webhooks/:id/deliveries', [AdminWebhooksController, 'inboundDeliveries'])
+    router.post('inbound-webhooks/deliveries/:delivery/redispatch', [
+      AdminWebhooksController,
+      'redispatchInbound',
+    ])
     router.get('setup', [SetupController, 'index'])
     router.post('setup/check/:service', [SetupController, 'check'])
     router.post('setup/identity', [SetupController, 'confirmIdentity'])

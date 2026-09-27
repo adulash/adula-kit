@@ -86,6 +86,7 @@ export const SERVICES: Record<string, string[]> = {
   'Integration': [
     'Webhooks',
     'signWebhook',
+    'InboundWebhooks',
     'openApiDocument',
     'ImportBatches',
     'renderPrintHtml',
@@ -115,6 +116,7 @@ export const EXTENSION_POINTS = [
   'Module workflows (Module.workflows) with versioned definitions',
   'Message templates edited per deployment',
   'Outgoing webhooks and the bearer-token /api/v1 API',
+  'Signed inbound webhooks raising inbound.<source>.<event> through the outbox',
 ]
 export const OUTSIDE_THE_KIT = [
   'Dynamic fields or a field editor screen',

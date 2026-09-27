@@ -192,6 +192,10 @@
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>) => Promise<void>"
     },
+    "createInboundWebhooksSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
     "createManagedAssignmentsSchema": {
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>) => Promise<void>"
@@ -335,6 +339,34 @@
     "ImportTarget": {
       "kind": "TypeAliasDeclaration",
       "type": "{ key: string; label: string; type: string; required: boolean; }"
+    },
+    "INBOUND_BODY_LIMIT": {
+      "kind": "VariableDeclaration",
+      "type": "number"
+    },
+    "InboundDelivery": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: string; deliveryId: string; event: string; eventName: string; dispatches: number; receivedAt: string; }"
+    },
+    "inboundEventName": {
+      "kind": "FunctionDeclaration",
+      "type": "(source: string, event: string) => string"
+    },
+    "InboundReceipt": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ delivery: string; event: string; duplicate: boolean; }"
+    },
+    "InboundSource": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; key: string; name: string; algorithm: \"sha256\" | \"sha512\"; signatureHeader: string; signaturePrefix: string; eventHeader: string; deliveryHeader: string; active: boolean; createdAt: string; lastReceivedAt: string | null; path: string; }"
+    },
+    "InboundSourceInput": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key?: unknown; name?: unknown; algorithm?: unknown; signatureHeader?: unknown; signaturePrefix?: unknown; eventHeader?: unknown; deliveryHeader?: unknown; active?: unknown; }"
+    },
+    "InboundWebhooks": {
+      "kind": "ClassDeclaration",
+      "type": "typeof InboundWebhooks"
     },
     "InitialSetup": {
       "kind": "ClassDeclaration",

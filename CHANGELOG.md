@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0 — unreleased
+
+Minor release: workspace and realtime changes decided in ADR 034 and later.
+
+* Integrations: signed inbound webhooks (#30). Administrators add sources with a
+  generated, rotatable secret; senders post to `POST /webhooks/in/<key>`, the HMAC over
+  the raw body is verified before anything is stored, deliveries are deduplicated and
+  raised as `inbound.<key>.<event>` through the outbox, and the delivery log can raise
+  one again. Additive migration `1770000000015_kit_inbound_webhooks`. See ADR 037.
+  Projects need the starter's route, controller, limiter entry and shield exception.
+
 ## 1.1.0 — unreleased
 
 Minor release: additive APIs and one additive kit migration
