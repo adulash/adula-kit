@@ -1,16 +1,18 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { usePage } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
 import {
+  ChevronDown,
   ClipboardList,
   LayoutDashboard,
-  ArrowUpLeft,
   ListChecks,
   FileUp,
-  Stamp,
+  UserPlus,
 } from 'lucide-react'
 import type { ResourceNavigation } from '@adula/kit'
 import { Toaster } from '~/components/ui/sonner'
+import { Badge } from '~/components/ui/badge'
+import { Button } from '~/components/ui/button'
 import { AccountMenu } from '~/components/account-menu'
 import { AdminNav, ImpersonationBar, adminLinks } from '~/components/admin-nav'
 import { FlashMessages } from '~/components/flash-messages'
@@ -18,27 +20,75 @@ import { useUiPreferences } from '~/components/ui/ui-preferences'
 import { BackupBanner } from '~/components/backup-banner'
 import { NotificationBell } from '~/components/notification-bell'
 
+/** Collapsed module groups are a per-browser convenience; storage may be unavailable. */
+function useCollapsedModules() {
+  const [collapsed, setCollapsed] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('adula:nav-collapsed') ?? '[]') as string[]
+    } catch {
+      return []
+    }
+  })
+  const toggle = (module: string) =>
+    setCollapsed((current) => {
+      const next = current.includes(module)
+        ? current.filter((name) => name !== module)
+        : [...current, module]
+      try {
+        localStorage.setItem('adula:nav-collapsed', JSON.stringify(next))
+      } catch {
+        // The groups still toggle for this page view.
+      }
+      return next
+    })
+  return { collapsed, toggle }
+}
+
+const navLinkClass = (active: boolean) =>
+  `flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm transition-colors ${active ? 'bg-accent font-semibold text-primary' : 'text-muted-foreground hover:bg-background hover:text-foreground'}`
+
 export default function Workspace({ children }: { children: ReactNode }) {
   const preferences = useUiPreferences()
   const page = usePage<{
     user?: { fullName: string | null; email: string }
     navigation: ResourceNavigation
     canInviteUsers?: boolean
+    canImport?: boolean
+    openTasks?: number
+    isAdmin?: boolean
   }>()
-  const navigation = [
-    { href: '/', label: 'نظرة عامة', icon: LayoutDashboard },
-    { href: '/my-tasks', label: 'مهامي', icon: ListChecks },
-    { href: '/approvals', label: 'صندوق الموافقات', icon: Stamp },
-    { href: '/imports', label: 'الاستيراد', icon: FileUp },
-    ...(page.props.canInviteUsers
-      ? [{ href: '/users/invite', label: 'دعوة مستخدم', icon: ClipboardList }]
+  const { collapsed, toggle } = useCollapsedModules()
+  const openTasks = page.props.openTasks ?? 0
+  // Daily work first: the overview, one list of everything waiting for the user, and imports
+  // only for users who can create records (#34, #35).
+  const work = [
+    { href: '/', label: 'نظرة عامة', icon: LayoutDashboard, badge: 0 },
+    { href: '/my-tasks', label: 'مهامي', icon: ListChecks, badge: openTasks },
+    ...(page.props.canImport
+      ? [{ href: '/imports', label: 'الاستيراد', icon: FileUp, badge: 0 }]
       : []),
-    ...(page.props.navigation ?? []).map((entry) => ({ ...entry, icon: ClipboardList })),
   ]
+  const modules = [
+    ...new Map(
+      (page.props.navigation ?? []).map((entry) => [
+        entry.module,
+        {
+          module: entry.module,
+          label: entry.moduleLabel,
+          links: (page.props.navigation ?? []).filter((item) => item.module === entry.module),
+        },
+      ])
+    ).values(),
+  ]
+  const navigation = [
+    ...work,
+    ...(page.props.navigation ?? []).map((entry) => ({ ...entry, icon: ClipboardList, badge: 0 })),
+  ]
+  const isActive = (href: string) => (href !== '/' ? page.url.startsWith(href) : page.url === '/')
   const current =
     [...navigation, ...adminLinks].find(
       (entry) => entry.href !== '/' && page.url.startsWith(entry.href)
-    )?.label ?? 'نظرة عامة'
+    )?.label ?? (page.url.startsWith('/admin') ? 'الإدارة' : 'نظرة عامة')
   return (
     <div dir="rtl" className="min-h-screen bg-background text-foreground" data-workspace-shell>
       <FlashMessages />
@@ -52,39 +102,75 @@ export default function Workspace({ children }: { children: ReactNode }) {
             <span className="text-[11px] text-muted-foreground">مساحة أعمالك، بوضوح</span>
           </span>
         </Link>
-        <div className="mx-5 mb-8 rounded-lg border border-border bg-background px-4 py-3 text-sm font-medium">
-          مساحة العمل
-          <span className="mt-1 block text-xs font-normal text-muted-foreground">
-            التطبيق المرجعي
-          </span>
-        </div>
         <p className="mb-3 px-7 text-[11px] font-semibold text-muted-foreground">العمل اليومي</p>
-        <nav aria-label="التنقل الرئيسي" className="space-y-1 px-4">
-          {navigation.map(({ href, label, icon: Icon }) => {
-            const active = href !== '/' ? page.url.startsWith(href) : page.url === '/'
-            return (
+        <nav aria-label="التنقل الرئيسي" className="space-y-5 px-4">
+          <div className="space-y-1">
+            {work.map(({ href, label, icon: Icon, badge }) => (
               <Link
                 key={href}
                 href={href}
-                aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm transition-colors ${active ? 'bg-accent font-semibold text-primary' : 'text-muted-foreground hover:bg-background hover:text-foreground'}`}
+                aria-current={isActive(href) ? 'page' : undefined}
+                className={navLinkClass(isActive(href))}
               >
                 <Icon size={19} strokeWidth={1.6} />
                 {label}
+                {badge > 0 && (
+                  <Badge className="ms-auto px-1.5" aria-label={`${badge} مفتوحة`}>
+                    {badge}
+                  </Badge>
+                )}
               </Link>
+            ))}
+          </div>
+          {modules.map((group) => {
+            const open = !collapsed.includes(group.module)
+            return (
+              <div key={group.module} role="group" aria-label={group.label}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-expanded={open}
+                  onClick={() => toggle(group.module)}
+                  className="h-8 w-full justify-between px-4 text-[11px] font-semibold text-muted-foreground"
+                >
+                  {group.label}
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform ${open ? '' : 'rotate-90'}`}
+                  />
+                </Button>
+                {open && (
+                  <div className="mt-1 space-y-1">
+                    {group.links.map((entry) => (
+                      <Link
+                        key={entry.href}
+                        href={entry.href}
+                        aria-current={isActive(entry.href) ? 'page' : undefined}
+                        className={navLinkClass(isActive(entry.href))}
+                      >
+                        <ClipboardList size={18} strokeWidth={1.6} />
+                        {entry.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             )
           })}
         </nav>
         <AdminNav />
         <div className="mx-5 mb-6 mt-auto border-t border-border pt-5">
+          {page.props.canInviteUsers && (
+            <Link
+              href="/users/invite"
+              className="mb-4 flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <UserPlus size={14} />
+              دعوة مستخدم
+            </Link>
+          )}
           <AccountMenu />
-          <Link
-            href="/"
-            className="mt-4 flex items-center justify-between text-xs text-muted-foreground"
-          >
-            الصفحة الرئيسية
-            <ArrowUpLeft size={14} />
-          </Link>
         </div>
       </aside>
       <div className="lg:ps-[244px]">
@@ -110,8 +196,11 @@ export default function Workspace({ children }: { children: ReactNode }) {
           {navigation.map((item) => (
             <Link key={item.href} href={item.href}>
               {item.label}
+              {item.badge > 0 ? ` (${item.badge})` : ''}
             </Link>
           ))}
+          {/* The administration area stays one entry on small screens too. */}
+          {page.props.isAdmin && <Link href="/admin">الإدارة</Link>}
         </nav>
         <main className="mx-auto max-w-[1440px] p-5 lg:px-10 lg:py-9">
           <div

@@ -101,7 +101,7 @@ test.group('Record collaboration browser acceptance', (group) => {
     await tasks.getByRole('button', { name: 'تم الإنجاز' }).click()
     await tasks.getByRole('dialog').getByLabel('ملاحظة الإغلاق').fill('تم التدقيق')
     await tasks.getByRole('button', { name: 'تأكيد الإنجاز' }).click()
-    await tasks.getByText('لا مهام في هذا العرض.').waitFor()
+    await tasks.getByText('لا مهام ولا موافقات مفتوحة.').waitFor()
     const [row] = await kit().assignments.forRecord(
       'ui_samples',
       id,

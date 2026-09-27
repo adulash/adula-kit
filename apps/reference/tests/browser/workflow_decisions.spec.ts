@@ -122,7 +122,7 @@ test.group('Workflow decision steps in the approvals inbox', (group) => {
     await back.getByText('اكتب ملاحظة القرار.').waitFor()
     await back.getByLabel('ملاحظة').fill('أرفق مبرر التأجيل')
     await back.getByRole('button', { name: 'إعادة للمراجعة', exact: true }).click()
-    await inbox.getByText('لا موافقات معلقة.').waitFor()
+    await inbox.getByText('لا موافقات بانتظار قرارك.').waitFor()
 
     // The earlier step is open again for the requester, who sends it back.
     await browserContext.clearCookies()
@@ -134,7 +134,7 @@ test.group('Workflow decision steps in the approvals inbox', (group) => {
       .getByRole('dialog', { name: 'تأكيد القرار: إعادة الإرسال' })
       .getByRole('button', { name: 'إعادة الإرسال', exact: true })
       .click()
-    await inbox.getByText('لا موافقات معلقة.').waitFor()
+    await inbox.getByText('لا موافقات بانتظار قرارك.').waitFor()
 
     await browserContext.clearCookies()
     await browserContext.loginAs(approver.user)
@@ -144,7 +144,7 @@ test.group('Workflow decision steps in the approvals inbox', (group) => {
       .getByRole('dialog', { name: 'تأكيد القرار: اعتماد' })
       .getByRole('button', { name: 'اعتماد', exact: true })
       .click()
-    await inbox.getByText('لا موافقات معلقة.').waitFor()
+    await inbox.getByText('لا موافقات بانتظار قرارك.').waitFor()
 
     const stored = await knex()('ui_requests').where('id', id).first()
     assert.equal(stored.doc_status, 1, 'the request stays submitted and unchanged')

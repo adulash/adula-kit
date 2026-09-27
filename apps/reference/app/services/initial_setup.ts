@@ -178,3 +178,18 @@ export async function setupSnapshot(user: { id: number; email: string }) {
     environment: app.inProduction ? 'production' : 'development',
   }
 }
+
+/**
+ * Whether the one-time setup still needs the administrator: identity not confirmed, or
+ * the storage and infrastructure checks never passed. Cheap enough for every page.
+ */
+export async function setupPending() {
+  const settings = new Settings(database())
+  const approved = await settings.get<{ fingerprint: string }>('setup.identity')
+  if (approved?.fingerprint !== (await identityFingerprint())) return true
+  for (const name of ['storage', 'infrastructure']) {
+    const state = await settings.get<SetupCheck>(`setup.check.${name}`)
+    if (state?.status !== 'passed') return true
+  }
+  return false
+}

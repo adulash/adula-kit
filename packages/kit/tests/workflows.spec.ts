@@ -238,8 +238,23 @@ test.group('Workflow engine', (group) => {
       inbox.map((entry) => entry.id),
       [run.id]
     )
+    // My tasks lists the same approval, decidable in place (#35).
+    const decisions = await assignments().mine(manager, { kind: 'approval' })
+    assert.equal(decisions.approvals, 1)
+    assert.lengthOf(decisions.data, 1)
+    assert.isTrue(decisions.data[0].canDecide)
+    assert.isFalse(decisions.data[0].canComplete)
+    assert.equal(decisions.data[0].workflowRunId, run.id)
+    const manual = await assignments().mine(manager, { kind: 'task' })
+    assert.lengthOf(manual.data, 0)
+    // The director's approval is not due yet, so it is not decidable anywhere.
+    const early2 = await assignments().mine(director, { kind: 'approval' })
+    assert.isFalse(early2.data.some((item) => item.canDecide))
     run = await workflows.decide(run.id, manager, 'approve', 'الأسعار مطابقة')
     assert.equal(run.step, 'director')
+    const decided = await assignments().mine(manager, { status: 'done', kind: 'approval' })
+    assert.isFalse(decided.data[0].canDecide)
+    assert.equal(decided.data[0].outcome, 'approve')
     run = await workflows.decide(run.id, director, 'approve')
     assert.equal(run.status, 'completed')
     assert.equal(run.outcome, 'approved')

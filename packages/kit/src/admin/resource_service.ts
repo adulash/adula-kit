@@ -125,6 +125,11 @@ export class ResourceService {
         label: resource.label.ar,
         href: `/resources/${resource.name}`,
         module: this.registry.owner(resource.name),
+        moduleLabel:
+          this.registry
+            .modules()
+            .find((module) => module.name === this.registry.owner(resource.name))?.label.ar ??
+          this.registry.owner(resource.name),
       }))
   }
 
