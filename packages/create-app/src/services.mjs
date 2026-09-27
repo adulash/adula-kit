@@ -20,7 +20,7 @@ export async function runServices(name, args, execute = runCommand, hold = undef
     backend,
     async () => {
       if (mode === 'ace') return execute(process.execPath, ['ace', ...rest])
-      // Keep project-owned dev/test commands, including their post-test formatting.
+      // Keep project-owned dev/test commands; pnpm appends the extra arguments to them.
       return execute(process.execPath, [
         'node_modules/pnpm/bin/pnpm.cjs',
         'run',

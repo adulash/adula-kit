@@ -158,8 +158,9 @@ app.devDependencies.pnpm = workspace.packageManager.split('@')[1]
 app.dependencies['@adula/kit'] = own.version
 app.dependencies['@adula/ui'] = own.version
 app.scripts.typecheck = 'tsc --noEmit && tsc --noEmit --project inertia/tsconfig.json'
-// Lucid regenerates this project-owned file during the first test migration.
-app.scripts.test = 'node ace test && prettier --write database/schema.ts'
+// A single command: pnpm and npm append `test -- <args>` to it. The test runner's teardown
+// formats database/schema.ts, which Lucid regenerates during the first test migration.
+if (app.scripts.test !== 'node ace test') throw new Error('Unexpected reference test script')
 files['package.json'] = JSON.stringify(app, null, 2) + '\n'
 files['pnpm-workspace.yaml'] = (await readFile(join(root, 'pnpm-workspace.yaml'), 'utf8')).replace(
   /packages:[\s\S]*?(?=allowBuilds:)/,

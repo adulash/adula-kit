@@ -8,6 +8,7 @@ import { parseEnv, promisify } from 'node:util'
 import { createRequire } from 'node:module'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { createServer } from 'node:net'
+import { runServices } from '../src/services.mjs'
 import {
   assertEmpty,
   writeNew,
@@ -265,3 +266,20 @@ test('the committed environment example keeps variables but no local secrets or 
   ])
     assert.ok(!text.includes(value), value)
 })
+
+test('extra test arguments reach the test runner instead of a chained formatter', async () => {
+  const template = JSON.parse(
+    await readFile(new URL('../build/template.json', import.meta.url), 'utf8')
+  )
+  const { scripts } = JSON.parse(template.files['package.json'])
+  // pnpm appends `test -- --files=...` to the end of the script (issue #22).
+  assert.equal(scripts.test, 'node ace test')
+  assert.match(template.files['tests/bootstrap.ts'], /teardown:[\s\S]*database\/schema\.ts/)
+  const calls = []
+  await runServices('direct', ['test', '--files=tests/functional/a.spec.ts'], async (...call) => {
+    calls.push(call)
+  })
+  const run = calls.find(([, params]) => params.includes('test:app'))
+  assert.deepEqual(run?.[1].slice(-2), ['test:app', '--files=tests/functional/a.spec.ts'])
+})
+
