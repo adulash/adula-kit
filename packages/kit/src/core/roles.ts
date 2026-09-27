@@ -10,6 +10,11 @@ import { administrationGuard } from './administration_guard.js'
 
 export type RoleSummary = {
   id: number
+  /**
+   * Stable identifier addressed by workflows and module defaults. The display name
+   * can change freely; the key is set once.
+   */
+  key: string | null
   name: string
   permissionLevel: number
   rules: number
@@ -86,6 +91,17 @@ function roleName(value: unknown) {
     throw new KitError(422, 'E_ROLE_NAME', 'اسم الدور مطلوب (حتى 100 حرف)')
   return name
 }
+/** A role key: lower-case letters, digits and underscores, starting with a letter. */
+export function roleKey(value: unknown) {
+  const key = typeof value === 'string' ? value.trim() : ''
+  if (!/^[a-z][a-z0-9_]{0,99}$/.test(key))
+    throw new KitError(
+      422,
+      'E_ROLE_KEY',
+      'مفتاح الدور حروف إنجليزية صغيرة وأرقام وشرطة سفلية، ويبدأ بحرف (مثل project_manager)'
+    )
+  return key
+}
 function permissionLevel(value: unknown) {
   const level = Number(value ?? 0)
   if (!Number.isSafeInteger(level) || level < 0 || level > 9)
@@ -113,6 +129,7 @@ export class RolesAdmin {
     const rows = await this.db('roles as r')
       .select(
         'r.id',
+        'r.key',
         'r.name',
         'r.permission_level',
         this.db.raw('(SELECT count(*) FROM role_rules rr WHERE rr.role_id = r.id) AS rules'),
@@ -123,6 +140,7 @@ export class RolesAdmin {
       .orderBy('r.name')
     return rows.map((row) => ({
       id: row.id,
+      key: row.key ?? null,
       name: row.name,
       permissionLevel: row.permission_level,
       rules: Number(row.rules),
@@ -141,6 +159,7 @@ export class RolesAdmin {
       .first()
     return {
       id: role.id,
+      key: role.key ?? null,
       name: role.name,
       permissionLevel: role.permission_level,
       users: Number(users?.count ?? 0),
@@ -148,21 +167,58 @@ export class RolesAdmin {
     }
   }
 
-  async create(actorId: number, input: { name: string; permissionLevel?: number }) {
+  async create(
+    actorId: number,
+    input: { name: string; key?: string | null; permissionLevel?: number }
+  ) {
     const name = roleName(input.name)
+    const key =
+      input.key === undefined || input.key === null || input.key === '' ? null : roleKey(input.key)
     const level = permissionLevel(input.permissionLevel)
     return this.db.transaction(async (trx) => {
       if (await trx('roles').where('name', name).first())
         throw new KitError(409, 'E_ROLE_EXISTS', 'يوجد دور بهذا الاسم')
-      const [role] = await trx('roles').insert({ name, permission_level: level }).returning('*')
+      if (key && (await trx('roles').where('key', key).first()))
+        throw new KitError(409, 'E_ROLE_KEY_EXISTS', 'يوجد دور بهذا المفتاح')
+      const [role] = await trx('roles')
+        .insert({ name, key, permission_level: level })
+        .returning('*')
       await logActivity(trx, {
         resource: RESOURCE,
         recordId: role.id,
         actorId,
         action: 'create',
-        changes: { name, permissionLevel: level },
+        changes: { name, key, permissionLevel: level },
       })
-      return { id: role.id as number, name, permissionLevel: level }
+      return { id: role.id as number, key, name, permissionLevel: level }
+    })
+  }
+
+  /**
+   * Gives a role its stable key. A key is set once: workflows and module defaults
+   * depend on it, so changing it would silently detach them.
+   */
+  async setKey(actorId: number, id: number, value: string) {
+    const key = roleKey(value)
+    return this.db.transaction(async (trx) => {
+      const role = await this.find(trx, id)
+      if (role.key === key) return
+      if (role.key)
+        throw new KitError(
+          409,
+          'E_ROLE_KEY_FIXED',
+          'مفتاح الدور ثابت بعد تعيينه لأن تدفقات العمل والوحدات تعتمد عليه'
+        )
+      if (await trx('roles').where('key', key).whereNot('id', id).first())
+        throw new KitError(409, 'E_ROLE_KEY_EXISTS', 'يوجد دور بهذا المفتاح')
+      await trx('roles').where('id', id).update({ key })
+      await logActivity(trx, {
+        resource: RESOURCE,
+        recordId: id,
+        actorId,
+        action: 'set_key',
+        changes: { key },
+      })
     })
   }
 

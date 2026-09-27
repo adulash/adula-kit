@@ -194,8 +194,14 @@ test.group('Core administration services', (group) => {
     )
     await roles.rename(1, roleId, 'المحررون')
     await roles.setPermissionLevel(1, roleId, 2)
+    // A role created without a key receives one once; it is then fixed.
+    await roles.setKey(1, roleId, 'editors')
+    await roles.setKey(1, roleId, 'editors')
+    assert.equal(await code(() => roles.setKey(1, roleId, 'writers')), 'E_ROLE_KEY_FIXED')
+    assert.equal(await code(() => roles.setKey(1, roleId, '1bad')), 'E_ROLE_KEY')
     const all = await roles.list()
     const listed = all.find((role) => role.id === roleId)!
+    assert.equal(listed.key, 'editors')
     assert.equal(listed.name, 'المحررون')
     assert.equal(listed.permissionLevel, 2)
     assert.equal(listed.rules, 1)

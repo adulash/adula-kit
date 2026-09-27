@@ -23,13 +23,20 @@ type Props = { roles: RoleSummary[] }
 export default function RolesIndex({ roles }: Props) {
   const { confirm, confirmation } = useConfirmAction()
   const [name, setName] = useState('')
+  const [key, setKey] = useState('')
   const [level, setLevel] = useState('0')
   const create = (event: FormEvent) => {
     event.preventDefault()
     router.post(
       '/admin/roles',
-      { name, permissionLevel: Number(level) },
-      { preserveScroll: true, onSuccess: () => setName('') }
+      { name, key, permissionLevel: Number(level) },
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          setName('')
+          setKey('')
+        },
+      }
     )
   }
   return (
@@ -41,7 +48,7 @@ export default function RolesIndex({ roles }: Props) {
       />
       <form
         onSubmit={create}
-        className="mb-6 grid gap-3 rounded-xl border border-border bg-white p-5 md:grid-cols-[1fr_140px_auto]"
+        className="mb-6 grid gap-3 rounded-xl border border-border bg-white p-5 md:grid-cols-[1fr_1fr_140px_auto]"
       >
         <div className="space-y-1">
           <Label htmlFor="role-name">اسم الدور</Label>
@@ -50,6 +57,18 @@ export default function RolesIndex({ roles }: Props) {
             value={name}
             onChange={(event) => setName(event.target.value)}
             required
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="role-key">المفتاح الثابت</Label>
+          <Input
+            id="role-key"
+            dir="ltr"
+            placeholder="project_manager"
+            pattern="[a-z][a-z0-9_]*"
+            title="حروف إنجليزية صغيرة وأرقام وشرطة سفلية، ويبدأ بحرف"
+            value={key}
+            onChange={(event) => setKey(event.target.value)}
           />
         </div>
         <div className="space-y-1">
@@ -73,6 +92,7 @@ export default function RolesIndex({ roles }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead>الدور</TableHead>
+              <TableHead>المفتاح</TableHead>
               <TableHead>المستوى</TableHead>
               <TableHead>القواعد</TableHead>
               <TableHead>المستخدمون</TableHead>
@@ -86,6 +106,9 @@ export default function RolesIndex({ roles }: Props) {
                   <Link href={`/admin/roles/${role.id}`} className="font-semibold text-primary">
                     {role.name}
                   </Link>
+                </TableCell>
+                <TableCell dir="ltr" className="text-end font-mono text-xs text-muted-foreground">
+                  {role.key ?? '—'}
                 </TableCell>
                 <TableCell>{role.permissionLevel}</TableCell>
                 <TableCell>{role.rules}</TableCell>
@@ -112,7 +135,7 @@ export default function RolesIndex({ roles }: Props) {
             ))}
             {roles.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
                   لا أدوار بعد.
                 </TableCell>
               </TableRow>

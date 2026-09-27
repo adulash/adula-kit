@@ -228,6 +228,39 @@ test.group('Core administration screens', (group) => {
     assert.exists(list.body().props.roles.find((role: { id: number }) => role.id === viewerRoleId))
   })
 
+  test('a role key is set at creation or once later, and survives renaming', async ({
+    client,
+    assert,
+  }) => {
+    const created = await asJson(client.post('/admin/roles').loginAs(admin)).json({
+      name: `مراجع ${unique}`,
+      key: `reviewer_${unique}`,
+      permissionLevel: 0,
+    })
+    created.assertStatus(200)
+    const id: number = created.body().data.id
+    const key: string = created.body().data.key
+    const renamed = await asJson(client.patch(`/admin/roles/${id}`).loginAs(admin)).json({
+      name: `المراجع ${unique}`,
+    })
+    renamed.assertStatus(200)
+    const changed = await asJson(client.patch(`/admin/roles/${id}`).loginAs(admin)).json({
+      key: 'another_key',
+    })
+    changed.assertStatus(409)
+    assert.equal(changed.body().error.code, 'E_ROLE_KEY_FIXED')
+    const invalid = await asJson(client.post('/admin/roles').loginAs(admin)).json({
+      name: `سيئ ${unique}`,
+      key: 'Not A Key',
+    })
+    invalid.assertStatus(422)
+    const listed = await asJson(client.get('/admin/roles').loginAs(admin))
+    const role = listed.body().data.find((entry: { id: number }) => entry.id === id)
+    assert.equal(role.key, key)
+    assert.equal(role.name, `المراجع ${unique}`)
+    await knex()('roles').where('id', id).delete()
+  })
+
   test('condition validation refuses unsupported operators, unknown fields and collections', async ({
     client,
     assert,
