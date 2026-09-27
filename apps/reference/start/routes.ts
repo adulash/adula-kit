@@ -217,7 +217,11 @@ router
 
 router
   .group(() => {
-    router.get('/', ({ response }) => response.redirect('/admin/users'))
+    // The single administration entry opens the one-time setup until it is complete.
+    router.get('/', async ({ response }) => {
+      const { setupPending } = await import('#services/initial_setup')
+      return response.redirect((await setupPending()) ? '/admin/setup' : '/admin/users')
+    })
     router.get('users', [AdminUsersController, 'index'])
     router.get('users/:id', [AdminUsersController, 'show'])
     router.post('users/:id/roles', [AdminUsersController, 'assignRole'])

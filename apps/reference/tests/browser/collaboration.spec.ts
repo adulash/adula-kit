@@ -96,7 +96,7 @@ test.group('Record collaboration browser acceptance', (group) => {
     await tasks.getByText('31/12/2026', { exact: true }).waitFor()
     await tasks.screenshot({ path: join(await screenshotDir(), 'my-tasks.png') })
     await tasks.getByRole('button', { name: 'تم الإنجاز' }).click()
-    await tasks.getByText('لا مهام في هذا العرض.').waitFor()
+    await tasks.getByText('لا مهام ولا موافقات مفتوحة.').waitFor()
     const [row] = await kit().assignments.forRecord(
       'ui_samples',
       id,

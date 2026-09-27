@@ -6,55 +6,124 @@ import {
   History,
   KeyRound,
   Network,
+  Rocket,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   UserCog,
   Users,
   Mail,
   Webhook,
   GitBranch,
+  type LucideIcon,
 } from 'lucide-react'
 import { calendarDisplay } from '~/components/ui/calendar_date'
 import { useUiPreferences } from '~/components/ui/ui-preferences'
+import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 
-export const adminLinks = [
-  { href: '/admin/setup', label: 'الإعداد الأولي', icon: Settings },
-  { href: '/admin/users', label: 'المستخدمون', icon: Users },
-  { href: '/admin/roles', label: 'الأدوار والصلاحيات', icon: ShieldCheck },
-  { href: '/admin/org-units', label: 'الهيكل التنظيمي', icon: Network },
-  { href: '/admin/activity', label: 'سجل النشاط', icon: History },
-  { href: '/admin/jobs', label: 'تشغيل النظام', icon: Activity },
-  { href: '/admin/settings', label: 'الإعدادات', icon: Settings },
-  { href: '/admin/templates', label: 'قوالب الرسائل', icon: Mail },
-  { href: '/admin/webhooks', label: 'الربط الخارجي', icon: Webhook },
-  { href: '/admin/workflows', label: 'تدفقات فاشلة', icon: GitBranch },
-  { href: '/admin/sessions', label: 'الجلسات', icon: KeyRound },
-]
+export type NavLink = { href: string; label: string; icon: LucideIcon }
+export type AdminGroup = { label: string; links: NavLink[] }
 
+/** The administration area by concern (#34); it replaces a flat list next to daily work. */
+export const adminGroups: AdminGroup[] = [
+  {
+    label: 'الأشخاص والصلاحيات',
+    links: [
+      { href: '/admin/users', label: 'المستخدمون', icon: Users },
+      { href: '/admin/roles', label: 'الأدوار والصلاحيات', icon: ShieldCheck },
+      { href: '/admin/org-units', label: 'الهيكل التنظيمي', icon: Network },
+      { href: '/admin/sessions', label: 'الجلسات', icon: KeyRound },
+    ],
+  },
+  {
+    label: 'الإعدادات',
+    links: [
+      { href: '/admin/settings', label: 'الإعدادات', icon: SlidersHorizontal },
+      { href: '/admin/templates', label: 'قوالب الرسائل', icon: Mail },
+      { href: '/admin/webhooks', label: 'الربط الخارجي', icon: Webhook },
+    ],
+  },
+  {
+    label: 'المراقبة والتشغيل',
+    links: [
+      { href: '/admin/jobs', label: 'تشغيل النظام', icon: Activity },
+      { href: '/admin/workflows', label: 'تدفقات فاشلة', icon: GitBranch },
+      { href: '/admin/activity', label: 'سجل النشاط', icon: History },
+    ],
+  },
+]
+export const setupLink: NavLink = { href: '/admin/setup', label: 'الإعداد الأولي', icon: Rocket }
+export const adminLinks: NavLink[] = [setupLink, ...adminGroups.flatMap((group) => group.links)]
+
+const linkClass = (active: boolean) =>
+  `flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm transition-colors ${active ? 'bg-accent font-semibold text-primary' : 'text-muted-foreground hover:bg-background hover:text-foreground'}`
+
+/**
+ * One administration entry for administrators, pinned under daily work. Inside the
+ * administration area it expands into its categories; the one-time setup is listed
+ * first until it is complete. A badge signals failed workflows or a stale backup.
+ */
 export function AdminNav() {
-  const page = usePage<{ isAdmin?: boolean }>()
+  const page = usePage<{ isAdmin?: boolean; adminAlerts?: number; setupPending?: boolean }>()
   if (!page.props.isAdmin) return null
+  const inside = page.url.startsWith('/admin')
+  const alerts = page.props.adminAlerts ?? 0
   return (
-    <>
-      <p className="mb-3 mt-8 px-7 text-[11px] font-semibold text-muted-foreground">الإدارة</p>
-      <nav aria-label="التنقل الإداري" className="space-y-1 px-4">
-        {adminLinks.map(({ href, label, icon: Icon }) => {
-          const active = page.url.startsWith(href)
-          return (
+    <div className="mt-6 border-t border-border px-4 pt-5">
+      <Link
+        href="/admin"
+        aria-current={inside && page.url === '/admin' ? 'page' : undefined}
+        className={`${linkClass(false)} ${inside ? 'font-semibold text-foreground' : ''}`}
+      >
+        <Settings size={17} strokeWidth={1.6} />
+        الإدارة
+        {alerts > 0 && (
+          <Badge
+            variant="destructive"
+            className="ms-auto px-1.5"
+            aria-label={`${alerts} تنبيه إداري`}
+          >
+            {alerts}
+          </Badge>
+        )}
+      </Link>
+      {inside && (
+        <nav aria-label="التنقل الإداري" className="mt-2 space-y-4">
+          {page.props.setupPending && (
             <Link
-              key={href}
-              href={href}
-              aria-current={active ? 'page' : undefined}
-              className={`flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm transition-colors ${active ? 'bg-accent font-semibold text-primary' : 'text-muted-foreground hover:bg-background hover:text-foreground'}`}
+              href={setupLink.href}
+              aria-current={page.url.startsWith(setupLink.href) ? 'page' : undefined}
+              className={linkClass(page.url.startsWith(setupLink.href))}
             >
-              <Icon size={17} strokeWidth={1.6} />
-              {label}
+              <setupLink.icon size={17} strokeWidth={1.6} />
+              {setupLink.label}
             </Link>
-          )
-        })}
-      </nav>
-    </>
+          )}
+          {adminGroups.map((group) => (
+            <div key={group.label} role="group" aria-label={group.label}>
+              <p className="mb-1 px-4 text-[11px] font-semibold text-muted-foreground">
+                {group.label}
+              </p>
+              {group.links.map(({ href, label, icon: Icon }) => {
+                const active = page.url.startsWith(href)
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    aria-current={active ? 'page' : undefined}
+                    className={linkClass(active)}
+                  >
+                    <Icon size={17} strokeWidth={1.6} />
+                    {label}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
+        </nav>
+      )}
+    </div>
   )
 }
 

@@ -48,12 +48,15 @@ const eventLabel: Record<string, string> = {
   cancelled: 'أُلغي',
 }
 
-/** Approve or reject with an optional comment, in a confirmation dialog. */
+/**
+ * Approve or reject with an optional comment, in a confirmation dialog. My tasks passes
+ * the approval assignment as { id: workflowRunId, myApproval: { assignmentId, title } }.
+ */
 export function WorkflowDecision({
   run,
   onDecided,
 }: {
-  run: WorkflowRun
+  run: Pick<WorkflowRun, 'id' | 'resourceLabel' | 'recordTitle' | 'myApproval'>
   onDecided: (run: WorkflowRun) => void
 }) {
   const [decision, setDecision] = useState<'approve' | 'reject' | null>(null)

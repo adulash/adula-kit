@@ -11,16 +11,25 @@ import { Button } from '~/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { formatDate } from '~/components/ui/resource-value'
 import { useUiPreferences } from '~/components/ui/ui-preferences'
+import { WorkflowDecision } from '~/components/ui/record-workflows'
 
-type Props = { assignments: AssignmentPage; status: 'open' | 'done' | 'all' }
+type Tab = 'all' | 'approvals' | 'assigned' | 'closed'
+type Props = { assignments: AssignmentPage; tab: Tab }
 
 const statusLabel: Record<Assignment['status'], string> = {
   open: 'مفتوحة',
   done: 'منجزة',
   cancelled: 'ملغاة',
 }
+const empty: Record<Tab, string> = {
+  all: 'لا مهام ولا موافقات مفتوحة.',
+  approvals: 'لا موافقات بانتظار قرارك.',
+  assigned: 'لا مهام مسندة إليك مفتوحة.',
+  closed: 'لا مهام مغلقة بعد.',
+}
 
-export default function MyTasks({ assignments, status }: Props) {
+/** Everything waiting for the user: assigned tasks and approval decisions, acted on in place. */
+export default function MyTasks({ assignments, tab }: Props) {
   const formatDateTime = useDateTimeFormatter()
   const { calendar } = useUiPreferences()
   const [rows, setRows] = useState(assignments.data)
@@ -35,12 +44,13 @@ export default function MyTasks({ assignments, status }: Props) {
   const more = async () => {
     if (!cursor) return
     const response = await axios.get<AssignmentPage>('/my-tasks', {
-      params: { cursor, status },
+      params: { cursor, tab },
       headers: { Accept: 'application/json' },
     })
     setRows((current) => [...current, ...response.data.data])
     setCursor(response.data.nextCursor)
   }
+  const reload = () => router.reload({ only: ['assignments', 'openTasks'] })
   const act = async (assignment: Assignment, action: 'complete' | 'cancel') => {
     setBusy(assignment.id)
     setError('')
@@ -50,7 +60,7 @@ export default function MyTasks({ assignments, status }: Props) {
         {},
         { headers: { Accept: 'application/json' }, withXSRFToken: true }
       )
-      router.reload({ only: ['assignments'] })
+      reload()
     } catch (caught) {
       setError(
         axios.isAxiosError(caught) && caught.response?.data?.error?.message
@@ -61,6 +71,7 @@ export default function MyTasks({ assignments, status }: Props) {
       setBusy(null)
     }
   }
+  const tasks = assignments.open - assignments.approvals
   return (
     <>
       <Head title="مهامي" />
@@ -68,14 +79,19 @@ export default function MyTasks({ assignments, status }: Props) {
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">مهامي</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            {assignments.open ? `${assignments.open} مهمة مفتوحة` : 'لا مهام مفتوحة'}
+            {assignments.open
+              ? `${assignments.open} مفتوحة، منها ${assignments.approvals} بانتظار قرارك`
+              : 'لا مهام مفتوحة'}
           </p>
         </div>
-        <Tabs value={status} onValueChange={(value) => router.get('/my-tasks', { status: value })}>
+        <Tabs value={tab} onValueChange={(value) => router.get('/my-tasks', { tab: value })}>
           <TabsList>
-            <TabsTrigger value="open">المفتوحة</TabsTrigger>
-            <TabsTrigger value="done">المغلقة</TabsTrigger>
-            <TabsTrigger value="all">الكل</TabsTrigger>
+            <TabsTrigger value="all">الكل{assignments.open ? ` (${assignments.open})` : ''}</TabsTrigger>
+            <TabsTrigger value="approvals">
+              بانتظار قراري{assignments.approvals ? ` (${assignments.approvals})` : ''}
+            </TabsTrigger>
+            <TabsTrigger value="assigned">مهام مسندة{tasks ? ` (${tasks})` : ''}</TabsTrigger>
+            <TabsTrigger value="closed">المغلقة</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -106,7 +122,9 @@ export default function MyTasks({ assignments, status }: Props) {
               </Link>
               {item.note && <p className="text-sm text-muted-foreground">{item.note}</p>}
               <p className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                <span>أسندها: {item.assignedByName ?? 'النظام'}</span>
+                <span>
+                  {item.kind === 'approval' ? 'طلبها' : 'أسندها'}: {item.assignedByName ?? 'النظام'}
+                </span>
                 <span>{formatDateTime(item.createdAt)}</span>
                 {item.dueOn && (
                   <span
@@ -123,6 +141,17 @@ export default function MyTasks({ assignments, status }: Props) {
               </p>
             </div>
             <div className="flex gap-2">
+              {item.canDecide && item.workflowRunId && (
+                <WorkflowDecision
+                  run={{
+                    id: item.workflowRunId,
+                    resourceLabel: item.resourceLabel,
+                    recordTitle: item.recordTitle,
+                    myApproval: { assignmentId: item.id, title: item.title },
+                  }}
+                  onDecided={reload}
+                />
+              )}
               {item.canComplete && (
                 <Button size="sm" disabled={busy === item.id} onClick={() => act(item, 'complete')}>
                   <CheckCircle2 size={15} />
@@ -140,18 +169,13 @@ export default function MyTasks({ assignments, status }: Props) {
                   إلغاء المهمة
                 </Button>
               )}
-              {item.workflowRunId && item.status === 'open' && (
-                <Button size="sm" variant="outline" asChild>
-                  <Link href="/approvals">صندوق الموافقات</Link>
-                </Button>
-              )}
             </div>
           </li>
         ))}
         {rows.length === 0 && (
           <li className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border p-12 text-muted-foreground">
             <ListChecks size={26} />
-            لا مهام في هذا العرض.
+            {empty[tab]}
           </li>
         )}
       </ul>

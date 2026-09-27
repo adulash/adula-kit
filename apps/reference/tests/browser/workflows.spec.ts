@@ -51,15 +51,18 @@ test.group('Workflow approvals browser acceptance', (group) => {
     visit,
   }) => {
     await browserContext.loginAs(manager)
+    // The old inbox link lands on the approvals tab of My tasks (#35).
     const inbox = await visit('/approvals')
-    await inbox.getByRole('heading', { name: 'صندوق الموافقات' }).waitFor()
+    await inbox.getByRole('heading', { name: 'مهامي' }).waitFor()
+    await inbox.waitForURL(/\/my-tasks\?tab=approvals$/)
+    await inbox.getByRole('tab', { name: /بانتظار قراري/, selected: true }).waitFor()
     await inbox.getByText('موافقة مدير القسم').waitFor()
     await inbox.screenshot({ path: join(await screenshotDir(), 'approvals-inbox.png') })
     await inbox.getByRole('button', { name: 'موافقة', exact: true }).click()
     const dialog = inbox.getByRole('dialog', { name: 'تأكيد الموافقة' })
     await dialog.getByLabel('ملاحظة (اختيارية)').fill('مطابق للميزانية')
     await dialog.getByRole('button', { name: 'موافقة', exact: true }).click()
-    await inbox.getByText('لا موافقات معلقة.').waitFor()
+    await inbox.getByText('لا موافقات بانتظار قرارك.').waitFor()
 
     const record = await visit(`/resources/orders/${id}`)
     const panel = record.getByRole('region', { name: 'سير العمل' })

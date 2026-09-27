@@ -29,8 +29,17 @@ export type Assignment = {
   workflowRunId: string | null
   canComplete: boolean
   canCancel: boolean
+  /** An open approval step waiting for this user's decision (WorkflowEngine.decide). */
+  canDecide: boolean
 }
-export type AssignmentPage = { data: Assignment[]; nextCursor: string | null; open: number }
+export type AssignmentPage = {
+  data: Assignment[]
+  nextCursor: string | null
+  /** Open items of every kind. */
+  open: number
+  /** Open approval steps among them. */
+  approvals: number
+}
 
 const TITLE_LIMIT = 200
 const NOTE_LIMIT = 2000
@@ -165,13 +174,21 @@ export class Assignments {
   /** The signed-in user's own tasks, open first; records they can no longer read are hidden. */
   async mine(
     actor: Actor,
-    options: { status?: string; cursor?: string; limit?: number } = {}
+    options: {
+      status?: string
+      /** approval: workflow decisions only; task: manual assignments only. */
+      kind?: string
+      cursor?: string
+      limit?: number
+    } = {}
   ): Promise<AssignmentPage> {
     const status = options.status === 'done' || options.status === 'all' ? options.status : 'open'
     const limit = Math.max(1, Math.min(100, Math.floor(Number(options.limit) || 50)))
     const query = this.query().where('a.assignee_id', actor.id).orderBy('a.id', 'desc')
     if (status === 'open') query.where('a.status', 'open')
     if (status === 'done') query.whereNot('a.status', 'open')
+    if (options.kind === 'approval') query.whereNotNull('a.workflow_run_id')
+    if (options.kind === 'task') query.whereNull('a.workflow_run_id')
     let last: number | null = null
     if (options.cursor !== undefined && options.cursor !== '') {
       last = Number(options.cursor)
@@ -199,9 +216,9 @@ export class Assignments {
           data.push(this.present(row, actor))
       }
     }
-    const [{ count }] = await this.db('assignments')
+    const [{ count, approvals }] = await this.db('assignments')
       .where({ assignee_id: actor.id, status: 'open' })
-      .count<{ count: string }[]>('* as count')
+      .select(this.db.raw('count(*) as count'), this.db.raw('count(workflow_run_id) as approvals'))
     // One title read per resource on the page, under the actor's own access.
     const byResource = new Map<string, number[]>()
     for (const item of data)
@@ -216,6 +233,7 @@ export class Assignments {
       data,
       nextCursor: more && last !== null ? String(last) : null,
       open: Number(count),
+      approvals: Number(approvals),
     }
   }
 
@@ -258,7 +276,14 @@ export class Assignments {
     return db('assignments as a')
       .leftJoin('users as u', 'u.id', 'a.assignee_id')
       .leftJoin('users as b', 'b.id', 'a.assigned_by')
-      .select('a.*', 'u.full_name as assignee_name', 'b.full_name as assigned_by_name')
+      .leftJoin('workflow_runs as wr', 'wr.id', 'a.workflow_run_id')
+      .select(
+        'a.*',
+        'u.full_name as assignee_name',
+        'b.full_name as assigned_by_name',
+        'wr.status as run_status',
+        'wr.current_step as run_step'
+      )
   }
 
   private present(row: Record<string, any>, actor: Actor, title?: string): Assignment {
@@ -284,6 +309,13 @@ export class Assignments {
       workflowRunId: row.workflow_run_id ? String(row.workflow_run_id) : null,
       canComplete: open && !row.workflow_run_id && Number(row.assignee_id) === actor.id,
       canCancel: open && !row.workflow_run_id && Number(row.assigned_by) === actor.id,
+      // The same checks WorkflowEngine.decide() applies before accepting a decision.
+      canDecide:
+        open &&
+        Boolean(row.workflow_run_id) &&
+        row.run_status === 'waiting' &&
+        row.run_step === row.workflow_step &&
+        Number(row.assignee_id) === actor.id,
     }
   }
 

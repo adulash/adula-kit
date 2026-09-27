@@ -3,21 +3,35 @@ import { KitError, type Actor } from '@adula/kit'
 import { kit, requestActor } from '#services/kit'
 import { positiveId, wantsJson } from '#controllers/admin/support'
 
-/** "My tasks" and record assignments; the kit re-authorizes each record. */
+type Tab = 'all' | 'approvals' | 'assigned' | 'closed'
+const tabs: Record<Tab, { status: 'open' | 'done'; kind?: 'approval' | 'task' }> = {
+  all: { status: 'open' },
+  approvals: { status: 'open', kind: 'approval' },
+  assigned: { status: 'open', kind: 'task' },
+  closed: { status: 'done' },
+}
+
+/**
+ * "My tasks": manual assignments and workflow approvals in one list with tabs (#35),
+ * and record assignments. The kit re-authorizes each record.
+ */
 export default class AssignmentsController {
   async mine(ctx: HttpContext) {
     return this.#run(ctx, async (actor) => {
+      const requested = ctx.request.input('tab')
+      // Earlier links used ?status=open|done.
+      const tab: Tab =
+        requested in tabs
+          ? (requested as Tab)
+          : ctx.request.input('status') === 'done'
+            ? 'closed'
+            : 'all'
       const page = await kit().assignments.mine(actor, {
-        status: ctx.request.input('status'),
+        ...tabs[tab],
         cursor: ctx.request.input('cursor'),
       })
       if (wantsJson(ctx)) return page
-      return ctx.inertia.render('work/my_tasks', {
-        assignments: page,
-        status: ['done', 'all'].includes(ctx.request.input('status'))
-          ? (ctx.request.input('status') as 'done' | 'all')
-          : ('open' as const),
-      })
+      return ctx.inertia.render('work/my_tasks', { assignments: page, tab })
     })
   }
 
