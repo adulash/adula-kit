@@ -180,7 +180,13 @@ export function ResourceForm({
         headers: { Accept: 'application/json' },
         withXSRFToken: true,
       })
-      toast.success(editor.mode === 'create' ? 'تمت إضافة السجل' : 'تم حفظ التعديلات')
+      toast.success(
+        editor.mode === 'create'
+          ? editor.recordLabel
+            ? `تمت إضافة ${editor.recordLabel}`
+            : 'تمت إضافة السجل'
+          : 'تم حفظ التعديلات'
+      )
       router.visit(`${base}/${response.data.data.id}`)
     } catch (error) {
       const unknown =

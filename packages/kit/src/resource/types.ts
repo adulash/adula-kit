@@ -45,7 +45,15 @@ export type Field = {
 )
 export type Resource = {
   name: string
+  /** The list heading, usually plural (for example «الحسابات»). */
   label: Label
+  /**
+   * The singular record noun (for example «حساب»). Generated pages say «إضافة حساب»
+   * instead of the generic «إضافة سجل».
+   */
+  recordLabel?: Label
+  /** Full create-button text when «إضافة <recordLabel>» does not fit (for example «مهمة جديدة»). */
+  createLabel?: Label
   model: LucidModel
   scoped: boolean
   submittable?: boolean

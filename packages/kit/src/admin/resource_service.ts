@@ -131,6 +131,8 @@ export class ResourceService {
     return {
       name,
       label: resource.label.ar,
+      recordLabel: resource.recordLabel?.ar ?? null,
+      createLabel: resource.createLabel?.ar ?? null,
       fields,
       list: resource.list.filter((key) => visible.has(key)),
       show: resource.show.filter((key) => visible.has(key)),
@@ -851,6 +853,7 @@ export class ResourceService {
       mode: action,
       name,
       label: resource.label.ar,
+      recordLabel: resource.recordLabel?.ar ?? null,
       fields,
       inline,
       options,

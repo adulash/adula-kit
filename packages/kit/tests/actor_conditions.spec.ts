@@ -77,8 +77,8 @@ test.group('Current-actor conditions ($actor.id)', (group) => {
       'update',
       order
     ).pluck('r.id')
-    assert.include(editable, own.id)
-    assert.notInclude(editable, theirs.id)
+    assert.include(editable, Number(own.id))
+    assert.notInclude(editable, Number(theirs.id))
     const denied = await failure(() =>
       service().save(
         'orders',

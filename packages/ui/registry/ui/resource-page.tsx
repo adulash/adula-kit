@@ -54,12 +54,21 @@ export function ResourcePage({
 }: ResourcePageProps) {
   const name = view.mode === 'form' ? view.editor.name : view.resource.name
   const label = view.mode === 'form' ? view.editor.label : view.resource.label
+  // A singular record noun («حساب») reads better than the plural list label (#37).
+  const noun = view.mode === 'form' ? view.editor.recordLabel : view.resource.recordLabel
+  const verb = view.mode === 'form' && view.editor.mode === 'create' ? 'إضافة' : 'تعديل'
   const title =
     view.mode === 'index'
       ? label
       : view.mode === 'form'
-        ? `${view.editor.mode === 'create' ? 'إضافة' : 'تعديل'} · ${label}`
+        ? noun
+          ? `${verb} ${noun}`
+          : `${verb} · ${label}`
         : `تفاصيل · ${label}`
+  const createText =
+    view.mode === 'index'
+      ? (view.resource.createLabel ?? (noun ? `إضافة ${noun}` : 'إضافة سجل'))
+      : ''
   return (
     <>
       <Head title={title} />
@@ -77,7 +86,7 @@ export function ResourcePage({
               <Button asChild>
                 <Link href={`/resources/${name}/create`}>
                   <Plus size={16} />
-                  إضافة سجل
+                  {createText}
                 </Link>
               </Button>
             </div>

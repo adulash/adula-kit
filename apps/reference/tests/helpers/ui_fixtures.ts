@@ -71,6 +71,7 @@ export const sampleLines = defineResource({
 export const samples = defineResource({
   name: 'ui_samples',
   label: { ar: 'عينات الواجهة', en: 'UI samples' },
+  recordLabel: { ar: 'عينة', en: 'Sample' },
   model: BaseModel,
   scoped: true,
   version: true,
