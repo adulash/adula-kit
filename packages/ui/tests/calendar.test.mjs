@@ -41,3 +41,12 @@ test('both display mode presents the same date in both calendars and leaves empt
   assert.equal(calendarDisplay(null, 'both'), '—')
   assert.equal(calendarIso('', 'islamic-umalqura'), '')
 })
+test('Arabic display strings carry no bidi marks that reorder digits inside isolated spans', () => {
+  for (const calendar of ['gregory', 'islamic-umalqura', 'both']) {
+    for (const withTime of [false, true]) {
+      const text = calendarDisplay('2026-12-31T09:30:00Z', calendar, withTime)
+      assert.doesNotMatch(text, /[‎‏؜]/, `${calendar} withTime=${withTime}`)
+    }
+  }
+  assert.equal(calendarDisplay('2026-12-31', 'gregory'), '31/12/2026')
+})

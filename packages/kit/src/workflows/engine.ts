@@ -58,7 +58,15 @@ export type WorkflowOptions = {
 const MAX_STEPS_PER_TICK = 25
 const BACKOFF_SECONDS = [30, 120, 600, 1800, 7200]
 
-class StepFailure extends Error {}
+class StepFailure extends Error {
+  /** A permanent failure stops the run now instead of retrying a configuration error. */
+  constructor(
+    message: string,
+    readonly permanent = false
+  ) {
+    super(message)
+  }
+}
 
 /**
  * Durable workflow engine over workflow_runs. Every step runs inside the run's
@@ -231,7 +239,7 @@ export class WorkflowEngine {
         })
         if (outcome === 'stop') return
       } catch (error) {
-        await this.fail(trx, run, error, false)
+        await this.fail(trx, run, error, error instanceof StepFailure && error.permanent)
         return
       }
     }
@@ -293,11 +301,23 @@ export class WorkflowEngine {
           .where({ workflow_run_id: run.id, workflow_step: stepName, status: 'open' })
           .first('id')
         if (!open) {
-          const users = await this.recipients(trx, run, context, step.assignees)
+          const assignees = step.assignees
+          if (typeof assignees === 'object' && 'role' in assignees)
+            if (!(await trx('roles').where('name', assignees.role).first('id')))
+              throw new StepFailure(
+                `Approval step ${stepName} is addressed to role "${assignees.role}", which does not exist (it may have been renamed). Restore the role name or update the workflow, then retry the run.`,
+                true
+              )
+          const users = await this.recipients(trx, run, context, assignees)
           const eligible: number[] = []
           for (const userId of users)
             if (await this.canView(run.resource, run.record_id, userId)) eligible.push(userId)
-          if (!eligible.length) throw new StepFailure(`No eligible approver for ${stepName}`)
+          // Waiting on nobody would hide the run for hours of retries; fail it where admins look.
+          if (!eligible.length)
+            throw new StepFailure(
+              `No eligible approver for ${stepName}: ${users.length ? `${users.length} recipients cannot view the record` : 'the recipients resolve to no active user'}. Fix the recipients, then retry the run.`,
+              true
+            )
           const due = step.dueInDays
             ? new Date(this.now().getTime() + step.dueInDays * 86400000).toISOString().slice(0, 10)
             : null

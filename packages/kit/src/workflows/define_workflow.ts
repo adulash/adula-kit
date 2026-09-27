@@ -63,11 +63,13 @@ export type WorkflowStep =
     }
 
 export type WorkflowInput = {
+  /** Lower-case letters, digits and underscores, starting with a letter (for example release_approval). */
   name: string
   version: number
   resource: string
   label: string
   start: string
+  /** Step names follow the workflow name rule (for example notify_approved). */
   steps: Record<string, WorkflowStep>
   /** Failed step attempts before the run stops as failed (default 5). */
   maxAttempts?: number
@@ -80,6 +82,26 @@ export type WorkflowEvent =
   | { type: 'REJECT' }
 
 const IDENTIFIER = /^[a-z][a-z0-9_]*$/
+export const WORKFLOW_NAME_RULE =
+  'use lower-case letters, digits and underscores, starting with a letter'
+
+/** Names the rule and a valid spelling, since dotted event-style names are a natural first try. */
+function assertIdentifier(kind: 'workflow' | 'step', value: string) {
+  if (IDENTIFIER.test(value)) return
+  const suggestion = value
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^[^a-z]+|_+$/g, '')
+  const example = IDENTIFIER.test(suggestion)
+    ? suggestion
+    : kind === 'workflow'
+      ? 'release_approval'
+      : 'notify_approved'
+  throw new Error(
+    `Invalid ${kind} name "${value}": ${WORKFLOW_NAME_RULE} (for example ${example}).`
+  )
+}
 
 function targets(step: WorkflowStep) {
   switch (step.type) {
@@ -101,13 +123,13 @@ function targets(step: WorkflowStep) {
  * running workflow (migrate explicitly with WorkflowEngine.migrateRuns).
  */
 export function defineWorkflow(input: WorkflowInput): WorkflowDefinition {
-  if (!IDENTIFIER.test(input.name)) throw new Error(`Invalid workflow name: ${input.name}`)
+  assertIdentifier('workflow', input.name)
   if (!Number.isInteger(input.version) || input.version < 1)
     throw new Error('Workflow version must be a positive integer')
   if (!(input.start in input.steps)) throw new Error(`Unknown start step: ${input.start}`)
   const keys = Object.keys(input.steps)
   for (const key of keys) {
-    if (!IDENTIFIER.test(key)) throw new Error(`Invalid step name: ${key}`)
+    assertIdentifier('step', key)
     for (const target of targets(input.steps[key]))
       if (!(target in input.steps)) throw new Error(`Step ${key} points to unknown step ${target}`)
     const step = input.steps[key]

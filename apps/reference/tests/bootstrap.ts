@@ -18,6 +18,7 @@ import cache from '@adonisjs/cache/services/main'
 import queue from '@nemoventures/adonis-jobs/services/main'
 import { createServer } from 'node:http'
 import type { Socket } from 'node:net'
+import { readFile, writeFile } from 'node:fs/promises'
 
 /**
  * This file is imported by the "bin/test.ts" entrypoint file
@@ -62,7 +63,20 @@ export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
       )
     },
   ],
-  teardown: [],
+  teardown: [
+    async () => {
+      // Lucid regenerates this project-owned file while migrating. Formatting it here keeps
+      // `test` a single command, so `npm test -- <args>` reaches Japa (issue #22).
+      const { format, resolveConfig } = await import('prettier')
+      const path = app.makePath('database/schema.ts')
+      const source = await readFile(path, 'utf8')
+      const formatted = await format(source, {
+        ...(await resolveConfig(path)),
+        filepath: path,
+      })
+      if (formatted !== source) await writeFile(path, formatted)
+    },
+  ],
 }
 
 /**

@@ -1,9 +1,15 @@
 import { BaseCommand } from '@adonisjs/core/ace'
 import { fileURLToPath } from 'node:url'
-import { diagnose } from '../src/commands/doctor.js'
+import {
+  diagnose,
+  diagnoseResourceSnapshots,
+  diagnoseWorkflowRoles,
+} from '../src/commands/doctor.js'
 import { diagnoseAttachments } from '../src/attachments/doctor.js'
 import { Settings } from '../src/services/settings.js'
 import { MigrationRunner } from '@adonisjs/lucid/migration'
+import { readFile } from 'node:fs/promises'
+import type { ResourceRegistry } from '../src/resource/registry.js'
 export default class Doctor extends BaseCommand {
   static commandName = 'adula:doctor'
   static description = 'Check kit ownership, installation and backup readiness'
@@ -29,6 +35,37 @@ export default class Doctor extends BaseCommand {
           ? `${pending.length} pending migrations; run migration:run after the deployment backup`
           : 'Migration files and database history agree',
     })
+    const sources = []
+    for (const entry of pending)
+      for (const extension of ['.ts', '.js'])
+        try {
+          const file = `${entry.name}${extension}`
+          sources.push({ file, source: await readFile(this.app.makePath(file), 'utf8') })
+          break
+        } catch {}
+    let registry: ResourceRegistry | undefined
+    try {
+      ;({ registry } = await this.app.import('#start/modules'))
+    } catch {}
+    if (registry) {
+      const roles = await db.from('roles').select('name')
+      findings.push(
+        diagnoseWorkflowRoles(
+          registry.workflows(),
+          roles.map((role) => String(role.name))
+        )
+      )
+    }
+    if (registry)
+      findings.push(
+        diagnoseResourceSnapshots(sources, (name) => {
+          try {
+            return registry.get(name)
+          } catch {
+            return undefined
+          }
+        })
+      )
     for (const finding of findings)
       this.logger.log(`${finding.status.toUpperCase()} ${finding.check}: ${finding.message}`)
     if (findings.some((finding) => finding.status === 'fail')) this.exitCode = 1

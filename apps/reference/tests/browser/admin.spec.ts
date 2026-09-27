@@ -250,7 +250,8 @@ test.group('Administration screens in the browser', (group) => {
   }) => {
     await browserContext.loginAs(admin)
     const page = await visit('/admin/org-units')
-    await page.getByLabel(`نقل ${moving} إلى`, { exact: true }).selectOption(String(targetId))
+    await page.getByRole('combobox', { name: `نقل ${moving} إلى`, exact: true }).click()
+    await page.getByRole('option', { name: new RegExp(`الوجهة ${unique}$`) }).click()
     await page.getByRole('button', { name: `نقل ${moving}`, exact: true }).click()
     const path = `${rootPath}.${targetId}.${movingId}`
     await page.getByText(path, { exact: true }).waitFor()

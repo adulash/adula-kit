@@ -7,6 +7,7 @@ import { AdminHeader } from '~/components/admin-nav'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import { ResourceSelect } from '~/components/ui/resource-field'
 import { Badge } from '~/components/ui/badge'
 import {
   Dialog,
@@ -19,7 +20,11 @@ import {
 
 type Props = { units: OrgUnitNode[] }
 type Draft = { parentId: number | null; name: string; type: string }
-const select = 'h-9 rounded-md border border-input bg-white px-2 text-sm'
+/** Indents nested units in a flat list so the hierarchy stays readable. */
+const unitOption = (unit: OrgUnitNode) => ({
+  value: String(unit.id),
+  label: `${'· '.repeat(unit.depth - 1)}${unit.name}`,
+})
 
 export default function OrgUnitsIndex({ units }: Props) {
   const [creating, setCreating] = useState<Draft | null>(null)
@@ -77,22 +82,14 @@ export default function OrgUnitsIndex({ units }: Props) {
             </span>
             <Badge variant="outline">{unit.members} عضو</Badge>
             <span className="flex items-center gap-1">
-              <select
+              <ResourceSelect
                 aria-label={`نقل ${unit.name} إلى`}
-                className={select}
+                className="h-8 w-48 text-xs"
                 value={targets[unit.id] ?? String(unit.parentId ?? '')}
-                onChange={(event) =>
-                  setTargets((current) => ({ ...current, [unit.id]: event.target.value }))
-                }
-              >
-                <option value="">— الجذر —</option>
-                {candidates(unit).map((other) => (
-                  <option key={other.id} value={other.id}>
-                    {'· '.repeat(other.depth - 1)}
-                    {other.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="— الجذر —"
+                options={candidates(unit).map(unitOption)}
+                onChange={(value) => setTargets((current) => ({ ...current, [unit.id]: value }))}
+              />
               <Button
                 size="sm"
                 variant="outline"
@@ -149,26 +146,17 @@ export default function OrgUnitsIndex({ units }: Props) {
             </DialogHeader>
             <div className="space-y-1">
               <Label htmlFor="unit-parent">الوحدة الأم</Label>
-              <select
+              <ResourceSelect
                 id="unit-parent"
-                className={`${select} w-full`}
-                value={creating?.parentId ?? ''}
-                onChange={(event) =>
+                value={String(creating?.parentId ?? '')}
+                placeholder="— الجذر —"
+                options={units.map(unitOption)}
+                onChange={(value) =>
                   setCreating((draft) =>
-                    draft
-                      ? { ...draft, parentId: event.target.value ? Number(event.target.value) : null }
-                      : draft
+                    draft ? { ...draft, parentId: value ? Number(value) : null } : draft
                   )
                 }
-              >
-                <option value="">— الجذر —</option>
-                {units.map((unit) => (
-                  <option key={unit.id} value={unit.id}>
-                    {'· '.repeat(unit.depth - 1)}
-                    {unit.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
             <div className="space-y-1">
               <Label htmlFor="unit-name">الاسم</Label>

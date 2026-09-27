@@ -8,6 +8,7 @@ import { parseEnv, promisify } from 'node:util'
 import { createRequire } from 'node:module'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { createServer } from 'node:net'
+import { runServices } from '../src/services.mjs'
 import {
   assertEmpty,
   writeNew,
@@ -189,6 +190,12 @@ test('identity is validated and contrast tokens follow supplied colors', async (
   await assert.rejects(readIdentity(join(root, 'extra.json'), 'Company'), /only/)
   assert.match(brandCss({ primaryColor: '#ffffff' }), /--primary-foreground: #000000/)
   assert.match(brandCss({ primaryColor: '#000000' }), /--primary-foreground: #ffffff/)
+  // Identity reaches the inline theme only through its variables (issue #23).
+  assert.match(brandCss({ primaryColor: '#3949ab' }), /--ring: #3949ab;/)
+  assert.equal(
+    brandCss({ fontFamily: 'IBM Plex Sans Arabic' }).trim().split('\n').at(-1),
+    ':root { --brand-font: "IBM Plex Sans Arabic", "Noto Sans Arabic"; }'
+  )
 })
 
 test('child commands cannot inherit a caller database or test mode', () => {
@@ -265,3 +272,29 @@ test('the committed environment example keeps variables but no local secrets or 
   ])
     assert.ok(!text.includes(value), value)
 })
+
+test('extra test arguments reach the test runner instead of a chained formatter', async () => {
+  const template = JSON.parse(
+    await readFile(new URL('../build/template.json', import.meta.url), 'utf8')
+  )
+  const { scripts } = JSON.parse(template.files['package.json'])
+  // pnpm appends `test -- --files=...` to the end of the script (issue #22).
+  assert.equal(scripts.test, 'node ace test')
+  assert.match(template.files['tests/bootstrap.ts'], /teardown:[\s\S]*database\/schema\.ts/)
+  const calls = []
+  await runServices('direct', ['test', '--files=tests/functional/a.spec.ts'], async (...call) => {
+    calls.push(call)
+  })
+  const run = calls.find(([, params]) => params.includes('test:app'))
+  assert.deepEqual(run?.[1].slice(-2), ['test:app', '--files=tests/functional/a.spec.ts'])
+})
+
+test('starter pages compose the registry Select instead of native lists', async () => {
+  const template = JSON.parse(
+    await readFile(new URL('../build/template.json', import.meta.url), 'utf8')
+  )
+  const pages = Object.entries(template.files).filter(([path]) => path.endsWith('.tsx'))
+  assert.ok(pages.length > 10)
+  for (const [path, source] of pages) assert.doesNotMatch(source, /<select[\s>]/, path)
+})
+

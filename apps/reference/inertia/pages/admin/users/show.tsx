@@ -9,6 +9,7 @@ import { useConfirmAction } from '~/components/ui/confirm-action'
 import { Button } from '~/components/ui/button'
 import { Badge } from '~/components/ui/badge'
 import { Label } from '~/components/ui/label'
+import { ResourceSelect } from '~/components/ui/resource-field'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import {
   Table,
@@ -20,7 +21,11 @@ import {
 } from '~/components/ui/table'
 
 type Props = { user: UserSummary; roles: RoleSummary[]; orgUnits: OrgUnitNode[] }
-const select = 'h-10 w-full rounded-md border border-input bg-white px-3 text-sm'
+/** Indents nested units in a flat list so the hierarchy stays readable. */
+const unitOption = (unit: OrgUnitNode) => ({
+  value: String(unit.id),
+  label: `${'· '.repeat(unit.depth - 1)}${unit.name}`,
+})
 
 export default function UserShow({ user, roles, orgUnits }: Props) {
   const formatDateTime = useDateTimeFormatter()
@@ -161,36 +166,24 @@ export default function UserShow({ user, roles, orgUnits }: Props) {
             <form onSubmit={assignRole} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
               <div className="space-y-1">
                 <Label htmlFor="assign-role">الدور</Label>
-                <select
+                <ResourceSelect
                   id="assign-role"
-                  className={select}
                   value={roleId}
-                  onChange={(event) => setRoleId(event.target.value)}
+                  placeholder="اختر دوراً"
+                  options={roles.map((role) => ({ value: String(role.id), label: role.name }))}
+                  onChange={setRoleId}
                   required
-                >
-                  {roles.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="assign-role-unit">مقيّد بوحدة (اختياري)</Label>
-                <select
+                <ResourceSelect
                   id="assign-role-unit"
-                  className={select}
                   value={roleUnit}
-                  onChange={(event) => setRoleUnit(event.target.value)}
-                >
-                  <option value="">كل الجهة</option>
-                  {orgUnits.map((unit) => (
-                    <option key={unit.id} value={unit.id}>
-                      {'· '.repeat(unit.depth - 1)}
-                      {unit.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="كل الجهة"
+                  options={orgUnits.map(unitOption)}
+                  onChange={setRoleUnit}
+                />
               </div>
               <Button type="submit" className="self-end" disabled={!roleId}>
                 إسناد الدور
@@ -236,20 +229,13 @@ export default function UserShow({ user, roles, orgUnits }: Props) {
             <form onSubmit={assignUnit} className="grid gap-3 md:grid-cols-[1fr_auto]">
               <div className="space-y-1">
                 <Label htmlFor="assign-unit">الوحدة</Label>
-                <select
+                <ResourceSelect
                   id="assign-unit"
-                  className={select}
                   value={unitId}
-                  onChange={(event) => setUnitId(event.target.value)}
-                >
-                  <option value="">اختر وحدة</option>
-                  {available.map((unit) => (
-                    <option key={unit.id} value={unit.id}>
-                      {'· '.repeat(unit.depth - 1)}
-                      {unit.name}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="اختر وحدة"
+                  options={available.map(unitOption)}
+                  onChange={setUnitId}
+                />
               </div>
               <Button type="submit" className="self-end" disabled={!unitId}>
                 إضافة إلى الوحدة

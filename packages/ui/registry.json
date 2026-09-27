@@ -464,7 +464,10 @@
         "resource-actions",
         "resource-field",
         "resource-value",
-        "ui-preferences"
+        "ui-preferences",
+        "command",
+        "popover",
+        "resource-surface"
       ],
       "dependencies": [
         "@tanstack/react-table@9.2.4",
@@ -537,7 +540,9 @@
         "label",
         "textarea",
         "dialog",
-        "select"
+        "select",
+        "ui-preferences",
+        "resource-value"
       ],
       "dependencies": [
         "lucide-react@1.47.0",

@@ -174,7 +174,11 @@ test.group('Generic resource browser acceptance', (group) => {
     await page.assertVisible(page.getByText('1,234.50'))
     await page.assertVisible(page.getByText('مفتوح', { exact: true }))
     await page.assertVisible(page.getByText(customerName, { exact: true }))
-    await page.assertVisible(page.locator('dd', { hasText: /18.{0,2}\/09.{0,2}\/2026/ }).first())
+    // Dates render in reading order: no bidi marks and no forced LTR container (issue #19).
+    const day = page.locator('dd bdi', { hasText: '18/09/2026' }).first()
+    await page.assertVisible(day)
+    assert.notMatch((await day.textContent()) ?? '', /[\u200e\u200f]/)
+    assert.equal(await day.locator('xpath=ancestor::*[@dir="ltr"]').count(), 0)
     await page.assertVisible(page.locator('pre', { hasText: '"a": 1' }))
     await page.assertVisible(page.getByText('نعم', { exact: true }))
     await page.getByText('صنف أول', { exact: true }).waitFor()
@@ -315,6 +319,7 @@ test.group('Generic resource browser acceptance', (group) => {
     // Counting unfiltered rows only works when this test owns every sample row.
     await knex()('ui_sample_lines').del()
     await knex()('ui_samples').del()
+    const customer = await knex()('customers').where('name', customerName).first('id')
     for (const quantity of [1, 2, 3])
       await runtime.resources.save('ui_samples', loaded, {
         orgUnitId: admin.orgUnitId,
@@ -322,6 +327,7 @@ test.group('Generic resource browser acceptance', (group) => {
         quantity,
         enabled: quantity === 2,
         status: quantity === 3 ? 'closed' : 'open',
+        customerId: quantity === 2 ? customer.id : null,
       })
     await browserContext.loginAs(admin.user)
     const page = await visit('/resources/ui_samples')
@@ -348,13 +354,46 @@ test.group('Generic resource browser acceptance', (group) => {
     await page.getByRole('button', { name: 'الكمية' }).click()
     await page.waitForURL(/sort=quantity&direction=desc/)
     assert.equal(await firstQuantity(), '3')
-    await page.getByLabel('الحالة').selectOption('closed')
+    // Filters use the registry Select and a searchable relation picker, not native lists (#39).
+    await page.getByRole('combobox', { name: 'الحالة' }).click()
+    await page.getByRole('option', { name: 'مغلق', exact: true }).click()
     await page.waitForURL(/filters%5Bstatus%5D=closed/)
     await page.assertElementsCount('tbody tr[aria-rowindex]', 1)
-    await page.getByLabel('مفعل').selectOption('true')
+    // Row actions stay pinned at the inline end of wide tables (#31).
+    assert.equal(
+      await page.evaluate<string>(
+        'getComputedStyle([...document.querySelectorAll("thead th")].at(-1)).position'
+      ),
+      'sticky'
+    )
+    // Closing a record opened from a filtered list returns to that exact view (#31).
+    const listUrl = page.url()
+    const view = page.getByRole('link', { name: /عرض السجل/ }).first()
+    const record = await view.getAttribute('href')
+    await view.click()
+    await page.getByRole('dialog', { name: 'تفاصيل · عينات الواجهة' }).waitFor()
+    await page.keyboard.press('Escape')
+    await page.waitForURL(listUrl)
+    await page.assertElementsCount('tbody tr[aria-rowindex]', 1)
+    assert.equal(
+      await page.evaluate<string>('document.activeElement?.getAttribute("href") ?? ""'),
+      record
+    )
+    await page.getByRole('combobox', { name: 'مفعل' }).click()
+    await page.getByRole('option', { name: 'نعم', exact: true }).click()
     await page.waitForURL(/filters%5Benabled%5D=true/)
     await page.assertVisible(page.getByText('لا توجد سجلات مطابقة'))
     await page.getByRole('button', { name: 'مسح التصفية' }).click()
+    await page.waitForURL((url) => !url.search.includes('filters'))
+    await page.assertElementsCount('tbody tr[aria-rowindex]', 3)
+    await page.getByRole('combobox', { name: 'العميل' }).click()
+    await page.getByPlaceholder('ابحث في السجلات المرتبطة').fill(customerName)
+    await page.getByRole('option', { name: customerName, exact: true }).click()
+    await page.waitForURL(new RegExp(`filters%5BcustomerId%5D=${customer.id}`))
+    await page.assertElementsCount('tbody tr[aria-rowindex]', 1)
+    await page.assertVisible(page.getByRole('combobox', { name: 'العميل' }).getByText(customerName))
+    await page.getByRole('combobox', { name: 'العميل' }).click()
+    await page.getByRole('option', { name: 'الكل', exact: true }).click()
     await page.waitForURL((url) => !url.search.includes('filters'))
     await page.assertElementsCount('tbody tr[aria-rowindex]', 3)
     const download = page.waitForEvent('download')

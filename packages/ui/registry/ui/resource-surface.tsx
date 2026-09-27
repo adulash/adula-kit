@@ -12,6 +12,53 @@ import {
 
 export type ResourcePresentation = 'dialog' | 'page'
 
+const LIST_RETURN = 'adula:list-return'
+type ListReturn = { href: string; scroll: number; record: string }
+
+/**
+ * Remembers the list view (query and scroll) before a record opens from it, so closing the
+ * record dialog returns to that view. DataTable calls it; page overrides that link to records
+ * from their own list can call it too.
+ */
+export function rememberListView(record: string) {
+  try {
+    sessionStorage.setItem(
+      LIST_RETURN,
+      JSON.stringify({
+        href: window.location.pathname + window.location.search,
+        scroll: window.scrollY,
+        record,
+      } satisfies ListReturn)
+    )
+  } catch {
+    // Storage can be unavailable (private mode); closing then falls back to backHref.
+  }
+}
+
+function listReturn(backHref: string): ListReturn | null {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(LIST_RETURN) ?? 'null') as ListReturn | null
+    const path = (href: string) => new URL(href, window.location.origin).pathname
+    if (saved && typeof saved.href === 'string' && path(saved.href) === path(backHref)) return saved
+  } catch {
+    // Ignore unreadable entries.
+  }
+  return null
+}
+
+/** Return focus to the control that opened the record, else to the page heading without a ring. */
+function restoreFocus(record: string | undefined) {
+  const trigger = record
+    ? document.querySelector<HTMLElement>(`main a[href="${CSS.escape(record)}"]`)
+    : null
+  const target = trigger ?? document.querySelector<HTMLElement>('main h1')
+  if (!trigger && target) {
+    target.setAttribute('tabindex', '-1')
+    target.classList.add('outline-none')
+  }
+  target?.focus({ preventScroll: true })
+}
+
 /** Forms and record details are modal unless the user requests a page override. */
 export function ResourceSurface({
   title,
@@ -54,12 +101,13 @@ export function ResourceSurface({
           setOpen(false)
           closeTimer.current = setTimeout(
             () => {
-              router.visit(backHref, {
+              // Return to the list view the record was opened from: same query and scroll.
+              const saved = listReturn(backHref)
+              router.visit(saved?.href ?? backHref, {
                 onSuccess: () => {
+                  if (saved) window.scrollTo(0, saved.scroll)
                   // A direct route has no mounted DialogTrigger to restore focus to.
-                  const heading = document.querySelector<HTMLElement>('main h1')
-                  heading?.setAttribute('tabindex', '-1')
-                  heading?.focus()
+                  restoreFocus(saved?.record)
                 },
               })
             },

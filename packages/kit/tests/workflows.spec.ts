@@ -150,6 +150,25 @@ test.group('Workflow engine', (group) => {
         }),
       /unknown step missing/
     )
+    // Naming errors state the rule and a valid spelling (issue #24).
+    const named = (name: string, step: string) => () =>
+      defineWorkflow({
+        name,
+        version: 1,
+        resource: 'orders',
+        label: 'x',
+        start: step,
+        steps: { [step]: { type: 'end', outcome: 'completed' } },
+      })
+    assert.throws(
+      named('projects.release.approval', 'done'),
+      'Invalid workflow name "projects.release.approval": use lower-case letters, digits and underscores, starting with a letter (for example projects_release_approval).'
+    )
+    assert.throws(
+      named('release_approval', 'notifyApproved'),
+      'Invalid step name "notifyApproved": use lower-case letters, digits and underscores, starting with a letter (for example notify_approved).'
+    )
+    assert.throws(named('2fast', 'done'), /\(for example fast\)/)
     assert.throws(() => engine([approval(), approval()]), /Duplicate workflow version/)
     assert.throws(
       () =>
@@ -413,6 +432,58 @@ test.group('Workflow engine', (group) => {
       assert.equal(run.status, 'completed')
     } finally {
       server.close()
+    }
+  })
+
+  test('an approval addressed to a missing or empty role fails at once and can be retried', async ({
+    assert,
+  }) => {
+    const flow = defineWorkflow({
+      name: 'role_approval',
+      version: 1,
+      resource: 'orders',
+      label: 'اعتماد بالدور',
+      start: 'review',
+      steps: {
+        review: {
+          type: 'approval',
+          label: 'مراجعة',
+          assignees: { role: 'مدير مشروع' },
+          approve: 'done',
+          reject: 'done',
+        },
+        done: { type: 'end', outcome: 'completed' },
+      },
+    })
+    const workflows = engine([flow])
+    const id = await submittedOrder('1')
+    await deliver(workflows)
+    // The role was renamed away (issue #25): no retries hide the run for hours.
+    let [run] = await workflows.runsFor('orders', id, admin)
+    assert.equal(run.status, 'failed')
+    assert.equal(run.attempts, 1)
+    assert.include(run.lastError, 'role "مدير مشروع", which does not exist')
+    const failed = await workflows.failed()
+    assert.include(
+      failed.map((entry) => entry.id),
+      run.id
+    )
+    const [role] = await db('roles').insert({ name: 'مدير مشروع' }).returning('id')
+    try {
+      await workflows.retry(run.id, admin.id)
+      await workflows.tick()
+      run = await workflows.run(run.id, admin)
+      assert.equal(run.status, 'failed')
+      assert.include(run.lastError, 'the recipients resolve to no active user')
+      await db('user_roles').insert({ user_id: manager.id, role_id: role.id })
+      await workflows.retry(run.id, admin.id)
+      await workflows.tick()
+      run = await workflows.run(run.id, admin)
+      assert.equal(run.status, 'waiting')
+      assert.lengthOf(await db('assignments').where({ workflow_run_id: run.id }), 1)
+    } finally {
+      await db('user_roles').del()
+      await db('roles').where('id', role.id).del()
     }
   })
 

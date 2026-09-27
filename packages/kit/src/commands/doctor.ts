@@ -3,6 +3,9 @@ import { isAbsolute, join, relative } from 'node:path'
 import type { Settings } from '../services/settings.js'
 import { KIT_VERSION } from '../version.js'
 import { agentAssets, managedRules, digest } from './agent_assets.js'
+import { columnName } from '../resource/define_resource.js'
+import type { Field, Resource } from '../resource/types.js'
+import type { WorkflowDefinition } from '../workflows/define_workflow.js'
 
 export type Finding = {
   check: string
@@ -287,4 +290,90 @@ export async function diagnose(
   if (pkg.dependencies?.['@adula/ui'] || pkg.devDependencies?.['@adula/ui'])
     findings.push(...(await diagnoseUi(root)))
   return findings
+}
+
+type TableShape = Pick<Resource, 'name' | 'scoped' | 'version' | 'submittable' | 'customFields'> & {
+  fields: Record<
+    string,
+    Pick<Field, 'column' | 'required' | 'sequence' | 'unique' | 'searchable'> & {
+      type: string
+      resource?: string
+    }
+  >
+}
+
+/** The columns and indexes createResourceTable derives from a definition, one entry each. */
+function tableShape(resource: TableShape) {
+  const shape = new Map<string, string>()
+  for (const flag of ['scoped', 'version', 'submittable', 'customFields'] as const)
+    if (resource[flag]) shape.set(flag, flag)
+  for (const [key, field] of Object.entries(resource.fields)) {
+    if (field.type === 'hasMany') continue
+    const column = field.column ?? columnName(key)
+    const traits = [
+      field.type === 'belongsTo' ? `belongsTo ${field.resource}` : field.type,
+      ...(field.required || field.sequence ? ['required'] : []),
+      ...(field.unique ? ['unique'] : []),
+      ...(field.searchable ? ['searchable'] : []),
+    ]
+    shape.set(column, `${column} (${traits.join(', ')})`)
+  }
+  return shape
+}
+
+/**
+ * A generated create-migration embeds the definition as it was at scaffold time. While it is
+ * still pending, compare that snapshot with the current resource so the table matches (#20).
+ */
+export function diagnoseResourceSnapshots(
+  pending: { file: string; source: string }[],
+  resource: (name: string) => TableShape | undefined
+): Finding {
+  const drift: string[] = []
+  for (const { file, source } of pending) {
+    const embedded = /createResourceTable\([^,]+,\s*(\{[\s\S]*\})\s*\)\s*\}/.exec(source)?.[1]
+    if (!embedded) continue
+    let snapshot: TableShape
+    try {
+      snapshot = JSON.parse(embedded)
+    } catch {
+      continue
+    }
+    const current = resource(snapshot.name)
+    if (!current) continue
+    const [before, after] = [tableShape(snapshot), tableShape(current)]
+    const changed = [...new Set([...before.keys(), ...after.keys()])]
+      .filter((key) => before.get(key) !== after.get(key))
+      .map((key) => after.get(key) ?? `without ${before.get(key)}`)
+    if (changed.length) drift.push(`${file} (${snapshot.name}): ${changed.join('; ')}`)
+  }
+  return {
+    check: 'resources.snapshots',
+    status: drift.length ? 'warn' : 'pass',
+    message: drift.length
+      ? `Pending create-migrations differ from their resource definitions; update the embedded definition before migration:run: ${drift.join(' | ')}`
+      : 'Pending resource migrations match their definitions',
+  }
+}
+
+/** Workflow recipients address roles by their editable name; list references that match none (#25). */
+export function diagnoseWorkflowRoles(
+  workflows: readonly Pick<WorkflowDefinition, 'name' | 'version' | 'steps'>[],
+  roles: readonly string[]
+): Finding {
+  const known = new Set(roles)
+  const missing: string[] = []
+  for (const workflow of workflows)
+    for (const [key, step] of Object.entries(workflow.steps)) {
+      const to = step.type === 'approval' ? step.assignees : step.type === 'notify' ? step.to : null
+      if (to && typeof to === 'object' && 'role' in to && !known.has(to.role))
+        missing.push(`${workflow.name}@${workflow.version}.${key} → "${to.role}"`)
+    }
+  return {
+    check: 'workflows.roles',
+    status: missing.length ? 'warn' : 'pass',
+    message: missing.length
+      ? `Workflow steps address roles that do not exist (renamed or not created yet); approvals there fail: ${missing.join(', ')}`
+      : 'Every role named by a workflow step exists',
+  }
 }

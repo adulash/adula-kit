@@ -2,7 +2,15 @@ import { test } from '@japa/runner'
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, relative } from 'node:path'
-import { assessUploadSize, diagnoseUi, diagnoseUploads } from '../src/commands/doctor.js'
+import {
+  assessUploadSize,
+  diagnoseResourceSnapshots,
+  diagnoseUi,
+  diagnoseUploads,
+  diagnoseWorkflowRoles,
+} from '../src/commands/doctor.js'
+import { defineWorkflow } from '../src/workflows/define_workflow.js'
+import { generateResource } from '../src/commands/generator.js'
 import { digest } from '../src/commands/agent_assets.js'
 import { KIT_VERSION } from '../src/version.js'
 
@@ -210,5 +218,81 @@ test.group('Doctor filesystem diagnostics', (group) => {
       findings.map((finding) => finding.status),
       ['fail']
     )
+  })
+})
+
+test.group('Doctor resource migration snapshots', () => {
+  test('reports a pending create-migration that no longer matches its resource', async ({
+    assert,
+  }) => {
+    const root = await mkdtemp(join(tmpdir(), 'adula-snapshot-'))
+    await mkdir(join(root, 'start'))
+    await writeFile(
+      join(root, 'start/modules.ts'),
+      '// adula:imports\nexport const modules = [/* adula:modules */]\n'
+    )
+    const files = await generateResource(root, 'task', 'projects')
+    const file = files.find((path) => path.includes('/migrations/'))!
+    const pending = [{ file, source: await readFile(join(root, file), 'utf8') }]
+    const title = {
+      type: 'string',
+      label: { ar: 'العنوان', en: 'Title' },
+      required: true,
+      searchable: true,
+    }
+    const scaffolded = { name: 'task', scoped: true, fields: { title } }
+    assert.equal(diagnoseResourceSnapshots(pending, () => scaffolded).status, 'pass')
+    // The developer followed the scaffold message and filled the definition (issue #20).
+    const filled = {
+      ...scaffolded,
+      fields: {
+        title,
+        status: { type: 'lookup', group: 'task_status', label: title.label, required: true },
+        dueDate: { type: 'date', label: title.label },
+        notes: { type: 'hasMany', resource: 'note', foreignKey: 'taskId', label: title.label },
+      },
+    }
+    const drift = diagnoseResourceSnapshots(pending, (name) =>
+      name === 'task' ? filled : undefined
+    )
+    assert.equal(drift.status, 'warn')
+    assert.include(drift.message, `${file} (task): status (lookup, required); due_date (date)`)
+    assert.notInclude(drift.message, 'notes')
+    const removed = diagnoseResourceSnapshots(pending, () => ({ ...scaffolded, fields: {} }))
+    assert.include(removed.message, 'without title (string, required, searchable)')
+    // Unknown resources and hand-written migrations are not guessed at.
+    assert.equal(diagnoseResourceSnapshots(pending, () => undefined).status, 'pass')
+    const manual = [{ file, source: 'await createResourceTable(db, resource)' }]
+    assert.equal(diagnoseResourceSnapshots(manual, () => filled).status, 'pass')
+  })
+})
+
+test.group('Doctor workflow role references', () => {
+  test('lists workflow steps whose role name matches no role', ({ assert }) => {
+    const flow = defineWorkflow({
+      name: 'release_approval',
+      version: 2,
+      resource: 'release',
+      label: 'x',
+      start: 'review',
+      steps: {
+        review: {
+          type: 'approval',
+          label: 'مراجعة',
+          assignees: { role: 'مدير مشروع' },
+          approve: 'tell',
+          reject: 'done',
+        },
+        tell: { type: 'notify', to: { role: 'المطورون' }, next: 'done' },
+        done: { type: 'end', outcome: 'completed' },
+      },
+    })
+    const ok = diagnoseWorkflowRoles([flow], ['مدير مشروع', 'المطورون'])
+    assert.equal(ok.status, 'pass')
+    // An administrator renamed the role in the roles screen (issue #25).
+    const renamed = diagnoseWorkflowRoles([flow], ['مدير المشروع', 'المطورون'])
+    assert.equal(renamed.status, 'warn')
+    assert.include(renamed.message, 'release_approval@2.review → "مدير مشروع"')
+    assert.notInclude(renamed.message, 'tell')
   })
 })

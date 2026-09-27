@@ -22,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select'
+import { formatDate } from '~/components/ui/resource-value'
+import { useUiPreferences } from '~/components/ui/ui-preferences'
 
 const json = { headers: { Accept: 'application/json' }, withXSRFToken: true }
 const statusLabel: Record<Assignment['status'], string> = {
@@ -40,6 +42,7 @@ export function RecordAssignments({
   id: number | string
   canAssign: boolean
 }) {
+  const { calendar } = useUiPreferences()
   const base = `/resources/${resource}/${id}`
   const [rows, setRows] = useState<Assignment[] | null>(null)
   const [open, setOpen] = useState(false)
@@ -136,7 +139,9 @@ export function RecordAssignments({
                 المكلف: {row.assigneeName ?? `#${row.assigneeId}`}
               </span>
               {row.dueOn && (
-                <span className="text-xs text-muted-foreground">الاستحقاق {row.dueOn}</span>
+                <span className="text-xs text-muted-foreground">
+                  الاستحقاق <bdi className="tabular-nums">{formatDate(row.dueOn, calendar)}</bdi>
+                </span>
               )}
             </li>
           ))}
