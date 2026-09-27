@@ -3,6 +3,7 @@ import { mkdtemp, mkdir, writeFile, readFile, access } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { generateResource } from '../src/commands/generator.js'
+import { appendMarkedItem } from '../src/commands/source_markers.js'
 
 test.group('Resource generator', () => {
   test('generates and registers resource without overwriting existing files', async ({
@@ -49,8 +50,33 @@ test.group('Resource generator', () => {
     await generateResource(root, 'next', 'examples')
     const modules = await readFile(join(root, 'start/modules.ts'), 'utf8')
     const module = await readFile(join(root, 'app/modules/examples/module.ts'), 'utf8')
-    assert.include(modules, 'existing , module_examples,')
-    assert.include(module, 'resource_default, resource_next,')
+    // One item per line with the marker last: the layout Prettier keeps stable (issue #21).
+    assert.include(modules, '[\n  existing,\n  module_examples,\n  /* adula:modules */\n]')
+    assert.include(
+      module,
+      '  resources: [\n    resource_default,\n    resource_next,\n    /* adula:resources */\n  ],'
+    )
     assert.include(module, "import resource_default from './resources/default.js'")
+  })
+  test('normalizes single-line marker lists and refuses lists it cannot rewrite safely', ({
+    assert,
+  }) => {
+    const marker = '/* adula:modules */'
+    const expected = 'export const modules = [\n  a,\n  b,\n  /* adula:modules */\n]\n'
+    for (const list of [
+      '[a, /* adula:modules */]',
+      '[a /* adula:modules */]',
+      '[a,/* adula:modules */ ]',
+    ])
+      assert.equal(appendMarkedItem(`export const modules = ${list}\n`, marker, 'b'), expected)
+    assert.equal(
+      appendMarkedItem(appendMarkedItem('x = [/* adula:modules */]', marker, 'a'), marker, 'b'),
+      'x = [\n  a,\n  b,\n  /* adula:modules */\n]'
+    )
+    assert.throws(
+      () => appendMarkedItem('x = [f(a, b), /* adula:modules */]', marker, 'c'),
+      /by hand/
+    )
+    assert.throws(() => appendMarkedItem('x = [a, /* adula:modules */, b]', marker, 'c'), /by hand/)
   })
 })

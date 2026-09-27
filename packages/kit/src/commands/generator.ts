@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile, access, glob } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { identifier } from '../resource/define_resource.js'
-import { appendMarkedItem } from './source_markers.js'
+import { appendMarkedItem, moduleSource } from './source_markers.js'
 
 export async function generateResource(root: string, name: string, module: string) {
   identifier(name)
@@ -38,7 +38,7 @@ export async function generateResource(root: string, name: string, module: strin
     current = await readFile(modulePath, 'utf8')
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
-    current = `// adula:imports\nexport default { name: '${module}', label: { ar: '${module}', en: '${module}' }, dependsOn: [], resources: [/* adula:resources */] }\n`
+    current = moduleSource(module)
   }
   if (!current.includes('// adula:imports') || !current.includes('/* adula:resources */'))
     throw new Error('Module registration markers are missing; no files were changed')

@@ -1,7 +1,7 @@
 import { BaseCommand, args, flags } from '@adonisjs/core/ace'
 import { mkdir, readFile, writeFile, access } from 'node:fs/promises'
 import { identifier } from '../src/resource/define_resource.js'
-import { appendMarkedItem } from '../src/commands/source_markers.js'
+import { appendMarkedItem, moduleSource } from '../src/commands/source_markers.js'
 
 export default class ModuleAdd extends BaseCommand {
   static commandName = 'adula:module:add'
@@ -48,7 +48,7 @@ export default class ModuleAdd extends BaseCommand {
       await mkdir(this.app.makePath('app/modules', this.name, directory), { recursive: true })
     await writeFile(
       this.app.makePath('app/modules', this.name, 'module.ts'),
-      `import type { Module } from '@adula/kit'\n// adula:imports\nexport default { name: '${this.name}', label: { ar: '${this.name}', en: '${this.name}' }, reference: ${Boolean(this.reference)}, dependsOn: [], resources: [/* adula:resources */] } satisfies Module\n`,
+      moduleSource(this.name, { reference: Boolean(this.reference), typed: true }),
       { flag: 'wx' }
     )
     await writeFile(indexPath, next)
