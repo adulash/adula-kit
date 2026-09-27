@@ -23,20 +23,27 @@ panel automatically.
 ## Assignments and "my tasks"
 
 `Assignments` assigns work on a record (update permission required; the assignee
-must be able to read the record). `/my-tasks` lists the user's tasks; only the
-assignee completes and only the assigner cancels. Approval steps of workflows
-create assignments of kind `approval`.
+must be able to read the record). `/my-tasks` lists everything waiting for the
+user in tabs: all, approvals waiting for their decision, assigned tasks and
+closed items. Only the assignee completes and only the assigner cancels.
+Approval steps of workflows create assignments of kind `approval`, decided in
+place on the same page (`canDecide`); `/approvals` redirects there. Items name
+their record by its business identifier (`recordTitle`, from the resource's
+`title` fields or its sequence and first list field).
 
 ## Notifications, templates, e-mail and realtime
 
-- `notifyWithTemplate(db, userId, key, variables)` writes a notification from a
-  message template. Defaults live in the kit (`DEFAULT_TEMPLATES`); administrators
+- `notifyWithTemplate(db, userId, key, variables, templates?, target?)` writes a
+  notification from a message template; `notify(db, userId, title, body, target?)`
+  writes one directly. A `{ resource, recordId }` target makes the notification open
+  that record (the record page authorizes the reader when it is opened). Defaults live in the kit (`DEFAULT_TEMPLATES`); administrators
   edit wording at `/admin/templates` (placeholders are validated).
 - Templates with mail enabled are e-mailed by the worker
   (`deliverNotificationMail`, three attempts).
 - A database trigger NOTIFYs on commit; each web process forwards the signal over
   SSE (`@adonisjs/transmit`, channel `notifications/<userId>`), and the bell
-  refreshes without a page reload.
+  refreshes without a page reload. The tabs of one browser share one stream: a
+  leader tab (Web Locks) holds it and relays signals over a BroadcastChannel.
 
 ## Outgoing webhooks
 
@@ -53,12 +60,45 @@ Failures retry for six attempts with growing delays; the creator is notified on
 final failure and can retry from the delivery log. Private and loopback targets
 are refused in production.
 
+## Inbound webhooks
+
+Administrators add inbound sources at `/admin/webhooks` (section «الروابط الواردة»).
+Each source has a key, a generated secret (shown once, rotatable) and header names
+that default to GitHub's. Senders post to `POST /webhooks/in/<key>`:
+
+```
+X-Hub-Signature-256: sha256=HMAC_SHA256(secret, <raw body>)
+X-GitHub-Event: pull_request          # the event name
+X-GitHub-Delivery: <id>               # deduplicated per source
+```
+
+A missing or wrong signature is refused before anything is stored. Each delivery
+is stored once and raised through the outbox as `inbound.<key>.<event>` with the
+payload `{ source, delivery, event, body }`. Modules react with an idempotent
+listener in `start/listeners.ts`, for example:
+
+```ts
+{
+  name: 'projects.link_pull_requests',
+  event: 'inbound.github.pull_request',
+  handle: async (event, trx) => {
+    const body = event.payload.body as { pull_request?: { title?: string } }
+    // Find TSK-000123 in the title and move the task, inside trx.
+  },
+}
+```
+
+The delivery log shows every stored delivery and can raise it again.
+
 ## API tokens and OpenAPI
 
 Users create read or read-write tokens under their account menu. `/api/v1`
 accepts `Authorization: Bearer <token>` only (no cookies, no CSRF) and exposes the
 same resource operations with the token owner's current permissions.
 `GET /api/v1/openapi.json` describes the resources and actions the caller may use.
+`GET /api/v1/resources/<name>/aggregate?groupBy=status&sum=total&where={json}` counts
+and totals the records the token may view (`ResourceService.aggregate`); fields the
+caller may not query are refused.
 
 ## CSV import
 

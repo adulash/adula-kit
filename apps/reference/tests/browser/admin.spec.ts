@@ -372,6 +372,29 @@ test.group('Administration screens in the browser', (group) => {
     }
   })
 
+  test('an administrator adds an inbound webhook source and receives its secret once', async ({
+    browserContext,
+    visit,
+    assert,
+  }) => {
+    await browserContext.loginAs(admin)
+    const page = await visit('/admin/webhooks')
+    await page.getByRole('heading', { name: 'الروابط الواردة' }).waitFor()
+    await page.getByRole('button', { name: 'إضافة مصدر وارد', exact: true }).click()
+    const form = page.getByRole('dialog', { name: 'إضافة مصدر وارد' })
+    await form.getByLabel('الاسم', { exact: true }).fill('مستودعات الشيفرة')
+    await form.getByLabel('المفتاح في العنوان', { exact: true }).fill(`git_${unique}`)
+    await form.getByRole('button', { name: 'حفظ', exact: true }).click()
+    const secret = page.getByRole('dialog', { name: 'مفتاح التوقيع للمرسل' })
+    await secret.waitFor()
+    await secret.getByText(`/webhooks/in/git_${unique}`).waitFor()
+    await secret.getByRole('button', { name: 'تم', exact: true }).click()
+    await page.getByText(`POST http://`, { exact: false }).first().waitFor()
+    const stored = await knex()('inbound_sources').where('key', `git_${unique}`).first()
+    assert.equal(stored.name, 'مستودعات الشيفرة')
+    await knex()('inbound_sources').where('id', stored.id).delete()
+  })
+
   test('the bell shows the unread count and clears after mark-all-read', async ({
     browserContext,
     visit,

@@ -491,3 +491,43 @@ export async function createRoleKeysSchema(db: Knex) {
   })
   await db.raw("UPDATE roles SET key = name WHERE name ~ '^[a-z][a-z0-9_]*$'")
 }
+
+/**
+ * Signed inbound webhooks (1.2): administrator-managed sources with sealed secrets,
+ * and a delivery log deduplicated by the sender's delivery id. Accepted deliveries are
+ * dispatched as domain events through the outbox.
+ */
+export async function createInboundWebhooksSchema(db: Knex) {
+  await db.schema.createTable('inbound_sources', (t) => {
+    t.increments('id')
+    t.string('key', 60).notNullable().unique()
+    t.string('name', 100).notNullable()
+    t.text('secret').notNullable()
+    t.string('algorithm', 10).notNullable().defaultTo('sha256')
+    t.string('signature_header', 100).notNullable().defaultTo('x-hub-signature-256')
+    t.string('signature_prefix', 20).notNullable().defaultTo('sha256=')
+    t.string('event_header', 100).notNullable().defaultTo('x-github-event')
+    t.string('delivery_header', 100).notNullable().defaultTo('x-github-delivery')
+    t.boolean('active').notNullable().defaultTo(true)
+    t.integer('created_by').references('id').inTable('users').onDelete('SET NULL')
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('updated_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.timestamp('last_received_at', { useTz: true })
+  })
+  await db.schema.createTable('inbound_deliveries', (t) => {
+    t.uuid('id').primary()
+    t.integer('source_id')
+      .notNullable()
+      .references('id')
+      .inTable('inbound_sources')
+      .onDelete('CASCADE')
+    t.string('delivery_id', 200).notNullable()
+    t.string('event', 100).notNullable()
+    t.jsonb('payload').notNullable()
+    t.uuid('event_id').notNullable()
+    t.integer('dispatches').notNullable().defaultTo(1)
+    t.timestamp('received_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.unique(['source_id', 'delivery_id'])
+    t.index(['source_id', 'received_at'])
+  })
+}
