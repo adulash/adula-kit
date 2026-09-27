@@ -287,6 +287,12 @@ test.group('Core administration screens', (group) => {
       client.put(`/admin/roles/${viewerRoleId}/rules`).loginAs(admin)
     ).json({ subject: 'ghosts', action: 'view' })
     subject.assertStatus(422)
+    // The current user is accepted for creator/updater and user fields only (#29).
+    const own = await put({ conditions: { createdBy: '$actor.id' } })
+    own.assertStatus(200)
+    assert.deepEqual(own.body().data.conditions, { createdBy: '$actor.id' })
+    const notUser = await put({ conditions: { notes: '$actor.id' } })
+    notUser.assertStatus(422)
     const saved = await put({ conditions: { status: 'open' }, fields: ['notes'] })
     saved.assertStatus(200)
     assert.deepEqual(saved.body().data.conditions, { status: 'open' })

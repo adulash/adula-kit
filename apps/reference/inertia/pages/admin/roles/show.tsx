@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactElement } from 'react'
 import { Head, router } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
-import { ArrowRight, Check, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { ArrowRight, Check, Pencil, Plus, Trash2, UserRound, X } from 'lucide-react'
 import type { MatrixField, MatrixSubject, RoleDetail, RoleMatrix, RoleRule } from '@adula/kit'
 import Workspace from '~/layouts/workspace'
 import { AdminHeader } from '~/components/admin-nav'
@@ -53,12 +53,15 @@ const OPERATORS: [string, string][] = [
   ['$gt', 'أكبر من'],
   ['$like', 'يشبه'],
 ]
-const NUMERIC = new Set(['integer', 'belongsTo'])
+const NUMERIC = new Set(['integer', 'belongsTo', 'user'])
+/** Replaced by the signed-in user's id when rules are evaluated. */
+const CURRENT_USER = '$actor.id'
 
 function convert(field: MatrixField | undefined, operator: string, raw: string): Scalar | Scalar[] {
   const one = (text: string): Scalar => {
     const value = text.trim()
     if (value === 'null') return null
+    if (value === CURRENT_USER && field?.actor) return CURRENT_USER
     if (field?.type === 'boolean') return value === 'true'
     if (field && NUMERIC.has(field.type)) return Number(value)
     return value
@@ -171,12 +174,38 @@ function RuleEditor({
                         onChange={(operator) => update(index, { operator })}
                         options={OPERATORS.map(([value, label]) => ({ value, label }))}
                       />
-                      <Input
-                        aria-label={`قيمة الشرط ${index + 1}`}
-                        value={predicate.value}
-                        placeholder={predicate.operator === '$in' ? 'قيم مفصولة بفواصل' : 'القيمة'}
-                        onChange={(event) => update(index, { value: event.target.value })}
-                      />
+                      {(() => {
+                        const field = subject.conditionFields.find(
+                          (entry) => entry.key === predicate.field
+                        )
+                        const current = predicate.value === CURRENT_USER
+                        return (
+                          <div className="flex gap-1">
+                            <Input
+                              aria-label={`قيمة الشرط ${index + 1}`}
+                              value={current ? 'المستخدم الحالي' : predicate.value}
+                              readOnly={current}
+                              placeholder={
+                                predicate.operator === '$in' ? 'قيم مفصولة بفواصل' : 'القيمة'
+                              }
+                              onChange={(event) => update(index, { value: event.target.value })}
+                            />
+                            {field?.actor && predicate.operator !== '$in' && (
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant={current ? 'default' : 'outline'}
+                                aria-pressed={current}
+                                aria-label={`المستخدم الحالي للشرط ${index + 1}`}
+                                title="المستخدم الحالي: يُستبدل بمعرّف من يستخدم النظام"
+                                onClick={() => update(index, { value: current ? '' : CURRENT_USER })}
+                              >
+                                <UserRound size={15} />
+                              </Button>
+                            )}
+                          </div>
+                        )
+                      })()}
                       <Button
                         type="button"
                         size="icon-sm"
@@ -500,7 +529,12 @@ export default function RoleShow({ role, matrix }: Props) {
                 </TableCell>
                 <TableCell>
                   <code className="text-xs" dir="ltr">
-                    {rule.conditions ? JSON.stringify(rule.conditions) : '—'}
+                    {rule.conditions
+                      ? JSON.stringify(rule.conditions).replaceAll(
+                          JSON.stringify(CURRENT_USER),
+                          'المستخدم الحالي'
+                        )
+                      : '—'}
                   </code>
                 </TableCell>
                 <TableCell>

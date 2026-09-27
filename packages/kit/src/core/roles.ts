@@ -3,6 +3,7 @@ import type { ResourceRegistry } from '../resource/registry.js'
 import type { Action, Label, ModuleRole, Resource } from '../resource/types.js'
 import type { Conditions } from '../auth/conditions.js'
 import { conditionSql } from '../auth/sql.js'
+import { resolveActorConditions, usesActor } from '../auth/conditions.js'
 import { KitError } from '../admin/errors.js'
 import { logActivity } from './activity.js'
 import { administrationGuard } from './administration_guard.js'
@@ -35,7 +36,14 @@ export type RuleInput = {
   conditions?: Conditions | null
   fields?: string[] | null
 }
-export type MatrixField = { key: string; label: Label; type: string; conditionable: boolean }
+export type MatrixField = {
+  key: string
+  label: Label
+  type: string
+  conditionable: boolean
+  /** Accepts the current user ("$actor.id") as a condition value: user fields, createdBy, updatedBy. */
+  actor?: boolean
+}
 export type MatrixSubject = {
   name: string
   label: Label
@@ -56,6 +64,7 @@ function standardConditionFields(resource: Resource): MatrixField[] {
     label: { ar, en },
     type: 'integer',
     conditionable: true,
+    ...(['createdBy', 'updatedBy'].includes(key) ? { actor: true } : {}),
   })
   return [
     field('id', 'المعرّف', 'ID'),
@@ -72,6 +81,7 @@ function matrixFields(resource: Resource): MatrixField[] {
     label: field.label,
     type: field.type,
     conditionable: !['hasMany', 'json', 'attachment'].includes(field.type),
+    ...(field.type === 'user' ? { actor: true } : {}),
   }))
 }
 
@@ -485,8 +495,31 @@ export class RolesAdmin {
       for (const field of Object.keys(input.conditions))
         if (!conditionable.has(field))
           throw new KitError(422, 'E_RULE_CONDITIONS', `الحقل ${field} لا يقبل الشروط`)
+      const actorFields = new Set(
+        [...standardConditionFields(resource), ...matrixFields(resource)]
+          .filter((field) => field.actor)
+          .map((field) => field.key)
+      )
+      for (const [field, condition] of Object.entries(input.conditions))
+        if (usesActor({ [field]: condition } as Conditions)) {
+          if (!actorFields.has(field))
+            throw new KitError(
+              422,
+              'E_RULE_CONDITIONS',
+              `المستخدم الحالي يُستخدم مع حقول المستخدمين وأنشأه وعدّله فقط: ${field}`
+            )
+          const operators =
+            condition !== null && typeof condition === 'object' ? Object.keys(condition) : ['$eq']
+          if (operators.some((operator) => !['$eq', '$ne', '$in'].includes(operator)))
+            throw new KitError(
+              422,
+              'E_RULE_CONDITIONS',
+              'المستخدم الحالي يقبل عوامل يساوي ولا يساوي وضمن قائمة فقط'
+            )
+        }
       try {
-        conditionSql(input.conditions, resource)
+        // The placeholder is an integer id at request time; validate it as one.
+        conditionSql(resolveActorConditions(input.conditions, 1), resource)
       } catch (error) {
         throw new KitError(422, 'E_RULE_CONDITIONS', `شرط غير مدعوم: ${(error as Error).message}`)
       }
