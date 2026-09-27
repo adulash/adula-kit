@@ -20,6 +20,22 @@ export async function sequence(trx: Knex.Transaction, key: string) {
   )
   return `${key}-${String(result.rows[0].value).padStart(6, '0')}`
 }
-export async function notify(db: Knex, userId: number, title: string, body: string) {
-  await db('notifications').insert({ user_id: userId, title, body })
+/** The record a notification is about; opening the notification opens the record. */
+export type NotificationTarget = { resource: string; recordId: number }
+
+export function targetColumns(target?: NotificationTarget | null) {
+  if (!target) return {}
+  if (!/^[a-z][a-z0-9_]*$/.test(target.resource) || !Number.isSafeInteger(target.recordId))
+    throw new Error('Invalid notification target')
+  return { resource: target.resource, record_id: target.recordId }
+}
+
+export async function notify(
+  db: Knex,
+  userId: number,
+  title: string,
+  body: string,
+  target?: NotificationTarget | null
+) {
+  await db('notifications').insert({ user_id: userId, title, body, ...targetColumns(target) })
 }

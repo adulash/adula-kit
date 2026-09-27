@@ -1,6 +1,7 @@
 import type { Knex } from 'knex'
 import { KitError } from '../admin/errors.js'
 import { pageLimit } from './activity.js'
+import type { ResourceRegistry } from '../resource/registry.js'
 
 export type Notification = {
   id: number
@@ -8,11 +9,28 @@ export type Notification = {
   body: string
   readAt: string | null
   createdAt: string
+  /**
+   * The record the notification is about, while its resource is still registered.
+   * The record page authorizes the reader when the link is opened.
+   */
+  target: { resource: string; recordId: number; href: string } | null
 }
 export type NotificationPage = { data: Notification[]; nextCursor: string | null; unread: number }
 
 export class NotificationsAdmin {
-  constructor(private db: Knex) {}
+  constructor(
+    private db: Knex,
+    /** Without a registry, stored targets are returned as they are. */
+    private registry?: Pick<ResourceRegistry, 'has'>
+  ) {}
+
+  private target(row: Record<string, any>): Notification['target'] {
+    if (!row.resource || row.record_id === null || row.record_id === undefined) return null
+    const resource = String(row.resource)
+    if (this.registry && !this.registry.has(resource)) return null
+    const recordId = Number(row.record_id)
+    return { resource, recordId, href: `/resources/${resource}/${recordId}` }
+  }
 
   /** Unread first, newest first; the cursor remembers which of the two segments it is in. */
   async list(
@@ -46,6 +64,7 @@ export class NotificationsAdmin {
         body: row.body,
         readAt: row.read_at ? new Date(row.read_at).toISOString() : null,
         createdAt: new Date(row.created_at).toISOString(),
+        target: this.target(row),
       })),
       nextCursor: rows.length > limit ? `${last.read_at ? 'r' : 'u'}:${last.id}` : null,
       unread: await this.unreadCount(userId),
@@ -59,6 +78,18 @@ export class NotificationsAdmin {
       .where({ id, user_id: userId })
       .whereNull('read_at')
       .update({ read_at: this.db.fn.now() })
+  }
+
+  /** Marks the notification read and returns where it points (null without a target). */
+  async open(userId: number, id: number) {
+    const row = await this.db('notifications').where({ id, user_id: userId }).first()
+    if (!row) throw new KitError(404, 'E_NOTIFICATION_NOT_FOUND', 'الإشعار غير موجود')
+    if (!row.read_at)
+      await this.db('notifications')
+        .where({ id, user_id: userId })
+        .whereNull('read_at')
+        .update({ read_at: this.db.fn.now() })
+    return this.target(row)?.href ?? null
   }
 
   async markAllRead(userId: number) {

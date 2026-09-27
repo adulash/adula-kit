@@ -46,6 +46,9 @@ export class ResourceRegistry {
     if (!resource) throw new Error(`Unknown resource: ${name}`)
     return resource
   }
+  has(name: string) {
+    return this.#resources.has(name)
+  }
   all() {
     return [...this.#resources.values()]
   }

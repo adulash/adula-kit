@@ -69,11 +69,15 @@ test.group('Record collaboration', (group) => {
       mentions: [2],
     })
     assert.deepEqual(comment.mentions, [{ id: 2, name: 'سارة القارئة' }])
-    const notified = await db('notifications').orderBy('user_id').select('user_id', 'title')
+    const notified = await db('notifications')
+      .orderBy('user_id')
+      .select('user_id', 'title', 'resource', 'record_id')
     assert.deepEqual(
       notified.map((row) => row.user_id),
       [2, 4]
     )
+    // Both notifications open the commented record.
+    for (const row of notified) assert.deepEqual([row.resource, row.record_id], ['orders', orderId])
     assert.include(notified[0].title, 'أشار إليك مدير النظام')
     assert.include(notified[1].title, 'تعليق جديد')
     // The author follows automatically.

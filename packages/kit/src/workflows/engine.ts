@@ -292,7 +292,9 @@ export class WorkflowEngine {
               id: run.record_id,
               workflow: definition.label,
               step: step.label ?? stepName,
-            }
+            },
+            undefined,
+            { resource: String(run.resource), recordId: Number(run.record_id) }
           )
         return move({ type: 'DONE' }, { recipients: users.length })
       }
@@ -632,12 +634,19 @@ export class WorkflowEngine {
       attempts,
     })
     if (final && run.started_by)
-      await notifyWithTemplate(trx, Number(run.started_by), 'workflow.failed', {
-        workflow: run.definition,
-        resource: this.resources.label(run.resource),
-        id: run.record_id,
-        error: message,
-      })
+      await notifyWithTemplate(
+        trx,
+        Number(run.started_by),
+        'workflow.failed',
+        {
+          workflow: run.definition,
+          resource: this.resources.label(run.resource),
+          id: run.record_id,
+          error: message,
+        },
+        undefined,
+        { resource: String(run.resource), recordId: Number(run.record_id) }
+      )
   }
 
   private async cancelRuns(trx: Knex.Transaction, resource: string, id: number, actorId: number) {

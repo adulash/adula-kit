@@ -10,6 +10,8 @@ import {
   UsersAdmin,
   backupStale,
   heartbeat,
+  notify,
+  notifyWithTemplate,
   parseSettingValue,
   runtimeHealth,
 } from '../index.js'
@@ -371,6 +373,47 @@ test.group('Core administration services', (group) => {
     assert.equal(paged.nextCursor, `r:${paged.data[2].id}`)
     const rest = await inbox.list(2, { limit: 3, cursor: paged.nextCursor! })
     assert.lengthOf(rest.data, 1)
+  })
+
+  test('notifications: a record target links while its resource is registered', async ({
+    assert,
+  }) => {
+    await db('notifications').where('user_id', 2).del()
+    await notify(db, 2, 'بلا سجل', 'نص')
+    await notify(db, 2, 'عن طلب', 'نص', { resource: 'orders', recordId: 7 })
+    await notify(db, 2, 'عن كيان محذوف', 'نص', { resource: 'archived_things', recordId: 3 })
+    await notifyWithTemplate(
+      db,
+      2,
+      'record.changed',
+      { change: 'تم تعديل', resource: 'العملاء', id: 4 },
+      undefined,
+      { resource: 'customers', recordId: 4 }
+    )
+    const linked = new NotificationsAdmin(db, registry)
+    const page = await linked.list(2)
+    const byTitle = new Map(page.data.map((row) => [row.title, row.target]))
+    assert.isNull(byTitle.get('بلا سجل'))
+    assert.deepEqual(byTitle.get('عن طلب'), {
+      resource: 'orders',
+      recordId: 7,
+      href: '/resources/orders/7',
+    })
+    // An unregistered (removed) resource keeps its row but loses the link.
+    assert.isNull(byTitle.get('عن كيان محذوف'))
+    assert.equal(byTitle.get('تم تعديل العملاء #4')?.href, '/resources/customers/4')
+    // Without a registry the stored target is returned unchanged.
+    const raw = await inbox.list(2)
+    assert.equal(raw.data.find((row) => row.title === 'عن كيان محذوف')?.target?.recordId, 3)
+    const target = page.data.find((row) => row.title === 'عن طلب')!
+    assert.equal(await linked.open(2, target.id), '/resources/orders/7')
+    const opened = await db('notifications').where('id', target.id).first('read_at')
+    assert.isNotNull(opened.read_at)
+    const plain = page.data.find((row) => row.title === 'بلا سجل')!
+    assert.isNull(await linked.open(2, plain.id))
+    assert.equal(await code(() => linked.open(1, plain.id)), 'E_NOTIFICATION_NOT_FOUND')
+    await assert.rejects(() => notify(db, 2, 'x', 'y', { resource: 'orders; drop', recordId: 1 }))
+    await db('notifications').where('user_id', 2).del()
   })
 
   test('settings: scoped upsert, JSON validation and protected keys', async ({ assert }) => {

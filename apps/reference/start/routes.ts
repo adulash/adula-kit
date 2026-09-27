@@ -206,6 +206,7 @@ router
     router.get('notifications', [NotificationsController, 'index'])
     router.post('notifications/read-all', [NotificationsController, 'readAll'])
     router.post('notifications/:id/read', [NotificationsController, 'read'])
+    router.get('notifications/:id/open', [NotificationsController, 'open'])
     router.post('impersonation/stop', [AdminUsersController, 'stopImpersonation'])
   })
   .use(middleware.auth())

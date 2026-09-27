@@ -464,3 +464,26 @@ export async function createWorkflowSchema(db: Knex) {
     t.index(['run_id', 'id'])
   })
 }
+
+/**
+ * Notifications may name the record they are about (1.1). Links are authorized when
+ * opened, by the record page itself, never when the notification is written.
+ */
+export async function createNotificationTargetsSchema(db: Knex) {
+  await db.schema.alterTable('notifications', (t) => {
+    t.string('resource', 100)
+    t.integer('record_id')
+  })
+}
+
+/**
+ * Roles gain a stable key (1.1) that workflows and module defaults address, so an
+ * administrator can rename the display name freely. Existing identifier-like names
+ * (such as the bootstrap "administrator") become their key.
+ */
+export async function createRoleKeysSchema(db: Knex) {
+  await db.schema.alterTable('roles', (t) => {
+    t.string('key', 100).unique()
+  })
+  await db.raw("UPDATE roles SET key = name WHERE name ~ '^[a-z][a-z0-9_]*$'")
+}
