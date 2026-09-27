@@ -56,6 +56,16 @@ Minor release: additive APIs and one additive kit migration
   unresolved and the rule is refused. Hosts that build actors themselves call
   `resolveActorConditions` (#29).
 
+* Resources: optional bilingual `recordLabel` (the singular noun, for example «حساب»)
+  and `createLabel` (the full button text, for example «مهمة جديدة»). Generated pages
+  say «إضافة حساب» on the create button, «إضافة حساب» / «تعديل حساب» as the form title
+  and «تمت إضافة حساب» after saving; resources without them keep «إضافة سجل».
+  `adula:resource` scaffolds a `recordLabel` (#37). `ResourceDescription` and
+  `ResourceEditor` gain the nullable `recordLabel` (and `createLabel` on the
+  description), so code that builds these objects itself needs them; `pnpm check:api`
+  therefore also reports `Resource` and `createResourceController`. Projects with
+  copied `resource-page` or `resource-form` need the updated components.
+
 ## 1.0.1 — unreleased
 
 Patch release: fixes reported against 1.0.0, with no public API or schema change.

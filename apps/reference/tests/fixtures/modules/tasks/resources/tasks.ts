@@ -9,6 +9,8 @@ export default defineResource({
       ar: 'المهام',
       en: 'Tasks',
     },
+    recordLabel: { ar: 'مهمة', en: 'Task' },
+    createLabel: { ar: 'مهمة جديدة', en: 'New task' },
     scoped: true,
     fields: {
       title: {
