@@ -435,6 +435,58 @@ test.group('Workflow engine', (group) => {
     }
   })
 
+  test('an approval addressed to a missing or empty role fails at once and can be retried', async ({
+    assert,
+  }) => {
+    const flow = defineWorkflow({
+      name: 'role_approval',
+      version: 1,
+      resource: 'orders',
+      label: 'اعتماد بالدور',
+      start: 'review',
+      steps: {
+        review: {
+          type: 'approval',
+          label: 'مراجعة',
+          assignees: { role: 'مدير مشروع' },
+          approve: 'done',
+          reject: 'done',
+        },
+        done: { type: 'end', outcome: 'completed' },
+      },
+    })
+    const workflows = engine([flow])
+    const id = await submittedOrder('1')
+    await deliver(workflows)
+    // The role was renamed away (issue #25): no retries hide the run for hours.
+    let [run] = await workflows.runsFor('orders', id, admin)
+    assert.equal(run.status, 'failed')
+    assert.equal(run.attempts, 1)
+    assert.include(run.lastError, 'role "مدير مشروع", which does not exist')
+    const failed = await workflows.failed()
+    assert.include(
+      failed.map((entry) => entry.id),
+      run.id
+    )
+    const [role] = await db('roles').insert({ name: 'مدير مشروع' }).returning('id')
+    try {
+      await workflows.retry(run.id, admin.id)
+      await workflows.tick()
+      run = await workflows.run(run.id, admin)
+      assert.equal(run.status, 'failed')
+      assert.include(run.lastError, 'the recipients resolve to no active user')
+      await db('user_roles').insert({ user_id: manager.id, role_id: role.id })
+      await workflows.retry(run.id, admin.id)
+      await workflows.tick()
+      run = await workflows.run(run.id, admin)
+      assert.equal(run.status, 'waiting')
+      assert.lengthOf(await db('assignments').where({ workflow_run_id: run.id }), 1)
+    } finally {
+      await db('user_roles').del()
+      await db('roles').where('id', role.id).del()
+    }
+  })
+
   test('cancelling the document stops the run and its open approvals', async ({ assert }) => {
     const workflows = engine()
     const id = await submittedOrder('800000')

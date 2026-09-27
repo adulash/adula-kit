@@ -5,6 +5,7 @@ import { KIT_VERSION } from '../version.js'
 import { agentAssets, managedRules, digest } from './agent_assets.js'
 import { columnName } from '../resource/define_resource.js'
 import type { Field, Resource } from '../resource/types.js'
+import type { WorkflowDefinition } from '../workflows/define_workflow.js'
 
 export type Finding = {
   check: string
@@ -352,5 +353,27 @@ export function diagnoseResourceSnapshots(
     message: drift.length
       ? `Pending create-migrations differ from their resource definitions; update the embedded definition before migration:run: ${drift.join(' | ')}`
       : 'Pending resource migrations match their definitions',
+  }
+}
+
+/** Workflow recipients address roles by their editable name; list references that match none (#25). */
+export function diagnoseWorkflowRoles(
+  workflows: readonly Pick<WorkflowDefinition, 'name' | 'version' | 'steps'>[],
+  roles: readonly string[]
+): Finding {
+  const known = new Set(roles)
+  const missing: string[] = []
+  for (const workflow of workflows)
+    for (const [key, step] of Object.entries(workflow.steps)) {
+      const to = step.type === 'approval' ? step.assignees : step.type === 'notify' ? step.to : null
+      if (to && typeof to === 'object' && 'role' in to && !known.has(to.role))
+        missing.push(`${workflow.name}@${workflow.version}.${key} → "${to.role}"`)
+    }
+  return {
+    check: 'workflows.roles',
+    status: missing.length ? 'warn' : 'pass',
+    message: missing.length
+      ? `Workflow steps address roles that do not exist (renamed or not created yet); approvals there fail: ${missing.join(', ')}`
+      : 'Every role named by a workflow step exists',
   }
 }

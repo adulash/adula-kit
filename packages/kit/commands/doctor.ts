@@ -1,6 +1,10 @@
 import { BaseCommand } from '@adonisjs/core/ace'
 import { fileURLToPath } from 'node:url'
-import { diagnose, diagnoseResourceSnapshots } from '../src/commands/doctor.js'
+import {
+  diagnose,
+  diagnoseResourceSnapshots,
+  diagnoseWorkflowRoles,
+} from '../src/commands/doctor.js'
 import { diagnoseAttachments } from '../src/attachments/doctor.js'
 import { Settings } from '../src/services/settings.js'
 import { MigrationRunner } from '@adonisjs/lucid/migration'
@@ -43,6 +47,15 @@ export default class Doctor extends BaseCommand {
     try {
       ;({ registry } = await this.app.import('#start/modules'))
     } catch {}
+    if (registry) {
+      const roles = await db.from('roles').select('name')
+      findings.push(
+        diagnoseWorkflowRoles(
+          registry.workflows(),
+          roles.map((role) => String(role.name))
+        )
+      )
+    }
     if (registry)
       findings.push(
         diagnoseResourceSnapshots(sources, (name) => {

@@ -7,7 +7,9 @@ import {
   diagnoseResourceSnapshots,
   diagnoseUi,
   diagnoseUploads,
+  diagnoseWorkflowRoles,
 } from '../src/commands/doctor.js'
+import { defineWorkflow } from '../src/workflows/define_workflow.js'
 import { generateResource } from '../src/commands/generator.js'
 import { digest } from '../src/commands/agent_assets.js'
 import { KIT_VERSION } from '../src/version.js'
@@ -262,5 +264,35 @@ test.group('Doctor resource migration snapshots', () => {
     assert.equal(diagnoseResourceSnapshots(pending, () => undefined).status, 'pass')
     const manual = [{ file, source: 'await createResourceTable(db, resource)' }]
     assert.equal(diagnoseResourceSnapshots(manual, () => filled).status, 'pass')
+  })
+})
+
+test.group('Doctor workflow role references', () => {
+  test('lists workflow steps whose role name matches no role', ({ assert }) => {
+    const flow = defineWorkflow({
+      name: 'release_approval',
+      version: 2,
+      resource: 'release',
+      label: 'x',
+      start: 'review',
+      steps: {
+        review: {
+          type: 'approval',
+          label: 'مراجعة',
+          assignees: { role: 'مدير مشروع' },
+          approve: 'tell',
+          reject: 'done',
+        },
+        tell: { type: 'notify', to: { role: 'المطورون' }, next: 'done' },
+        done: { type: 'end', outcome: 'completed' },
+      },
+    })
+    const ok = diagnoseWorkflowRoles([flow], ['مدير مشروع', 'المطورون'])
+    assert.equal(ok.status, 'pass')
+    // An administrator renamed the role in the roles screen (issue #25).
+    const renamed = diagnoseWorkflowRoles([flow], ['مدير المشروع', 'المطورون'])
+    assert.equal(renamed.status, 'warn')
+    assert.include(renamed.message, 'release_approval@2.review → "مدير مشروع"')
+    assert.notInclude(renamed.message, 'tell')
   })
 })
