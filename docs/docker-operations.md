@@ -18,6 +18,8 @@ The Dockerfile installs the pinned workspace lockfile before copying application
 
 Environment files, local work artifacts and browser inspection artifacts are excluded from the build context. Runtime dependencies include PostgreSQL 17 client tools and the AWS CLI. The application, worker and scheduler run as `node`; the backup service retains its dedicated volume access.
 
+Serve the application over HTTPS with HTTP/2. The bundled Caddy proxy does this by default. Each workspace tab keeps one realtime notification stream open, and browsers allow only six HTTP/1.1 connections per host, so with HTTP/1.1 a seventh visible tab waits for a free connection. Tabs close their stream after ten seconds in the background and reopen it when shown again, but a proxy placed in front of the application must not downgrade to HTTP/1.1. The development server uses HTTP/1.1; keep fewer than seven tabs open there.
+
 ## Backup and recovery
 
 `deploy/backup.sh` invokes the same `backup:create` command exercised by the source-S3 acceptance test. `BACKUP_S3_PREFIX` optionally selects a deployment or acceptance-test namespace, under `adula/`, without a trailing slash; its default is `adula`. The final object prefix is `<prefix>/<UTC timestamp>/`. Use distinct prefixes for independent deployments sharing a bucket.

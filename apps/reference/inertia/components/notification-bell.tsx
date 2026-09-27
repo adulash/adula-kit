@@ -5,6 +5,7 @@ import { Transmit } from '@adonisjs/transmit-client'
 import { Bell } from 'lucide-react'
 import { toast } from 'sonner'
 
+const HIDDEN_GRACE_MS = 10_000
 let client: Transmit | undefined
 function realtime() {
   // One shared stream per tab. Subscriptions are POSTs, so they carry the CSRF token.
@@ -30,24 +31,56 @@ export function NotificationBell() {
   const userId = page.props.user?.id
   useEffect(() => {
     if (!userId) return
-    const subscription = realtime().subscription(`notifications/${userId}`)
-    let active = true
-    subscription
-      .create()
-      .then(() => {
-        if (!active) void subscription.delete()
+    let stopStream: (() => void) | undefined
+    const open = () => {
+      if (stopStream) return
+      const transmit = realtime()
+      const subscription = transmit.subscription(`notifications/${userId}`)
+      let active = true
+      subscription
+        .create()
+        .then(() => {
+          if (!active) void subscription.delete()
+        })
+        .catch(() => {})
+      const stop = subscription.onMessage(() => {
+        router.reload({ only: ['unreadNotifications'] })
+        toast('وصلك إشعار جديد', {
+          action: { label: 'عرض', onClick: () => router.visit('/notifications') },
+        })
       })
-      .catch(() => {})
-    const stop = subscription.onMessage(() => {
-      router.reload({ only: ['unreadNotifications'] })
-      toast('وصلك إشعار جديد', {
-        action: { label: 'عرض', onClick: () => router.visit('/notifications') },
-      })
-    })
+      stopStream = () => {
+        active = false
+        stop()
+        void subscription.delete().catch(() => {})
+      }
+    }
+    const close = () => {
+      stopStream?.()
+      stopStream = undefined
+      // Each open stream holds one of the browser's six HTTP/1.1 connections to this host (#36).
+      client?.close()
+      client = undefined
+    }
+    let hiddenTimer: ReturnType<typeof setTimeout> | undefined
+    const onVisibility = () => {
+      clearTimeout(hiddenTimer)
+      if (document.visibilityState === 'hidden') {
+        // A short grace period avoids reconnecting on every quick tab switch.
+        hiddenTimer = setTimeout(close, HIDDEN_GRACE_MS)
+      } else if (!stopStream) {
+        open()
+        // Catch up on notifications that arrived while the stream was closed.
+        router.reload({ only: ['unreadNotifications'] })
+      }
+    }
+    if (document.visibilityState !== 'hidden') open()
+    document.addEventListener('visibilitychange', onVisibility)
     return () => {
-      active = false
-      stop()
-      void subscription.delete().catch(() => {})
+      clearTimeout(hiddenTimer)
+      document.removeEventListener('visibilitychange', onVisibility)
+      stopStream?.()
+      stopStream = undefined
     }
   }, [userId])
   if (!page.props.user) return null
