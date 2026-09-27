@@ -51,6 +51,12 @@ An optional identity JSON file contains `primaryColor` (six-digit hex), `logo`
 Known identity is applied immediately. Missing identity remains explicitly pending
 in `docs/design-identity.md`; no official branding is invented.
 
+Identity lives in the project-owned `inertia/css/brand.css`, which loads after the
+kit theme. It can override these `:root` tokens: `--background`, `--foreground`,
+`--card`, `--primary`, `--primary-foreground`, `--secondary`, `--muted-foreground`,
+`--accent`, `--border`, `--destructive`, `--ring`, `--radius` and `--brand-font`
+(a font list placed before `sans-serif`; the project loads the font itself).
+
 Terminal prompts and errors use English so they remain readable in terminals
 without Arabic shaping. The application stays Arabic. Installation shows six real
 stages, with color and a spinner in interactive terminals. `NO_COLOR=1`, redirected

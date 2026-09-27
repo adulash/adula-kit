@@ -331,6 +331,17 @@ try {
       ),
       '#14532d'
     )
+    // The brand color must reach compiled utilities, not only the variable (issue #23).
+    assert.equal(
+      await page.evaluate(() => {
+        const probe = document.createElement('span')
+        probe.className = 'text-destructive'
+        probe.style.setProperty('--destructive', '#14532d')
+        document.body.append(probe)
+        return getComputedStyle(probe).color
+      }),
+      'rgb(20, 83, 45)'
+    )
     const response = await page.goto(`${appEnv.APP_URL}/admin/users`)
     assert.equal(response.status(), 200)
     await page

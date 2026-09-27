@@ -190,6 +190,12 @@ test('identity is validated and contrast tokens follow supplied colors', async (
   await assert.rejects(readIdentity(join(root, 'extra.json'), 'Company'), /only/)
   assert.match(brandCss({ primaryColor: '#ffffff' }), /--primary-foreground: #000000/)
   assert.match(brandCss({ primaryColor: '#000000' }), /--primary-foreground: #ffffff/)
+  // Identity reaches the inline theme only through its variables (issue #23).
+  assert.match(brandCss({ primaryColor: '#3949ab' }), /--ring: #3949ab;/)
+  assert.equal(
+    brandCss({ fontFamily: 'IBM Plex Sans Arabic' }).trim().split('\n').at(-1),
+    ':root { --brand-font: "IBM Plex Sans Arabic", "Noto Sans Arabic"; }'
+  )
 })
 
 test('child commands cannot inherit a caller database or test mode', () => {

@@ -7,7 +7,7 @@
 @source "../";
 
 @theme inline {
-  --font-sans: 'Noto Sans Arabic', sans-serif;
+  --font-sans: var(--brand-font, 'Noto Sans Arabic'), sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -15,28 +15,32 @@
   --color-popover: var(--card);
   --color-popover-foreground: var(--foreground);
   --color-primary: var(--primary);
-  --color-primary-foreground: #ffffff;
+  --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--foreground);
   --color-muted: var(--secondary);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--primary);
-  --color-destructive: #b64239;
+  --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--border);
-  --color-ring: #659981;
+  --color-ring: var(--ring);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Identity tokens: override any of these (and --brand-font) in the project-owned brand.css. */
 :root {
   --background: #f4f6f2;
   --foreground: #1c3028;
   --card: #ffffff;
   --primary: #185640;
+  --primary-foreground: #ffffff;
+  --destructive: #b64239;
+  --ring: #659981;
   --secondary: #edf1eb;
   --muted-foreground: #65766b;
   --accent: #e5eee5;

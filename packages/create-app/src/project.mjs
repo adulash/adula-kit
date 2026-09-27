@@ -181,7 +181,7 @@ export function brandCss(identity) {
     css += `:root, .dark { --primary: ${identity.primaryColor}; --primary-foreground: ${foreground}; --ring: ${identity.primaryColor}; }\n`
   }
   if (identity.fontFamily)
-    css += `@theme { --font-sans: "${identity.fontFamily}", "Noto Sans Arabic", sans-serif; }\n`
+    css += `:root { --brand-font: "${identity.fontFamily}", "Noto Sans Arabic"; }\n`
   return css
 }
 
