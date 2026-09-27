@@ -16,7 +16,7 @@ export default class Resource extends BaseCommand {
     const files = await generateResource(fileURLToPath(this.app.appRoot), this.name, this.module)
     files.forEach((file) => this.logger.success(file))
     this.logger.info(
-      'Set bilingual labels, fill the resource definition, migrate, and run the generated security contract.'
+      'Set bilingual labels and fill the resource definition. The generated migration embeds the definition as scaffolded: copy your fields into it (and into the model, factory and contract fixture) before migration:run. adula:doctor reports a pending migration that differs. Then run the generated security contract.'
     )
   }
 }
