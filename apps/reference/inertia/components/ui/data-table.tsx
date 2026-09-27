@@ -1,4 +1,4 @@
-import { useRef, useState, type ComponentRef, type ReactNode } from 'react'
+import { useId, useRef, useState, type ComponentRef, type ReactNode } from 'react'
 import { InfiniteScroll, router, usePage } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
 import { tableFeatures, useTable } from '@tanstack/react-table'
@@ -8,6 +8,8 @@ import {
   ArrowDown,
   ArrowDownUp,
   ArrowUp,
+  Check,
+  ChevronsUpDown,
   Download,
   Inbox,
   Loader2,
@@ -31,7 +33,16 @@ import { useUiPreferences } from '~/components/ui/ui-preferences'
 import { Can } from '~/components/ui/can'
 import { Input } from '~/components/ui/input'
 import { ResourceActions } from '~/components/ui/resource-actions'
-import { FieldControl } from '~/components/ui/resource-field'
+import { FieldControl, ResourceSelect } from '~/components/ui/resource-field'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '~/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '~/components/ui/popover'
 import {
   csvCell,
   displayValue,
@@ -243,6 +254,7 @@ export function DataTable({
               field={field}
               value={query.get(`filters[${field.key}]`) ?? ''}
               options={lookups[field.key]}
+              related={related[field.key]}
               onApply={(value) => navigate({ [`filters[${field.key}]`]: value })}
             />
           ))}
@@ -638,29 +650,26 @@ function Filter({
   field,
   value,
   options,
+  related,
   onApply,
 }: {
   field: ResourceField
   value: string
   options?: Option[]
+  related?: SerializedRecord[]
   onApply: (value: string | undefined) => void
 }): ReactNode {
   const [draft, setDraft] = useState(value)
   const id = `filter-${field.key}`
   const select = (choices: Option[]) => (
-    <select
+    <ResourceSelect
       id={id}
-      className="h-9 rounded-md border border-input bg-white px-3 text-xs"
+      className="h-9 w-44 text-xs"
       value={value}
-      onChange={(event) => onApply(event.target.value || undefined)}
-    >
-      <option value="">الكل</option>
-      {choices.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
+      placeholder="الكل"
+      options={choices}
+      onChange={(next) => onApply(next || undefined)}
+    />
   )
   return (
     <label htmlFor={id} className="flex flex-col gap-1 text-xs text-muted-foreground">
@@ -673,7 +682,7 @@ function Filter({
           { value: 'false', label: 'لا' },
         ])
       ) : field.type === 'belongsTo' ? (
-        <RelationFilter field={field} value={value} onApply={onApply} />
+        <RelationFilter field={field} value={value} related={related} onApply={onApply} />
       ) : field.type === 'date' ? (
         <div className="w-56">
           <FieldControl
@@ -715,21 +724,31 @@ function Filter({
 function RelationFilter({
   field,
   value,
+  related = [],
   onApply,
 }: {
   field: ResourceField & { type: 'belongsTo' }
   value: string
+  /** Related rows already loaded with the list; they label the active filter after a reload. */
+  related?: SerializedRecord[]
   onApply: (value: string | undefined) => void
 }) {
+  const [open, setOpen] = useState(false)
   const [term, setTerm] = useState('')
   const [choices, setChoices] = useState<Option[]>([])
+  const [selected, setSelected] = useState<Option | null>(null)
   const [busy, setBusy] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const listId = useId()
   const load = async (search: string) => {
     setBusy(true)
     try {
       const response = await axios.get<ResourceList>(`/resources/${field.resource}`, {
-        params: { limit: 50, estimate: 'false', ...(search ? { search } : {}) },
+        params: {
+          limit: 50,
+          estimate: 'false',
+          ...(search ? { search } : {}),
+        },
         headers: { Accept: 'application/json' },
       })
       setChoices(
@@ -744,39 +763,71 @@ function RelationFilter({
       setBusy(false)
     }
   }
+  const loaded = related.find((row) => String(row.id) === value)
+  const current =
+    choices.find((choice) => choice.value === value) ??
+    (selected?.value === value ? selected : null) ??
+    (loaded ? { value, label: relationLabel(loaded, value) } : null)
+  const choose = (option: Option | null) => {
+    setSelected(option)
+    setOpen(false)
+    onApply(option?.value)
+  }
   return (
-    <span className="flex items-center gap-2">
-      <Input
-        id={`filter-${field.key}`}
-        className="h-9 w-44 text-xs"
-        value={term}
-        placeholder={value ? `#${value} · ابحث للتغيير` : 'ابحث في السجلات المرتبطة'}
-        onChange={(event) => {
-          setTerm(event.target.value)
-          clearTimeout(timer.current)
-          timer.current = setTimeout(() => void load(event.target.value), 300)
-        }}
-        onFocus={() => {
-          if (!choices.length) void load('')
-        }}
-      />
-      <select
-        aria-label={`اختيار ${field.label.ar}`}
-        className="h-9 max-w-44 rounded-md border border-input bg-white px-2 text-xs"
-        value={value}
-        disabled={busy && !choices.length}
-        onChange={(event) => onApply(event.target.value || undefined)}
-      >
-        <option value="">{busy ? 'جارٍ البحث...' : 'الكل'}</option>
-        {value && !choices.some((choice) => choice.value === value) && (
-          <option value={value}>#{value}</option>
-        )}
-        {choices.map((choice) => (
-          <option key={choice.value} value={choice.value}>
-            {choice.label}
-          </option>
-        ))}
-      </select>
-    </span>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (next && !choices.length) void load(term)
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button
+          id={`filter-${field.key}`}
+          type="button"
+          role="combobox"
+          variant="outline"
+          aria-expanded={open}
+          aria-controls={listId}
+          className={`h-9 w-44 justify-between text-xs font-normal ${value ? '' : 'text-muted-foreground'}`}
+        >
+          <span className="truncate">{value ? (current?.label ?? `#${value}`) : 'الكل'}</span>
+          <ChevronsUpDown className="opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="ابحث في السجلات المرتبطة"
+            aria-label={`البحث في ${field.label.ar}`}
+            value={term}
+            onValueChange={(next) => {
+              setTerm(next)
+              clearTimeout(timer.current)
+              timer.current = setTimeout(() => void load(next), 300)
+            }}
+          />
+          <CommandList id={listId}>
+            <CommandEmpty>{busy ? 'جارٍ البحث...' : 'لا توجد سجلات مطابقة'}</CommandEmpty>
+            <CommandGroup>
+              <CommandItem value="__all__" onSelect={() => choose(null)}>
+                <Check className={value ? 'opacity-0' : 'opacity-100'} />
+                الكل
+              </CommandItem>
+              {choices.map((choice) => (
+                <CommandItem
+                  key={choice.value}
+                  value={choice.value}
+                  onSelect={() => choose(choice)}
+                >
+                  <Check className={choice.value === value ? 'opacity-100' : 'opacity-0'} />
+                  {choice.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   )
 }

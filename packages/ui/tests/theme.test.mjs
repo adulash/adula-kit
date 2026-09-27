@@ -15,3 +15,12 @@ test('inline theme values are variables that the project brand.css can override'
   for (const token of new Set([...inline.matchAll(/var\(--([a-z-]+)\)/g)].map((m) => m[1])))
     assert.match(defaults, new RegExp(`--${token}: `), `missing default for --${token}`)
 })
+
+test('registry components compose the registry Select instead of native lists', async () => {
+  // A native list opens in OS styling, ignores the theme and RTL layout (issue #39).
+  const { readdir } = await import('node:fs/promises')
+  const dir = new URL('../registry/ui/', import.meta.url)
+  for (const name of await readdir(dir))
+    if (name.endsWith('.tsx'))
+      assert.doesNotMatch(await readFile(new URL(name, dir), 'utf8'), /<select[\s>]/, name)
+})

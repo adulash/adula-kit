@@ -289,3 +289,12 @@ test('extra test arguments reach the test runner instead of a chained formatter'
   assert.deepEqual(run?.[1].slice(-2), ['test:app', '--files=tests/functional/a.spec.ts'])
 })
 
+test('starter pages compose the registry Select instead of native lists', async () => {
+  const template = JSON.parse(
+    await readFile(new URL('../build/template.json', import.meta.url), 'utf8')
+  )
+  const pages = Object.entries(template.files).filter(([path]) => path.endsWith('.tsx'))
+  assert.ok(pages.length > 10)
+  for (const [path, source] of pages) assert.doesNotMatch(source, /<select[\s>]/, path)
+})
+

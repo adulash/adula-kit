@@ -8,6 +8,7 @@ import { AdminHeader, useDateTimeFormatter } from '~/components/admin-nav'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'
 import { Label } from '~/components/ui/label'
+import { ResourceSelect } from '~/components/ui/resource-field'
 import {
   Table,
   TableBody,
@@ -23,7 +24,6 @@ type Props = {
   facets: { resources: string[]; actions: string[] }
   filters: Filters
 }
-const select = 'h-9 w-full rounded-md border border-input bg-white px-2 text-sm'
 
 export default function ActivityIndex({ activity, facets, filters }: Props) {
   const formatDateTime = useDateTimeFormatter()
@@ -65,35 +65,25 @@ export default function ActivityIndex({ activity, facets, filters }: Props) {
       >
         <div className="space-y-1">
           <Label htmlFor="filter-resource">الكيان</Label>
-          <select
+          <ResourceSelect
             id="filter-resource"
-            className={select}
+            className="h-9 w-full"
             value={draft.resource}
-            onChange={(event) => set('resource', event.target.value)}
-          >
-            <option value="">الكل</option>
-            {facets.resources.map((resource) => (
-              <option key={resource} value={resource}>
-                {resource}
-              </option>
-            ))}
-          </select>
+            placeholder="الكل"
+            options={facets.resources.map((resource) => ({ value: resource, label: resource }))}
+            onChange={(value) => set('resource', value)}
+          />
         </div>
         <div className="space-y-1">
           <Label htmlFor="filter-action">الإجراء</Label>
-          <select
+          <ResourceSelect
             id="filter-action"
-            className={select}
+            className="h-9 w-full"
             value={draft.action}
-            onChange={(event) => set('action', event.target.value)}
-          >
-            <option value="">الكل</option>
-            {facets.actions.map((action) => (
-              <option key={action} value={action}>
-                {action}
-              </option>
-            ))}
-          </select>
+            placeholder="الكل"
+            options={facets.actions.map((action) => ({ value: action, label: action }))}
+            onChange={(value) => set('action', value)}
+          />
         </div>
         <div className="space-y-1">
           <Label htmlFor="filter-actor">معرّف المنفّذ</Label>

@@ -82,6 +82,7 @@ export function ResourceSelect({
   placeholder = 'اختر قيمة',
   required,
   disabled,
+  className = 'h-10 w-full',
   ...trigger
 }: Pick<
   ComponentProps<typeof SelectTrigger>,
@@ -93,6 +94,8 @@ export function ResourceSelect({
   placeholder?: string
   required?: boolean
   disabled?: boolean
+  /** Trigger size and width; forms keep the default, toolbars pass a compact size. */
+  className?: string
 }) {
   // Encode values so an empty selection cannot collide with a business lookup key.
   return (
@@ -102,7 +105,7 @@ export function ResourceSelect({
       required={required}
       disabled={disabled}
     >
-      <SelectTrigger {...trigger} className="h-10 w-full" aria-required={required}>
+      <SelectTrigger {...trigger} className={className} aria-required={required}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
