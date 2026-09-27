@@ -32,6 +32,10 @@
       "kind": "TypeAliasDeclaration",
       "type": "{ id: number; orgPaths: string[]; permissionLevel: number; rules: Rule[]; impersonatorId?: number | undefined; }"
     },
+    "ACTOR_ID": {
+      "kind": "VariableDeclaration",
+      "type": "\"$actor.id\""
+    },
     "ActorLoader": {
       "kind": "TypeAliasDeclaration",
       "type": "{ load(id: number): Promise<Actor>; }"
@@ -48,6 +52,14 @@
       "kind": "ClassDeclaration",
       "type": "typeof AdonisJobs"
     },
+    "AggregateOptions": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ groupBy?: string[] | undefined; count?: boolean | undefined; sum?: string[] | undefined; filters?: Record<string, unknown> | undefined; where?: Conditions | undefined; search?: string | undefined; }"
+    },
+    "AggregateRow": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ group: Record<string, JsonValue>; count?: number | undefined; sum?: Record<string, string | null> | undefined; }"
+    },
     "ALL_SUBJECT_LABEL": {
       "kind": "VariableDeclaration",
       "type": "Label"
@@ -58,11 +70,11 @@
     },
     "Assignment": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ id: number; resource: string; resourceLabel: string; recordId: number; assigneeId: number; assigneeName: string | null; assignedBy: number | null; assignedByName: string | null; kind: string; title: string; note: string | null; dueOn: string | null; status: AssignmentStatus; outcome: string | null; createdAt: string; completedAt: string | null; workflowRunId: string | null; canComplete: boolean; canCancel: boolean; }"
+      "type": "{ id: number; resource: string; resourceLabel: string; recordId: number; recordTitle: string; assigneeId: number; assigneeName: string | null; assignedBy: number | null; assignedByName: string | null; kind: string; title: string; note: string | null; dueOn: string | null; status: AssignmentStatus; outcome: string | null; createdAt: string; completedAt: string | null; workflowRunId: string | null; canComplete: boolean; canCancel: boolean; canDecide: boolean; }"
     },
     "AssignmentPage": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ data: Assignment[]; nextCursor: string | null; open: number; }"
+      "type": "{ data: Assignment[]; nextCursor: string | null; open: number; approvals: number; }"
     },
     "Assignments": {
       "kind": "ClassDeclaration",
@@ -119,6 +131,10 @@
     "CalendarSystem": {
       "kind": "TypeAliasDeclaration",
       "type": "\"gregory\" | \"islamic-umalqura\""
+    },
+    "canQueryField": {
+      "kind": "FunctionDeclaration",
+      "type": "(resource: Resource, actor: Actor, ability: KitAbility, key: string) => boolean"
     },
     "canRecord": {
       "kind": "FunctionDeclaration",
@@ -180,17 +196,29 @@
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>) => Promise<void>"
     },
+    "createInboundWebhooksSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
     "createMessagingSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
+    "createNotificationTargetsSchema": {
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>) => Promise<void>"
     },
     "createResourceController": {
       "kind": "FunctionDeclaration",
-      "type": "(resolveRuntime: (ctx: HttpContext) => Promise<ResourceRuntime>, renderList?: ((ctx: HttpContext, resource: Resource, result: { data: SerializedRecord[]; permissions: { [k: string]: Partial<Record<Action, boolean>>; }; meta: { limit: number; estimatedTotal: number | undefined; nextCursor: string | null; }; related: Record<string, SerializedRecord[]>; }) => unknown) | undefined, renderForm?: ((ctx: HttpContext, resource: Resource, editor: { mode: string; name: string; label: string; fields: ({ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"belongsTo\"; resource: string; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"lookup\"; group: string; key: string; })[]; inline: Record<string, { rows: SerializedRecord[]; hasMore: boolean; canCreate: boolean; permissions: Record<string, { update: boolean; delete: boolean; }>; fields: ResourceField[]; createFields: string[]; updateFields: Record<string, string[]>; }>; options: Record<string, { value: string; label: string; }[]>; relationSearch: Record<string, boolean>; orgUnits: { value: string; label: string; }[]; scoped: boolean; record: SerializedRecord | null; }) => unknown) | undefined, renderShow?: ((ctx: HttpContext, resource: Resource, result: { data: SerializedRecord; permissions: Partial<Record<Action, boolean>>; related: Record<string, SerializedRecord[]>; }) => unknown) | undefined) => new () => ResourceController"
+      "type": "(resolveRuntime: (ctx: HttpContext) => Promise<ResourceRuntime>, renderList?: ((ctx: HttpContext, resource: Resource, result: { data: SerializedRecord[]; permissions: { [k: string]: Partial<Record<Action, boolean>>; }; meta: { limit: number; estimatedTotal: number | undefined; nextCursor: string | null; }; related: Record<string, SerializedRecord[]>; }) => unknown) | undefined, renderForm?: ((ctx: HttpContext, resource: Resource, editor: { mode: string; name: string; label: string; recordLabel: string | null; fields: ({ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"belongsTo\"; resource: string; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"user\"; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"lookup\"; group: string; key: string; })[]; inline: Record<string, { rows: SerializedRecord[]; hasMore: boolean; canCreate: boolean; permissions: Record<string, { update: boolean; delete: boolean; }>; fields: ResourceField[]; createFields: string[]; updateFields: Record<string, string[]>; }>; options: Record<string, { value: string; label: string; }[]>; relationSearch: Record<string, boolean>; orgUnits: { value: string; label: string; }[]; scoped: boolean; record: SerializedRecord | null; }) => unknown) | undefined, renderShow?: ((ctx: HttpContext, resource: Resource, result: { data: SerializedRecord; permissions: Partial<Record<Action, boolean>>; related: Record<string, SerializedRecord[]>; }) => unknown) | undefined) => new () => ResourceController"
     },
     "createResourceTable": {
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>, resource: Pick<Resource, \"fields\" | \"name\" | \"scoped\" | \"submittable\" | \"version\" | \"customFields\">) => Promise<void>"
+    },
+    "createRoleKeysSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
     },
     "createSavedViewsSchema": {
       "kind": "FunctionDeclaration",
@@ -218,7 +246,7 @@
     },
     "defineResource": {
       "kind": "FunctionDeclaration",
-      "type": "<const F extends Record<string, Field>>(input: ResourceInput<F>) => Omit<Resource, \"fields\" | \"list\" | \"form\" | \"show\" | \"hidden\" | \"serialize\"> & { fields: F; list: readonly (keyof F & string)[]; form: readonly (keyof F & string)[]; show: readonly (keyof F & string)[]; hidden?: readonly (keyof F & string)[] | undefined; serialize?: readonly (keyof F & string)[] | undefined; } & Resource"
+      "type": "<const F extends Record<string, Field>>(input: ResourceInput<F>) => Omit<Resource, \"fields\" | \"list\" | \"form\" | \"show\" | \"hidden\" | \"serialize\" | \"title\"> & { fields: F; title?: readonly (keyof F & string)[] | undefined; list: readonly (keyof F & string)[]; form: readonly (keyof F & string)[]; show: readonly (keyof F & string)[]; hidden?: readonly (keyof F & string)[] | undefined; serialize?: readonly (keyof F & string)[] | undefined; } & Resource"
     },
     "defineWorkflow": {
       "kind": "FunctionDeclaration",
@@ -242,7 +270,7 @@
     },
     "Field": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; } & ({ type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; } | { type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; } | { type: \"belongsTo\"; resource: string; } | { type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; } | { type: \"lookup\"; group: string; })"
+      "type": "{ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; } & ({ type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; } | { type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; } | { type: \"belongsTo\"; resource: string; } | { type: \"user\"; } | { type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; } | { type: \"lookup\"; group: string; })"
     },
     "FIELD_TYPES": {
       "kind": "VariableDeclaration",
@@ -316,6 +344,34 @@
       "kind": "TypeAliasDeclaration",
       "type": "{ key: string; label: string; type: string; required: boolean; }"
     },
+    "INBOUND_BODY_LIMIT": {
+      "kind": "VariableDeclaration",
+      "type": "number"
+    },
+    "InboundDelivery": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: string; deliveryId: string; event: string; eventName: string; dispatches: number; receivedAt: string; }"
+    },
+    "inboundEventName": {
+      "kind": "FunctionDeclaration",
+      "type": "(source: string, event: string) => string"
+    },
+    "InboundReceipt": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ delivery: string; event: string; duplicate: boolean; }"
+    },
+    "InboundSource": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; key: string; name: string; algorithm: \"sha256\" | \"sha512\"; signatureHeader: string; signaturePrefix: string; eventHeader: string; deliveryHeader: string; active: boolean; createdAt: string; lastReceivedAt: string | null; path: string; }"
+    },
+    "InboundSourceInput": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key?: unknown; name?: unknown; algorithm?: unknown; signatureHeader?: unknown; signaturePrefix?: unknown; eventHeader?: unknown; deliveryHeader?: unknown; active?: unknown; }"
+    },
+    "InboundWebhooks": {
+      "kind": "ClassDeclaration",
+      "type": "typeof InboundWebhooks"
+    },
     "InitialSetup": {
       "kind": "ClassDeclaration",
       "type": "typeof InitialSetup"
@@ -376,6 +432,10 @@
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>, onSignal: (signal: NotificationSignal) => void, options?: { retryMs?: number | undefined; onError?: ((error: unknown) => void) | undefined; } | undefined) => () => Promise<void>"
     },
+    "ListOptions": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ limit?: number | undefined; cursor?: string | undefined; search?: string | undefined; sort?: string | undefined; direction?: \"asc\" | \"desc\" | undefined; filters?: Record<string, unknown> | undefined; tag?: string | undefined; estimate?: boolean | undefined; }"
+    },
     "loadAttachments": {
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>, ids: readonly number[]) => Promise<Map<number, AttachmentSummary>>"
@@ -394,7 +454,7 @@
     },
     "MailSender": {
       "kind": "TypeAliasDeclaration",
-      "type": "(message: { to: string; name: string | null; subject: string; text: string; }) => Promise<void>"
+      "type": "(message: { to: string; name: string | null; subject: string; text: string; target?: NotificationTarget | null | undefined; }) => Promise<void>"
     },
     "MailTestState": {
       "kind": "TypeAliasDeclaration",
@@ -402,7 +462,7 @@
     },
     "MatrixField": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ key: string; label: Label; type: string; conditionable: boolean; }"
+      "type": "{ key: string; label: Label; type: string; conditionable: boolean; actor?: boolean | undefined; }"
     },
     "MatrixSubject": {
       "kind": "TypeAliasDeclaration",
@@ -426,7 +486,19 @@
     },
     "Module": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ name: string; reference?: boolean | undefined; label: Label; dependsOn: readonly string[]; resources: readonly Resource[]; workflows?: readonly WorkflowDefinition[] | undefined; }"
+      "type": "{ name: string; reference?: boolean | undefined; label: Label; dependsOn: readonly string[]; resources: readonly Resource[]; workflows?: readonly WorkflowDefinition[] | undefined; lookups?: Readonly<Record<string, readonly ModuleLookup[]>> | undefined; defaultRoles?: readonly ModuleRole[] | undefined; }"
+    },
+    "ModuleLookup": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key: string; label: Label; sort?: number | undefined; }"
+    },
+    "ModuleRole": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key: string; name: string; permissionLevel?: number | undefined; rules: readonly { subject: string; action: string; inverted?: boolean | undefined; conditions?: Conditions | null | undefined; fields?: string[] | null | undefined; }[]; }"
+    },
+    "ModuleSeedResult": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ lookups: number; created: string[]; adopted: string[]; kept: string[]; }"
     },
     "moveOrgUnit": {
       "kind": "FunctionDeclaration",
@@ -438,7 +510,7 @@
     },
     "Notification": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ id: number; title: string; body: string; readAt: string | null; createdAt: string; }"
+      "type": "{ id: number; title: string; body: string; readAt: string | null; createdAt: string; target: { resource: string; recordId: number; href: string; } | null; }"
     },
     "NotificationPage": {
       "kind": "TypeAliasDeclaration",
@@ -452,13 +524,17 @@
       "kind": "TypeAliasDeclaration",
       "type": "{ userId: number; id: number; }"
     },
+    "NotificationTarget": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ resource: string; recordId: number; }"
+    },
     "notify": {
       "kind": "FunctionDeclaration",
-      "type": "(db: Knex<any, any[]>, userId: number, title: string, body: string) => Promise<void>"
+      "type": "(db: Knex<any, any[]>, userId: number, title: string, body: string, target?: NotificationTarget | null | undefined) => Promise<void>"
     },
     "notifyWithTemplate": {
       "kind": "FunctionDeclaration",
-      "type": "(db: Knex<any, any[]>, userId: number, key: string, variables: Record<string, unknown>, templates?: MessageTemplates | undefined) => Promise<void>"
+      "type": "(db: Knex<any, any[]>, userId: number, key: string, variables: Record<string, unknown>, templates?: MessageTemplates | undefined, target?: NotificationTarget | null | undefined) => Promise<void>"
     },
     "openApiDocument": {
       "kind": "FunctionDeclaration",
@@ -556,9 +632,13 @@
       "kind": "FunctionDeclaration",
       "type": "(text: string, variables: Record<string, unknown>) => string"
     },
+    "resolveActorConditions": {
+      "kind": "FunctionDeclaration",
+      "type": "(conditions: Conditions | undefined, actorId: number) => Conditions | undefined"
+    },
     "Resource": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ name: string; label: Label; model: LucidModel; scoped: boolean; submittable?: boolean | undefined; version?: boolean | undefined; customFields?: boolean | undefined; fields: Record<string, Field>; list: readonly string[]; form: readonly string[]; show: readonly string[]; serialize?: readonly string[] | undefined; hidden?: readonly string[] | undefined; actions: readonly Action[]; validator: { validate(data: unknown): Promise<RecordData>; }; hooks?: { beforeSave?: ((record: RecordData, context: HookContext) => Promise<void>) | undefined; afterSave?: ((record: RecordData, context: HookContext) => Promise<void>) | undefined; } | undefined; }"
+      "type": "{ name: string; label: Label; recordLabel?: Label | undefined; createLabel?: Label | undefined; model: LucidModel; scoped: boolean; submittable?: boolean | undefined; version?: boolean | undefined; customFields?: boolean | undefined; fields: Record<string, Field>; list: readonly string[]; form: readonly string[]; show: readonly string[]; title?: readonly string[] | undefined; serialize?: readonly string[] | undefined; hidden?: readonly string[] | undefined; actions: readonly Action[]; validator: { validate(data: unknown): Promise<RecordData>; }; hooks?: { beforeSave?: ((record: RecordData, context: HookContext) => Promise<void>) | undefined; afterSave?: ((record: RecordData, context: HookContext) => Promise<void>) | undefined; } | undefined; }"
     },
     "ResourceActivity": {
       "kind": "TypeAliasDeclaration",
@@ -570,11 +650,11 @@
     },
     "ResourceDescription": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ name: string; label: string; fields: ResourceField[]; list: string[]; show: string[]; searchable: boolean; canCreate: boolean; scoped: boolean; submittable: boolean; }"
+      "type": "{ name: string; label: string; recordLabel: string | null; createLabel: string | null; fields: ResourceField[]; list: string[]; show: string[]; searchable: boolean; canCreate: boolean; scoped: boolean; submittable: boolean; }"
     },
     "ResourceEditor": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ mode: string; name: string; label: string; fields: ({ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"belongsTo\"; resource: string; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"lookup\"; group: string; key: string; })[]; inline: Record<string, { rows: SerializedRecord[]; hasMore: boolean; canCreate: boolean; permissions: Record<string, { update: boolean; delete: boolean; }>; fields: ResourceField[]; createFields: string[]; updateFields: Record<string, string[]>; }>; options: Record<string, { value: string; label: string; }[]>; relationSearch: Record<string, boolean>; orgUnits: { value: string; label: string; }[]; scoped: boolean; record: SerializedRecord | null; }"
+      "type": "{ mode: string; name: string; label: string; recordLabel: string | null; fields: ({ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"belongsTo\"; resource: string; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"user\"; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"lookup\"; group: string; key: string; })[]; inline: Record<string, { rows: SerializedRecord[]; hasMore: boolean; canCreate: boolean; permissions: Record<string, { update: boolean; delete: boolean; }>; fields: ResourceField[]; createFields: string[]; updateFields: Record<string, string[]>; }>; options: Record<string, { value: string; label: string; }[]>; relationSearch: Record<string, boolean>; orgUnits: { value: string; label: string; }[]; scoped: boolean; record: SerializedRecord | null; }"
     },
     "ResourceField": {
       "kind": "TypeAliasDeclaration",
@@ -582,7 +662,7 @@
     },
     "ResourceInput": {
       "kind": "TypeAliasDeclaration",
-      "type": "Omit<Resource, \"fields\" | \"list\" | \"form\" | \"show\" | \"hidden\" | \"serialize\"> & { fields: F; list: readonly (keyof F & string)[]; form: readonly (keyof F & string)[]; show: readonly (keyof F & string)[]; hidden?: readonly (keyof F & string)[] | undefined; serialize?: readonly (keyof F & string)[] | undefined; }"
+      "type": "Omit<Resource, \"fields\" | \"list\" | \"form\" | \"show\" | \"hidden\" | \"serialize\" | \"title\"> & { fields: F; title?: readonly (keyof F & string)[] | undefined; list: readonly (keyof F & string)[]; form: readonly (keyof F & string)[]; show: readonly (keyof F & string)[]; hidden?: readonly (keyof F & string)[] | undefined; serialize?: readonly (keyof F & string)[] | undefined; }"
     },
     "ResourceList": {
       "kind": "TypeAliasDeclaration",
@@ -594,7 +674,7 @@
     },
     "ResourceNavigation": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ name: string; label: string; href: string; module: string; }[]"
+      "type": "{ name: string; label: string; href: string; module: string; moduleLabel: string; }[]"
     },
     "ResourceRegistry": {
       "kind": "ClassDeclaration",
@@ -630,7 +710,7 @@
     },
     "RoleSummary": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ id: number; name: string; permissionLevel: number; rules: number; users: number; }"
+      "type": "{ id: number; key: string | null; name: string; permissionLevel: number; rules: number; users: number; }"
     },
     "Rule": {
       "kind": "TypeAliasDeclaration",
@@ -667,6 +747,10 @@
     "SecretBox": {
       "kind": "TypeAliasDeclaration",
       "type": "{ seal(value: string): string; open(value: string): string | null; }"
+    },
+    "seedModules": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, registry: ResourceRegistry, actorId: number) => Promise<ModuleSeedResult>"
     },
     "selectedFields": {
       "kind": "FunctionDeclaration",
@@ -706,7 +790,7 @@
     },
     "SettingScope": {
       "kind": "TypeAliasDeclaration",
-      "type": "\"system\" | \"org_unit\" | \"user\""
+      "type": "\"user\" | \"system\" | \"org_unit\""
     },
     "SetupCheck": {
       "kind": "TypeAliasDeclaration",
@@ -850,7 +934,7 @@
     },
     "WorkflowRun": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ id: string; resource: string; resourceLabel: string; recordId: number; definition: string; label: string; version: number; status: WorkflowRunStatus; step: string | null; stepLabel: string | null; outcome: string | null; attempts: number; lastError: string | null; wakeAt: string | null; createdAt: string; completedAt: string | null; history: { step: string | null; event: string; actorName: string | null; detail: { [key: string]: JsonValue; }; at: string; }[]; myApproval: { assignmentId: number; title: string; } | null; }"
+      "type": "{ id: string; resource: string; resourceLabel: string; recordId: number; recordTitle: string; definition: string; label: string; version: number; status: WorkflowRunStatus; step: string | null; stepLabel: string | null; outcome: string | null; attempts: number; lastError: string | null; wakeAt: string | null; createdAt: string; completedAt: string | null; history: { step: string | null; event: string; actorName: string | null; detail: { [key: string]: JsonValue; }; at: string; }[]; myApproval: { assignmentId: number; title: string; } | null; }"
     },
     "WorkflowRunStatus": {
       "kind": "TypeAliasDeclaration",
@@ -906,7 +990,7 @@
     },
     "Field": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; } & ({ type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; } | { type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; } | { type: \"belongsTo\"; resource: string; } | { type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; } | { type: \"lookup\"; group: string; })"
+      "type": "{ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; } & ({ type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; } | { type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; } | { type: \"belongsTo\"; resource: string; } | { type: \"user\"; } | { type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; } | { type: \"lookup\"; group: string; })"
     },
     "HookContext": {
       "kind": "TypeAliasDeclaration",
@@ -922,7 +1006,15 @@
     },
     "Module": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ name: string; reference?: boolean | undefined; label: Label; dependsOn: readonly string[]; resources: readonly Resource[]; workflows?: readonly WorkflowDefinition[] | undefined; }"
+      "type": "{ name: string; reference?: boolean | undefined; label: Label; dependsOn: readonly string[]; resources: readonly Resource[]; workflows?: readonly WorkflowDefinition[] | undefined; lookups?: Readonly<Record<string, readonly ModuleLookup[]>> | undefined; defaultRoles?: readonly ModuleRole[] | undefined; }"
+    },
+    "ModuleLookup": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key: string; label: Label; sort?: number | undefined; }"
+    },
+    "ModuleRole": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key: string; name: string; permissionLevel?: number | undefined; rules: readonly { subject: string; action: string; inverted?: boolean | undefined; conditions?: Conditions | null | undefined; fields?: string[] | null | undefined; }[]; }"
     },
     "RecordData": {
       "kind": "TypeAliasDeclaration",
@@ -930,11 +1022,11 @@
     },
     "Resource": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ name: string; label: Label; model: LucidModel; scoped: boolean; submittable?: boolean | undefined; version?: boolean | undefined; customFields?: boolean | undefined; fields: Record<string, Field>; list: readonly string[]; form: readonly string[]; show: readonly string[]; serialize?: readonly string[] | undefined; hidden?: readonly string[] | undefined; actions: readonly Action[]; validator: { validate(data: unknown): Promise<RecordData>; }; hooks?: { beforeSave?: ((record: RecordData, context: HookContext) => Promise<void>) | undefined; afterSave?: ((record: RecordData, context: HookContext) => Promise<void>) | undefined; } | undefined; }"
+      "type": "{ name: string; label: Label; recordLabel?: Label | undefined; createLabel?: Label | undefined; model: LucidModel; scoped: boolean; submittable?: boolean | undefined; version?: boolean | undefined; customFields?: boolean | undefined; fields: Record<string, Field>; list: readonly string[]; form: readonly string[]; show: readonly string[]; title?: readonly string[] | undefined; serialize?: readonly string[] | undefined; hidden?: readonly string[] | undefined; actions: readonly Action[]; validator: { validate(data: unknown): Promise<RecordData>; }; hooks?: { beforeSave?: ((record: RecordData, context: HookContext) => Promise<void>) | undefined; afterSave?: ((record: RecordData, context: HookContext) => Promise<void>) | undefined; } | undefined; }"
     },
     "ResourceInput": {
       "kind": "TypeAliasDeclaration",
-      "type": "Omit<Resource, \"fields\" | \"list\" | \"form\" | \"show\" | \"hidden\" | \"serialize\"> & { fields: F; list: readonly (keyof F & string)[]; form: readonly (keyof F & string)[]; show: readonly (keyof F & string)[]; hidden?: readonly (keyof F & string)[] | undefined; serialize?: readonly (keyof F & string)[] | undefined; }"
+      "type": "Omit<Resource, \"fields\" | \"list\" | \"form\" | \"show\" | \"hidden\" | \"serialize\" | \"title\"> & { fields: F; title?: readonly (keyof F & string)[] | undefined; list: readonly (keyof F & string)[]; form: readonly (keyof F & string)[]; show: readonly (keyof F & string)[]; hidden?: readonly (keyof F & string)[] | undefined; serialize?: readonly (keyof F & string)[] | undefined; }"
     },
     "Scalar": {
       "kind": "TypeAliasDeclaration",

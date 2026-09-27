@@ -1,5 +1,55 @@
 # Changelog
 
+## Unreleased (1.1.0 and 1.2.0 milestones)
+
+Minor release scope: new features with additive migrations only. No existing export
+was removed or renamed; `pnpm check:api` reports additions and widened types
+(new optional parameters and fields, new fields on returned objects, the `user`
+field type). Code that builds kit result objects itself, or switches exhaustively
+over `Field['type']`, needs the new members. Package versions and release evidence
+are unchanged until the owner prepares the release. Three kit migrations are added:
+`kit_notification_targets`, `kit_role_keys` and `kit_inbound_webhooks`. Copied UI
+files changed (`data-table`, `resource-field`, `resource-form`, `resource-page`,
+`resource-show`, `resource-surface`, `resource-value`, `record-workflows`); review
+them with `node ace adula:ui add all --preview`. Run `adula:install` after
+migrating to apply module defaults and the managed rules.
+
+1.1.0 milestone:
+
+* Generators: `node ace adula:resource:snapshot <name>` rewrites a pending generated
+  create-migration from the current resource definition (#20).
+* Roles: a stable, unique `roles.key`, set at creation or once later; workflow
+  `{ role }` recipients resolve by key, with the display name as a fallback, and
+  `workflows.roles` warns about name-only references (#25).
+* Modules: `Module.lookups` and `Module.defaultRoles`, applied idempotently by
+  `adula:install` (`seedModules`); existing rows and roles are never changed (#26).
+* Dashboards: `ResourceService.aggregate()` counts and totals records with list
+  authorization, refusing fields the actor may not query; `canQueryField` is exported;
+  `/api/v1/resources/<name>/aggregate` serves it (#27).
+* Fields: a `user` field type (users foreign key; active members of the record's unit
+  or its ancestors; `{ id, fullName }` only) with a searchable picker and filter (#28).
+* Authorization: `"$actor.id"` in role rule conditions on createdBy, updatedBy and user
+  fields, resolved per actor and bound as a parameter (#29).
+* Work: tasks and approvals name records by their business identifier
+  (`recordTitle`, resource `title` fields) (#32).
+* Resources: optional singular `recordLabel` and `createLabel` for the create button,
+  form titles and save messages (#37).
+* Notifications: an optional `{ resource, recordId }` target; notifications open their
+  record, and e-mails can link to it (#38).
+
+1.2.0 milestone:
+
+* Integrations: signed inbound webhooks (`InboundWebhooks`, `POST /webhooks/in/<key>`)
+  that raise `inbound.<key>.<event>` through the outbox, with a delivery log (#30).
+* UI: records open in a dialog over the mounted list (`openRecord`), saving an edit
+  shows the details in the same dialog, and a record's children and activity load in
+  one deferred request from one read (`ResourceService.details()`/`record()`) (#31).
+* Workspace: daily work first, module groups, one administration entry with
+  categories and a failure badge, and permission-aware links (#34).
+* My tasks: approvals and assigned tasks in one page with tabs, decided in place;
+  `/approvals` redirects there (#35).
+* Realtime: one notification stream per browser, shared by its tabs (#36).
+
 ## 1.0.1 — unreleased
 
 Patch release: fixes reported against 1.0.0, with no public API or schema change.
