@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type ComponentRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ComponentRef, type ReactNode } from 'react'
 import { InfiniteScroll, router, usePage } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
 import { tableFeatures, useTable } from '@tanstack/react-table'
@@ -33,6 +33,7 @@ import { useUiPreferences } from '~/components/ui/ui-preferences'
 import { Can } from '~/components/ui/can'
 import { Input } from '~/components/ui/input'
 import { ResourceActions } from '~/components/ui/resource-actions'
+import { rememberListView } from '~/components/ui/resource-surface'
 import { FieldControl, ResourceSelect } from '~/components/ui/resource-field'
 import {
   Command,
@@ -77,6 +78,15 @@ export function DataTable({
   const [failure, setFailure] = useState('')
   const container = useRef<HTMLDivElement>(null)
   const scroller = useRef<ComponentRef<typeof InfiniteScroll>>(null)
+  // Opening one of this list's records remembers the view, so closing the dialog returns to it.
+  useEffect(
+    () =>
+      router.on('before', (event) => {
+        const { pathname } = event.detail.visit.url
+        if (pathname.startsWith(`/resources/${resource.name}/`)) rememberListView(pathname)
+      }),
+    [resource.name]
+  )
   // Inertia merges `result.data` page by page; permissions and labels of earlier pages accumulate here.
   const store = useRef<{
     source: ResourceList | null
@@ -381,7 +391,10 @@ export function DataTable({
                     )}
                   </th>
                 ))}
-                <th scope="col" className="px-5 text-start font-medium">
+                <th
+                  scope="col"
+                  className="sticky end-0 border-s bg-muted px-5 text-start font-medium"
+                >
                   الإجراءات
                 </th>
               </tr>
@@ -399,7 +412,7 @@ export function DataTable({
                   <tr
                     key={id}
                     aria-rowindex={index + 2}
-                    className="border-b last:border-0 hover:bg-background"
+                    className="group border-b last:border-0 hover:bg-background"
                     style={{ height: ROW_HEIGHT }}
                   >
                     {fields.map((field) => (
@@ -411,7 +424,8 @@ export function DataTable({
                         lookups={lookups}
                       />
                     ))}
-                    <td className="whitespace-nowrap px-5 text-xs">
+                    {/* Pinned at the inline end so wide tables keep their row actions in view. */}
+                    <td className="sticky end-0 whitespace-nowrap border-s bg-card px-5 text-xs group-hover:bg-background">
                       <span className="inline-flex items-center gap-1">
                         <Button variant="ghost" size="sm" asChild>
                           <Link
@@ -789,7 +803,7 @@ function RelationFilter({
           variant="outline"
           aria-expanded={open}
           aria-controls={listId}
-          className={`h-9 w-44 justify-between text-xs font-normal ${value ? '' : 'text-muted-foreground'}`}
+          className={`h-9 w-44 justify-between bg-transparent text-xs font-normal ${value ? '' : 'text-muted-foreground'}`}
         >
           <span className="truncate">{value ? (current?.label ?? `#${value}`) : 'الكل'}</span>
           <ChevronsUpDown className="opacity-50" />

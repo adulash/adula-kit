@@ -107,7 +107,7 @@
       "component": "resource-page"
     },
     "inertia/components/ui/data-table.tsx": {
-      "hash": "80bec8a29eff27a0b3f8c88c462745226d3263858ec9e9b5ece7b2c8a6a76329",
+      "hash": "9e51f41789ee73833627e765f2b94b78fb3c654e1881dbf0291b8d0f5c719f1d",
       "component": "data-table"
     },
     "inertia/components/ui/can.tsx": {
@@ -135,7 +135,7 @@
       "component": "resource-actions"
     },
     "inertia/components/ui/resource-surface.tsx": {
-      "hash": "8b1e125b00cb487e249ca241bab2afcb15a027ad96e3975596658bd2e5971e83",
+      "hash": "10ab65172ca5c8bb17443551cec13533fdcf0cf1b9d1a463c4d23e9d8c098b15",
       "component": "resource-surface"
     },
     "inertia/components/ui/ui-preferences.tsx": {

@@ -466,7 +466,8 @@
         "resource-value",
         "ui-preferences",
         "command",
-        "popover"
+        "popover",
+        "resource-surface"
       ],
       "dependencies": [
         "@tanstack/react-table@9.2.4",

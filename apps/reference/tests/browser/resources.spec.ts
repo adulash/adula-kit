@@ -359,6 +359,26 @@ test.group('Generic resource browser acceptance', (group) => {
     await page.getByRole('option', { name: 'مغلق', exact: true }).click()
     await page.waitForURL(/filters%5Bstatus%5D=closed/)
     await page.assertElementsCount('tbody tr[aria-rowindex]', 1)
+    // Row actions stay pinned at the inline end of wide tables (#31).
+    assert.equal(
+      await page.evaluate<string>(
+        'getComputedStyle([...document.querySelectorAll("thead th")].at(-1)).position'
+      ),
+      'sticky'
+    )
+    // Closing a record opened from a filtered list returns to that exact view (#31).
+    const listUrl = page.url()
+    const view = page.getByRole('link', { name: /عرض السجل/ }).first()
+    const record = await view.getAttribute('href')
+    await view.click()
+    await page.getByRole('dialog', { name: 'تفاصيل · عينات الواجهة' }).waitFor()
+    await page.keyboard.press('Escape')
+    await page.waitForURL(listUrl)
+    await page.assertElementsCount('tbody tr[aria-rowindex]', 1)
+    assert.equal(
+      await page.evaluate<string>('document.activeElement?.getAttribute("href") ?? ""'),
+      record
+    )
     await page.getByRole('combobox', { name: 'مفعل' }).click()
     await page.getByRole('option', { name: 'نعم', exact: true }).click()
     await page.waitForURL(/filters%5Benabled%5D=true/)
