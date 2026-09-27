@@ -294,5 +294,35 @@ test.group('Doctor workflow role references', () => {
     assert.equal(renamed.status, 'warn')
     assert.include(renamed.message, 'release_approval@2.review → "مدير مشروع"')
     assert.notInclude(renamed.message, 'tell')
+    // With keys known, a reference by display name still works but is fragile.
+    const keyed = diagnoseWorkflowRoles(
+      [flow],
+      [
+        { key: 'project_manager', name: 'مدير مشروع' },
+        { key: null, name: 'المطورون' },
+      ]
+    )
+    assert.equal(keyed.status, 'warn')
+    assert.include(keyed.message, 'by display name')
+    assert.include(keyed.message, 'release_approval@2.tell → "المطورون"')
+    assert.notInclude(keyed.message, 'match no role')
+    const byKey = defineWorkflow({
+      ...flow,
+      steps: {
+        ...flow.steps,
+        review: { ...flow.steps.review, assignees: { role: 'project_manager' } } as never,
+        tell: { type: 'notify', to: { role: 'developers' }, next: 'done' },
+      },
+    })
+    assert.equal(
+      diagnoseWorkflowRoles(
+        [byKey],
+        [
+          { key: 'project_manager', name: 'مدير المشروع' },
+          { key: 'developers', name: 'المطورون' },
+        ]
+      ).status,
+      'pass'
+    )
   })
 })

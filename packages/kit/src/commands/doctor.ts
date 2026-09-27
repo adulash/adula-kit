@@ -356,24 +356,48 @@ export function diagnoseResourceSnapshots(
   }
 }
 
-/** Workflow recipients address roles by their editable name; list references that match none (#25). */
+/**
+ * Workflow recipients address roles by their stable key, or for compatibility by
+ * their editable display name. List references that match no role, and those that
+ * only match a display name, which a rename in the roles screen would break (#25).
+ */
 export function diagnoseWorkflowRoles(
   workflows: readonly Pick<WorkflowDefinition, 'name' | 'version' | 'steps'>[],
-  roles: readonly string[]
+  roles: readonly (string | { key: string | null; name: string })[]
 ): Finding {
-  const known = new Set(roles)
+  const keys = new Set(
+    roles.flatMap((role) => (typeof role === 'string' || !role.key ? [] : [role.key]))
+  )
+  const names = new Set(roles.map((role) => (typeof role === 'string' ? role : role.name)))
   const missing: string[] = []
+  const byName: string[] = []
   for (const workflow of workflows)
     for (const [key, step] of Object.entries(workflow.steps)) {
       const to = step.type === 'approval' ? step.assignees : step.type === 'notify' ? step.to : null
-      if (to && typeof to === 'object' && 'role' in to && !known.has(to.role))
-        missing.push(`${workflow.name}@${workflow.version}.${key} → "${to.role}"`)
+      if (!to || typeof to !== 'object' || !('role' in to) || keys.has(to.role)) continue
+      const reference = `${workflow.name}@${workflow.version}.${key} → "${to.role}"`
+      if (names.has(to.role)) byName.push(reference)
+      else missing.push(reference)
     }
+  // Plain name lists (older hosts) cannot tell keys from names; only missing roles matter.
+  const keyed = roles.some((role) => typeof role !== 'string')
+  const messages = [
+    ...(missing.length
+      ? [
+          `Workflow steps address roles that match no role key or name; approvals there fail: ${missing.join(', ')}`,
+        ]
+      : []),
+    ...(keyed && byName.length
+      ? [
+          `Workflow steps address roles by display name; give each role a key and address it by key so renaming cannot detach approvers: ${byName.join(', ')}`,
+        ]
+      : []),
+  ]
   return {
     check: 'workflows.roles',
-    status: missing.length ? 'warn' : 'pass',
-    message: missing.length
-      ? `Workflow steps address roles that do not exist (renamed or not created yet); approvals there fail: ${missing.join(', ')}`
-      : 'Every role named by a workflow step exists',
+    status: messages.length ? 'warn' : 'pass',
+    message: messages.length
+      ? messages.join(' | ')
+      : 'Every role addressed by a workflow step exists',
   }
 }

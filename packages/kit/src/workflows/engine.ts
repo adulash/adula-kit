@@ -305,9 +305,9 @@ export class WorkflowEngine {
         if (!open) {
           const assignees = step.assignees
           if (typeof assignees === 'object' && 'role' in assignees)
-            if (!(await trx('roles').where('name', assignees.role).first('id')))
+            if ((await this.roleId(trx, assignees.role)) === null)
               throw new StepFailure(
-                `Approval step ${stepName} is addressed to role "${assignees.role}", which does not exist (it may have been renamed). Restore the role name or update the workflow, then retry the run.`,
+                `Approval step ${stepName} is addressed to role "${assignees.role}", which matches no role key or name. Give the role that key (or update the workflow), then retry the run.`,
                 true
               )
           const users = await this.recipients(trx, run, context, assignees)
@@ -760,15 +760,26 @@ export class WorkflowEngine {
     else if (typeof to === 'function') ids = await to(context)
     else if ('users' in to) ids = to.users
     else {
-      const members = await trx('user_roles as ur')
-        .join('roles as r', 'r.id', 'ur.role_id')
-        .join('users as u', 'u.id', 'ur.user_id')
-        .where('r.name', to.role)
-        .whereNull('u.disabled_at')
-        .distinct('ur.user_id')
+      const roleId = await this.roleId(trx, to.role)
+      const members =
+        roleId === null
+          ? []
+          : await trx('user_roles as ur')
+              .join('users as u', 'u.id', 'ur.user_id')
+              .where('ur.role_id', roleId)
+              .whereNull('u.disabled_at')
+              .distinct('ur.user_id')
       ids = members.map((row) => Number(row.user_id))
     }
     return [...new Set(ids.filter((id) => Number.isSafeInteger(id) && id > 0))]
+  }
+
+  /** A role reference is its stable key; for compatibility a display name also matches. */
+  private async roleId(db: Knex, reference: string): Promise<number | null> {
+    const byKey = await db('roles').where('key', reference).first('id')
+    if (byKey) return Number(byKey.id)
+    const byName = await db('roles').where('name', reference).first('id')
+    return byName ? Number(byName.id) : null
   }
 
   private async canView(resource: string, id: number, userId: number) {

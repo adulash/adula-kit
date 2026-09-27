@@ -243,6 +243,7 @@ export default function RoleShow({ role, matrix }: Props) {
   const { confirm, confirmation } = useConfirmAction()
   const [busy, setBusy] = useState(false)
   const [name, setName] = useState(role.name)
+  const [key, setKey] = useState(role.key ?? '')
   const [editing, setEditing] = useState<RoleRule | null>(null)
   const ruleFor = (subject: string, action: string, inverted: boolean) =>
     role.rules.find(
@@ -277,6 +278,14 @@ export default function RoleShow({ role, matrix }: Props) {
   const rename = (event: FormEvent) => {
     event.preventDefault()
     router.patch(`/admin/roles/${role.id}`, { name }, options)
+  }
+  const assignKey = (event: FormEvent) => {
+    event.preventDefault()
+    confirm({
+      title: 'تعيين المفتاح الثابت؟',
+      description: `تشير تدفقات العمل والوحدات إلى الدور بالمفتاح ${key}. لا يمكن تغييره بعد تعيينه، ويبقى تغيير الاسم ممكنًا.`,
+      action: () => router.patch(`/admin/roles/${role.id}`, { key }, options),
+    })
   }
   const cell = (active: boolean, kind: 'allow' | 'deny') =>
     `grid size-7 place-items-center rounded-md border transition-colors ${
@@ -354,6 +363,34 @@ export default function RoleShow({ role, matrix }: Props) {
         >
           حفظ الاسم
         </Button>
+      </form>
+      <form
+        onSubmit={assignKey}
+        className="mb-6 grid gap-3 rounded-xl border border-border bg-white p-5 md:grid-cols-[1fr_auto]"
+      >
+        <div className="space-y-1">
+          <Label htmlFor="role-key">المفتاح الثابت</Label>
+          <Input
+            id="role-key"
+            dir="ltr"
+            placeholder="project_manager"
+            pattern="[a-z][a-z0-9_]*"
+            value={key}
+            disabled={Boolean(role.key) || busy}
+            onChange={(event) => setKey(event.target.value)}
+            required
+          />
+          <p className="text-xs text-muted-foreground">
+            {role.key
+              ? 'تشير تدفقات العمل إلى الدور بهذا المفتاح، لذلك يبقى ثابتًا عند تغيير الاسم.'
+              : 'عيّن مفتاحًا لتشير إليه تدفقات العمل بدل الاسم القابل للتغيير. يُعيَّن مرة واحدة.'}
+          </p>
+        </div>
+        {!role.key && (
+          <Button type="submit" variant="outline" className="self-start md:mt-6" disabled={busy}>
+            تعيين المفتاح
+          </Button>
+        )}
       </form>
       <section className="mb-8 overflow-hidden rounded-xl border border-border bg-white">
         <div className="flex items-center justify-between border-b border-border px-5 py-4">

@@ -48,11 +48,14 @@ export default class Doctor extends BaseCommand {
       ;({ registry } = await this.app.import('#start/modules'))
     } catch {}
     if (registry) {
-      const roles = await db.from('roles').select('name')
+      const roles = await db.from('roles').select('key', 'name')
       findings.push(
         diagnoseWorkflowRoles(
           registry.workflows(),
-          roles.map((role) => String(role.name))
+          roles.map((role) => ({
+            key: role.key ? String(role.key) : null,
+            name: String(role.name),
+          }))
         )
       )
     }
