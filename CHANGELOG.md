@@ -56,6 +56,12 @@ Minor release: additive APIs and one additive kit migration
   unresolved and the rule is refused. Hosts that build actors themselves call
   `resolveActorConditions` (#29).
 
+* Generators: `node ace adula:resource:snapshot <name>` rewrites the definition
+  embedded in a resource's generated create-migration from the registered resource
+  while that migration is still pending. A migration that already ran is refused with
+  the advice to add an expand migration. `adula:resource` and the `resources.snapshots`
+  doctor check point to it (#20).
+
 ## 1.0.1 — unreleased
 
 Patch release: fixes reported against 1.0.0, with no public API or schema change.

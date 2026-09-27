@@ -161,7 +161,25 @@ await appendFile(service, '\n// Consumer customization must survive configure.\n
 const customized = await digest(service)
 await ace('configure-again', ['configure', '@adula/kit'])
 assert.equal(await digest(service), customized, 'Configure overwrote the consumer service')
-if (!reuse) await ace('generate', ['adula:resource', 'samples', '--module=examples'])
+if (!reuse) {
+  await ace('generate', ['adula:resource', 'samples', '--module=examples'])
+  // Fill the definition, then refresh the pending create-migration from it (#20).
+  const resourcePath = join(target, 'app/modules/examples/resources/samples.ts')
+  await writeFile(
+    resourcePath,
+    (await readFile(resourcePath, 'utf8')).replace(
+      "fields: { title: {",
+      "fields: { notes: { type: 'text', label: { ar: 'ملاحظات', en: 'Notes' } }, title: {"
+    )
+  )
+  await ace('snapshot', ['adula:resource:snapshot', 'samples'])
+  const migrations = join(target, 'app/modules/examples/migrations')
+  const [created] = (await readdir(migrations)).filter((name) => name.endsWith('_create_samples.ts'))
+  assert(
+    (await readFile(join(migrations, created), 'utf8')).includes('"notes"'),
+    'adula:resource:snapshot did not refresh the pending migration'
+  )
+}
 await ace('migrate', ['migration:run', '--force'])
 await ace('tests', ['test'], { env: { ...consumerEnv, NODE_ENV: 'test' } })
 await ace('install', ['adula:install'])
