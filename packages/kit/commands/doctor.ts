@@ -48,7 +48,9 @@ export default class Doctor extends BaseCommand {
       ;({ registry } = await this.app.import('#start/modules'))
     } catch {}
     if (registry) {
-      const roles = await db.from('roles').select('key', 'name')
+      // Before the 1.1 migrations run, roles have no key column yet (an unfinished upgrade).
+      const keyed = await db.connection().getWriteClient().schema.hasColumn('roles', 'key')
+      const roles = await db.from('roles').select(keyed ? ['key', 'name'] : ['name'])
       findings.push(
         diagnoseWorkflowRoles(
           registry.workflows(),
