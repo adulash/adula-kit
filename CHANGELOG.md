@@ -23,11 +23,14 @@ Minor release: additive APIs and one additive kit migration
   lookups active, and saving validates as usual (#48). Projects with a copied
   `resource-form` need the updated component.
 * Workflows: a `decision` step offers named outcomes, for example approve, reject and
-  reassign. Each outcome may ask the approver for document fields, which are saved on
-  the submitted document through the validator and hooks (`systemSave` with
-  `allowSubmitted`) and recorded in the field history. An outcome can require a
-  comment. The approvals inbox renders the outcomes and their fields (#42). Projects
-  with a copied `record-workflows` need the updated component.
+  return. Each outcome names its next step, which may be an earlier step, and may
+  require a comment. The approvals inbox renders one button per outcome. The submitted
+  document stays locked: a decision never edits it (#42). Projects with a copied
+  `record-workflows` need the updated component.
+* Security: the ESLint rule `adula/no-system-save-in-controllers` keeps `systemSave`
+  and `rehome` out of controllers and routes, and managed AGENTS rule 10 says so.
+  Existing projects can enable the rule in `eslint.config.js` and run `adula:install`
+  to refresh the managed rules.
 * Assignments: «تم الإنجاز» and «إلغاء المهمة» open a dialog for a closing note, kept
   with the task. Each application makes the note optional (default) or required with
   `new Assignments(..., { closeNote })`. Managed tasks
@@ -38,15 +41,13 @@ Minor release: additive APIs and one additive kit migration
 * Resources: a `user` field type stores a user id (foreign key to `users`, `RESTRICT`).
   Choices are active members of the record's unit or its ancestors, searched by name;
   saving checks the same rule. Lists and details return `{ id, fullName }` without the
-  e-mail. The field filters, sorts, imports by id and accepts create defaults. Workflow
-  decision forms offer the users eligible for the document, and `systemSave(...,
-  { chooser })` checks a chosen user against that person's scope; decision steps pass
-  the approver (#28). `ResourceService.fieldOptions` takes the record id for scoped
-  user fields. Code that switches exhaustively over `Field['type']` needs the new case
+  e-mail. The field filters, sorts, imports by id and accepts create defaults.
+  `systemSave(..., { chooser })` checks a user chosen by a person against that person's
+  scope (#28). Code that switches exhaustively over `Field['type']` needs the new case
   (`pnpm check:api` also reports `createResourceController` and `ResourceEditor`,
   whose types include it; `SettingScope` only prints in a new order). Projects
   with copied `data-table`, `resource-field`, `resource-form` or `resource-value` need
-  the updated components. See ADR 032 (proposed).
+  the updated components. See ADR 032.
 * Authorization: role rule conditions accept `'$actor.id'` (`ACTOR_ID`) on user fields,
   `createdBy` and `updatedBy`, for example `{ inspector: '$actor.id' }`. It is resolved
   per actor and bound as a query parameter; `buildAbility` and `conditionSql` refuse an

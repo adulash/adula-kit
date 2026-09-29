@@ -222,7 +222,7 @@
     },
     "DecisionOutcome": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ label: string; next: string; fields?: string[] | undefined; comment?: \"optional\" | \"required\" | undefined; }"
+      "type": "{ label: string; next: string; comment?: \"optional\" | \"required\" | undefined; }"
     },
     "DEFAULT_ATTACHMENT_EXTENSIONS": {
       "kind": "VariableDeclaration",
@@ -850,7 +850,7 @@
     },
     "WorkflowDecisionForm": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ outcomes: { key: string; label: string; comment: \"optional\" | \"required\"; fields: ResourceField[]; }[]; options: Record<string, { value: string; label: string; }[]>; values: SerializedRecord; }"
+      "type": "{ outcomes: { key: string; label: string; comment: \"optional\" | \"required\"; }[]; }"
     },
     "WorkflowDefinition": {
       "kind": "TypeAliasDeclaration",

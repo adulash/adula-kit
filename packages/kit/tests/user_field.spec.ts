@@ -367,25 +367,8 @@ test.group('User fields', (group) => {
     assert.equal(kept.orgUnitId, 3)
   })
 
-  test('choices outside a form and chosen system writes follow the record and the chooser', async ({
-    assert,
-  }) => {
-    const [ticketRow] = await db('tickets').where('org_unit_id', 2).limit(1)
-    const options = await service().fieldOptions('tickets', ['assignee'], agent, ticketRow.id)
-    assert.sameMembers(
-      options.assignee.map((option) => option.value),
-      ['1', '2', '4']
-    )
-    assert.notInclude(JSON.stringify(options), 'example.test')
-    // Scoped choices need the record; without it nobody is offered.
-    const withoutRecord = await service().fieldOptions('tickets', ['assignee'], agent)
-    assert.deepEqual(withoutRecord.assignee, [])
-    const desks = await service().fieldOptions('desks', ['owner'], agent)
-    assert.sameMembers(
-      desks.owner.map((option) => option.value),
-      ['1', '2', '4', '6']
-    )
-    // A person chose the value (a workflow approver): it must be eligible for them.
+  test('a system write checks a chosen user against the chooser', async ({ assert }) => {
+    // A person chose the value, such as a supervisor: it must be eligible for them.
     const chosen = await failure(() =>
       service().systemSave('desks', { code: 'D-9', owner: 3 }, undefined, {
         actorId: 2,

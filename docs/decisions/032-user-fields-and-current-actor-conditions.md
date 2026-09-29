@@ -27,10 +27,11 @@ are additive and belong to 1.1.0. The kit changes only what serves any resource.
      never blocks other edits, even after the account is disabled.
    - `systemSave` checks the record's unit on scoped resources. On unscoped resources it
      accepts any active member, unless the caller passes `chooser`: the person who chose
-     the value, whose scope then applies. Workflow decision steps (ADR 031) pass the
-     approver.
+     the value, whose scope then applies. Module code passes it when it writes a choice
+     made by a user; the owner chose to keep it for that use after workflow decision
+     steps stopped writing document fields (ADR 031, amended by #57).
    - Choices come from `/resources/:resource/options/:field`, searched by name, 50 per
-     page. Workflow decision forms get the users eligible for the document.
+     page.
    - Readers get `related.<field>` as `{ id, fullName }`, never the e-mail address.
    - The field can be filtered, sorted (by user id), imported by id, printed by name,
      described in OpenAPI as an integer, and pre-filled with `?defaults[field]=<id>`.
@@ -78,7 +79,7 @@ are additive and belong to 1.1.0. The kit changes only what serves any resource.
   `{ type: 'user' }`, which code that switches exhaustively over `Field['type']` must
   handle. The CHANGELOG lists the API details.
 - **Evidence.** Kit tests on PostgreSQL cover eligibility, unit moves by users and hooks,
-  serialization, system writes with and without a chooser, decision choices, defaults,
+  serialization, system writes with and without a chooser, defaults,
   and the placeholder in CASL, SQL, inverted rules and unresolved rules. The test-only
   `order_inspections` fixture (ADR 017) runs the HTTP security contract and an HTTP
   rule test; the role screen and the user picker have browser tests.
