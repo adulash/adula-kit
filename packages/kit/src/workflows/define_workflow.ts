@@ -19,8 +19,6 @@ export type Recipients =
 export type DecisionOutcome = {
   label: string
   next: string
-  /** Fields of the document the approver fills for this decision, saved through the validator. */
-  fields?: string[]
   /** Whether the decision needs a comment; defaults to optional. */
   comment?: 'optional' | 'required'
 }
@@ -58,10 +56,9 @@ export type WorkflowStep =
     }
   | {
       /**
-       * An approval with named outcomes, for example approve, reject and reassign. Each
-       * outcome may ask the approver for document fields, which are saved through the
-       * resource validator and hooks with the step's authority, recorded in the field
-       * history and visible to the next steps.
+       * An approval with named outcomes, for example approve, reject and return. Each
+       * outcome names its next step (a later or an earlier one) and may require a comment.
+       * The submitted document stays locked: a decision never changes its fields.
        */
       type: 'decision'
       label: string

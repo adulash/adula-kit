@@ -413,7 +413,7 @@ Structure
 9. Notify via notify(), number via sequence, configure via settings. Nothing else.
 
 Security
-10. Every route passes the authorize middleware. Every transformer uses `serialize` (explicit pick).
+10. Every route passes the authorize middleware. Every transformer uses `serialize` (explicit pick). `systemSave` and `rehome` skip role rules: use them only in listeners and module services after an explicit authorization, never in a controller or route (enforced by lint).
 11. Never write crypto, sessions, or auth flows; use kit. 2FA and impersonation changes need a human review.
 12. Never delete or weaken a test to make the build pass.
 

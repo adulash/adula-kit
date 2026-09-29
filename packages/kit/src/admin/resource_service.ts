@@ -79,11 +79,6 @@ export type SystemSaveOptions = {
   reason?: string
   /** Optimistic lock: when given, it must match the stored version. */
   version?: number
-  /**
-   * Write to a submitted document. Only for a workflow decision step, which limits the
-   * values to the fields the step declares (#42).
-   */
-  allowSubmitted?: boolean
 }
 
 export class ResourceService {
@@ -484,39 +479,6 @@ export class ResourceService {
       })
     }
     return related
-  }
-
-  /**
-   * Choices for lookup and relation fields outside a form, such as a workflow decision:
-   * active lookups, and related records the actor may view, labelled by their title.
-   */
-  async fieldOptions(name: string, keys: readonly string[], actor: Actor) {
-    const resource = this.registry.get(name)
-    const ability = buildAbility(actor.rules, this.registry.all())
-    const options: Record<string, { value: string; label: string }[]> = {}
-    for (const key of keys) {
-      const field = resource.fields[key]
-      if (field?.type === 'lookup') {
-        const rows = await this.db('lookups')
-          .where({ group: field.group, active: true })
-          .orderBy('id')
-          .select('key', 'label_ar')
-        options[key] = rows.map((row) => ({ value: row.key, label: row.label_ar }))
-      } else if (field?.type === 'belongsTo') {
-        const target = this.registry.get(field.resource)
-        if (!target.actions.includes('view') || !ability.can('view', target.name)) {
-          options[key] = []
-          continue
-        }
-        const page = await this.list(target.name, actor, { limit: 50, estimate: false })
-        const title = await this.titler(target)
-        options[key] = page.data.map((row) => ({
-          value: String(row.id),
-          label: title(row) ?? `#${row.id}`,
-        }))
-      }
-    }
-    return options
   }
 
   /** Formats record titles of one resource, loading the labels of its title lookups once. */
@@ -941,7 +903,6 @@ export class ResourceService {
     return this.persist(name, actor, values, id, options.trx, undefined, {
       reason: options.reason,
       version: options.version,
-      allowSubmitted: options.allowSubmitted,
     })
   }
 
@@ -985,7 +946,7 @@ export class ResourceService {
     id?: number,
     transaction?: Knex.Transaction,
     parentWrite?: { name: string; id: number; action: 'create' | 'update' },
-    system?: { reason?: string; version?: number; allowSubmitted?: boolean }
+    system?: { reason?: string; version?: number }
   ): Promise<SerializedRecord> {
     const resource = this.registry.get(name)
     const action = id === undefined ? 'create' : 'update'
@@ -1008,7 +969,7 @@ export class ResourceService {
         check(resource, action, existing)
         if (!system || system.version !== undefined)
           this.requireVersion(resource, existing, system ? system.version : input.version)
-        if (resource.submittable && existing.docStatus !== 0 && !system?.allowSubmitted)
+        if (resource.submittable && existing.docStatus !== 0)
           throw new KitError(409, 'E_DOCUMENT_LOCKED', 'Only draft documents can be edited')
       }
       if (system) {

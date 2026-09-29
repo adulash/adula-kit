@@ -15,8 +15,7 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { useUiPreferences } from '~/components/ui/ui-preferences'
-import { formatDatetime, inputValue, parseValue } from '~/components/ui/resource-value'
-import { ResourceField } from '~/components/ui/resource-field'
+import { formatDatetime } from '~/components/ui/resource-value'
 
 const json = { headers: { Accept: 'application/json' }, withXSRFToken: true }
 export const runStatusLabel: Record<string, string> = {
@@ -54,16 +53,16 @@ type DecisionChoice = NonNullable<
   NonNullable<WorkflowRun['myApproval']>['decision']
 >['outcomes'][number]
 
-// A plain approval step offers exactly these two decisions, without document fields.
+// A plain approval step offers exactly these two decisions.
 const approvalChoices: DecisionChoice[] = [
-  { key: 'approve', label: 'موافقة', comment: 'optional', fields: [] },
-  { key: 'reject', label: 'رفض', comment: 'optional', fields: [] },
+  { key: 'approve', label: 'موافقة', comment: 'optional' },
+  { key: 'reject', label: 'رفض', comment: 'optional' },
 ]
 const dialogTitle: Record<string, string> = { approve: 'تأكيد الموافقة', reject: 'تأكيد الرفض' }
 
 /**
  * The approver's decision in a confirmation dialog: approve or reject, or at a decision
- * step one of its named outcomes with the document fields that outcome asks for (#42).
+ * step one of its named outcomes (#42). A decision never edits the submitted document.
  */
 export function WorkflowDecision({
   run,
@@ -73,7 +72,6 @@ export function WorkflowDecision({
   onDecided: (run: WorkflowRun) => void
 }) {
   const [choice, setChoice] = useState<DecisionChoice | null>(null)
-  const [values, setValues] = useState<Record<string, string>>({})
   const [comment, setComment] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -84,11 +82,6 @@ export function WorkflowDecision({
     setChoice(next)
     setComment('')
     setError('')
-    setValues(
-      Object.fromEntries(
-        next.fields.map((field) => [field.key, inputValue(field, form?.values[field.key])])
-      )
-    )
   }
   const submit = async () => {
     if (!choice) return
@@ -96,21 +89,12 @@ export function WorkflowDecision({
       setError('اكتب ملاحظة القرار.')
       return
     }
-    let payload: Record<string, unknown>
-    try {
-      payload = Object.fromEntries(
-        choice.fields.map((field) => [field.key, parseValue(field, values[field.key] ?? '')])
-      )
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'راجع قيم الحقول.')
-      return
-    }
     setBusy(true)
     setError('')
     try {
       const response = await axios.post<{ data: WorkflowRun }>(
         `/workflows/${run.id}/decide`,
-        { decision: choice.key, comment, values: payload },
+        { decision: choice.key, comment },
         json
       )
       setChoice(null)
@@ -155,21 +139,6 @@ export function WorkflowDecision({
               {run.recordTitle ?? `#${run.recordId}`}
             </DialogDescription>
           </DialogHeader>
-          {choice && choice.fields.length > 0 && (
-            <div className="grid gap-4">
-              {choice.fields.map((field) => (
-                <ResourceField
-                  key={field.key}
-                  field={field}
-                  id={`decision-${run.id}-${field.key}`}
-                  value={values[field.key] ?? ''}
-                  disabled={busy}
-                  options={form?.options[field.key]}
-                  onChange={(value) => setValues((current) => ({ ...current, [field.key]: value }))}
-                />
-              ))}
-            </div>
-          )}
           <div className="space-y-2">
             <Label htmlFor={`decision-comment-${run.id}`} className="flex items-center gap-1">
               {choice?.comment === 'required' ? (

@@ -56,3 +56,23 @@ decide: {
   types, which is a minor change.
 - Not included: per-outcome permission rules beyond the step's assignees, and fields
   that are not stored on the document itself.
+
+## Amendment, 2026-09-29: approver fields removed before release
+
+After reviewing whether each 1.1.0 change served the kit or the single consuming
+project, the owner decided to keep multi-outcome decisions and to remove approver
+fields ("نعم، نفّذ ذلك", in reply to the recommendation). Only one project asked for
+approver fields. They also needed the `allowSubmitted` exception to the submitted-document
+lock, which any module code could have used.
+
+- `DecisionOutcome.fields`, the `values` argument of `WorkflowEngine.decide`, the
+  `options`/`values` of `WorkflowDecisionForm` and `ResourceService.fieldOptions` are
+  removed. `SystemSaveOptions.allowSubmitted` is removed, so a submitted document is
+  locked for every write again.
+- A decision step routes the run. An outcome may point to an earlier step, which opens
+  new assignments there, and may require a comment. The document itself is not changed.
+- Approver fields can return in a later minor release once a second project needs
+  them. They would come with a design that keeps the lock as an engine-internal
+  exception.
+
+1.1.0 was not published, so removing these APIs breaks no installation.

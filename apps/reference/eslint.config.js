@@ -8,5 +8,6 @@ export default configApp({
     'adula/no-cross-module-controller': 'error',
     'adula/no-direct-to-json': 'error',
     'adula/no-kit-patching': 'error',
+    'adula/no-system-save-in-controllers': 'error',
   },
 })

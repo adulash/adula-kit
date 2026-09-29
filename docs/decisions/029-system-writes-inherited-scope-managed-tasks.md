@@ -59,3 +59,15 @@ issues reimplemented kit rules in module code. All three are additive minor chan
   writes, inherited scope, re-homing and managed assignments.
 - Not included: a declared record action for managed tasks (it depends on #48, create
   defaults), and user-only fields excluded from system writes.
+
+## Amendment, 2026-09-29: system writes stay out of request handlers
+
+`systemSave` and `rehome` skip role rules, so a controller or route that calls them
+would let a user write past the unified authorization. The owner approved a guard
+("نعم، نفّذ ذلك"):
+
+- the ESLint rule `adula/no-system-save-in-controllers` rejects these calls in
+  `app/controllers`, `app/modules/*/controllers` and `start/routes`. The reference
+  configuration and new applications enable it;
+- managed AGENTS rule 10 states that these calls belong in listeners and module
+  services after an explicit authorization.
