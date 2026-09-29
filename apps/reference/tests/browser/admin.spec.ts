@@ -232,7 +232,7 @@ test.group('Administration screens in the browser', (group) => {
         .where({ role_id: roleId, subject: 'tasks', action: 'view', inverted: true })
         .first()
     )
-    await page.assertElementsCount('tbody tr', 2 + 6 + 1 + 1)
+    await page.assertElementsCount('tbody tr', 2 + 7 + 1 + 1)
     await allow.click()
     await page.getByRole('button', { name: 'تأكيد حذف الصلاحية', exact: true }).click()
     await page.locator('button[aria-label="سماح: المهام / عرض"][aria-pressed="false"]').waitFor()
@@ -241,6 +241,47 @@ test.group('Administration screens in the browser', (group) => {
         .where({ role_id: roleId, subject: 'tasks', action: 'view', inverted: false })
         .first()
     )
+  })
+
+  test('a rule condition can name the current user on a user field', async ({
+    browserContext,
+    visit,
+    assert,
+  }) => {
+    await knex()('role_rules').insert({
+      role_id: roleId,
+      subject: 'order_inspections',
+      action: 'update',
+    })
+    await browserContext.loginAs(admin)
+    const page = await visit(`/admin/roles/${roleId}`)
+    await page
+      .getByRole('button', { name: 'تحرير قاعدة تفتيش الطلبات / تعديل', exact: true })
+      .click()
+    await page.getByRole('button', { name: 'إضافة شرط', exact: true }).click()
+    // The current-user choice appears only for user fields and the creator/updater.
+    await page.getByRole('combobox', { name: 'حقل الشرط 1', exact: true }).click()
+    await page.getByRole('option', { name: 'الملاحظات', exact: true }).click()
+    await page.assertNotExists(
+      page.getByRole('button', { name: 'المستخدم الحالي للشرط 1', exact: true })
+    )
+    await page.getByRole('combobox', { name: 'حقل الشرط 1', exact: true }).click()
+    await page.getByRole('option', { name: 'المفتش', exact: true }).click()
+    const current = page.getByRole('button', { name: 'المستخدم الحالي للشرط 1', exact: true })
+    await current.click()
+    assert.equal(await current.getAttribute('aria-pressed'), 'true')
+    await page.assertInputValue(
+      page.getByRole('textbox', { name: 'قيمة الشرط 1', exact: true }),
+      'المستخدم الحالي'
+    )
+    await page.getByRole('button', { name: 'حفظ القاعدة', exact: true }).click()
+    await page.getByRole('button', { name: 'تأكيد التغيير', exact: true }).click()
+    // The rules table names the placeholder instead of showing it as a literal value.
+    await page.assertVisible(page.getByText('{"inspector":{"$eq":المستخدم الحالي}}'))
+    const stored = await knex()('role_rules')
+      .where({ role_id: roleId, subject: 'order_inspections', action: 'update' })
+      .first()
+    assert.deepEqual(stored.conditions, { inspector: { $eq: '$actor.id' } })
   })
 
   test('moving an org unit updates its path in the tree', async ({

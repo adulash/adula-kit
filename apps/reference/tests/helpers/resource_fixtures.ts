@@ -139,6 +139,16 @@ export const resourceFixtures: Record<string, ResourceFixture> = {
       updated: { ...values, recipient: `مستلم محدث ${context.unique}` },
     }
   },
+  order_inspections: async (context) => {
+    // The writer is an active member of the record's unit, so it is an eligible inspector.
+    const values = { inspector: context.userId, findings: `ملاحظات ${context.unique}` }
+    return {
+      input: values,
+      expected: values,
+      update: { ...values, findings: `ملاحظات محدثة ${context.unique}` },
+      updated: { ...values, findings: `ملاحظات محدثة ${context.unique}` },
+    }
+  },
   tasks: async (context) => {
     const order = await parentOrder(context)
     const values = { title: `مهمة ${context.unique}`, orderId: order.id, done: false }

@@ -1,5 +1,6 @@
 import type { Knex } from 'knex'
 import type { Actor, Rule } from './ability.js'
+import { actorConditionField, resolveActorConditions } from './conditions.js'
 import type { ResourceRegistry } from '../resource/registry.js'
 
 export interface ActorCache {
@@ -34,10 +35,16 @@ export class ActorStore {
     for (const row of assignments) {
       // Privileged field access only comes from deployment-wide roles.
       if (!row.role_path) permissionLevel = Math.max(permissionLevel, row.permission_level)
+      const subject = this.registry.all().find((resource) => resource.name === row.subject)
       const rule: Rule = {
         subject: row.subject,
         action: row.action,
-        conditions: row.conditions ?? undefined,
+        // "$actor.id" becomes this user's id, so CASL and SQL compare a bound integer.
+        // On another field of a registered resource it stays, and buildAbility refuses the
+        // rule (fail closed). A store built without that resource cannot judge its fields.
+        conditions: resolveActorConditions(row.conditions ?? undefined, id, (field) =>
+          subject ? actorConditionField(subject, field) : true
+        ),
         fields: row.fields ?? undefined,
         inverted: row.inverted,
       }

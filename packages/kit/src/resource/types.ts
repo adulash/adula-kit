@@ -34,6 +34,11 @@ export type Field = {
       maxSize?: string
     }
   | { type: 'belongsTo'; resource: string }
+  /**
+   * A user of this deployment (foreign key to users). Choices are active members of
+   * the record's organization unit or its ancestors; readers see only the display name.
+   */
+  | { type: 'user' }
   | { type: 'hasMany'; resource: string; foreignKey: string; inline?: boolean }
   | { type: 'lookup'; group: string }
 )

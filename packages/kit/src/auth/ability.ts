@@ -1,6 +1,6 @@
 import { Ability, subject, fieldPatternMatcher } from '@casl/ability'
 import type { Conditions } from './conditions.js'
-import { conditionsMatcher, predicates } from './conditions.js'
+import { conditionsMatcher, predicates, usesActor } from './conditions.js'
 import type { RecordData, Resource } from '../resource/types.js'
 
 export type Rule = {
@@ -30,6 +30,9 @@ export function buildAbility(
 ): KitAbility {
   for (const rule of rules) {
     predicates(rule.conditions)
+    // An unresolved placeholder would compare as text: `$ne` and inverted rules would fail open.
+    if (usesActor(rule.conditions))
+      throw new Error('Rule conditions use $actor.id; resolve them with resolveActorConditions')
     if (rule.fields?.length === 0) throw new Error('An empty fields rule is invalid')
   }
   const ability: KitAbility = new Ability(

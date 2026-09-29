@@ -3,7 +3,7 @@
 ## 1.1.0 — unreleased
 
 Minor release: additive APIs and one additive kit migration
-(`1770000000011_kit_managed_assignments`). See ADR 029.
+(`1770000000011_kit_managed_assignments`). See ADR 029, 030 and 032.
 
 * Resources: `ResourceService.systemSave()` writes a record for module code through the
   validator, hooks, lookup/relation/attachment checks, versioning and the audit trail,
@@ -37,6 +37,24 @@ Minor release: additive APIs and one additive kit migration
   (`Assignments.create(..., { managed: true })`) close with the record through
   `Assignments.close()`, or by hand only with a note. Both closes are recorded in the
   activity log (#51). The starter "My tasks" page and `app/services/kit.ts` changed.
+
+* Resources: a `user` field type stores a user id (foreign key to `users`, `RESTRICT`).
+  Choices are active members of the record's unit or its ancestors, searched by name;
+  saving checks the same rule. Lists and details return `{ id, fullName }` without the
+  e-mail. The field filters, sorts, imports by id and accepts create defaults.
+  `systemSave(..., { chooser })` checks a user chosen by a person against that person's
+  scope (#28). Code that switches exhaustively over `Field['type']` needs the new case
+  (`pnpm check:api` also reports `createResourceController` and `ResourceEditor`,
+  whose types include it; `SettingScope` only prints in a new order). Projects
+  with copied `data-table`, `resource-field`, `resource-form` or `resource-value` need
+  the updated components. See ADR 032.
+* Authorization: role rule conditions accept `'$actor.id'` (`ACTOR_ID`) on user fields,
+  `createdBy` and `updatedBy`, for example `{ inspector: '$actor.id' }`. It is resolved
+  per actor and bound as a query parameter; `buildAbility` and `conditionSql` refuse an
+  unresolved placeholder. The starter role screen (`inertia/pages/admin/roles/show.tsx`) offers «المستخدم الحالي» for those fields.
+  A placeholder on any other field, even one written without `RolesAdmin`, stays
+  unresolved and the rule is refused. Hosts that build actors themselves call
+  `resolveActorConditions` (#29).
 
 ## 1.0.1 — unreleased
 

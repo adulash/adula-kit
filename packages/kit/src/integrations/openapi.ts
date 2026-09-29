@@ -25,6 +25,8 @@ function fieldSchema(field: Field, mode: 'read' | 'write', registry: ResourceReg
       return { description }
     case 'belongsTo':
       return { type: 'integer', description: `${description} → ${field.resource}` }
+    case 'user':
+      return { type: 'integer', description: `${description} → user id (related: id, fullName)` }
     case 'lookup':
       return { type: 'string', description: `${description} (lookup group ${field.group})` }
     case 'attachment':

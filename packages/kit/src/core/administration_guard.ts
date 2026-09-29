@@ -1,5 +1,6 @@
 import type { Knex } from 'knex'
 import { buildAbility, type Rule } from '../auth/ability.js'
+import { resolveActorConditions } from '../auth/conditions.js'
 import { KitError } from '../admin/errors.js'
 
 /** Same CASL decision as the admin middleware, with fresh rows inside the transaction. */
@@ -18,7 +19,12 @@ async function administrators(db: Knex): Promise<Set<number>> {
       subject: row.subject,
       action: row.action,
       inverted: row.inverted,
-      conditions: row.conditions ?? undefined,
+      // Only subject 'all' is read here, so no field accepts the placeholder.
+      conditions: resolveActorConditions(
+        row.conditions ?? undefined,
+        Number(row.user_id),
+        () => false
+      ),
       fields: row.fields ?? undefined,
     })
     users.set(row.user_id, rules)

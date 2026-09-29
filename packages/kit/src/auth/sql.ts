@@ -1,7 +1,7 @@
 import type { Knex } from 'knex'
 import type { KitAbility, Actor } from './ability.js'
 import { abilitySchemas } from './ability.js'
-import { predicates, type Conditions } from './conditions.js'
+import { predicates, usesActor, type Conditions } from './conditions.js'
 import type { Resource } from '../resource/types.js'
 import { columnName } from '../resource/define_resource.js'
 import { canonicalDate, canonicalMoney } from '../resource/values.js'
@@ -19,6 +19,9 @@ export function conditionSql(conditions: Conditions | undefined, resource: Resou
     'orgPath',
   ])
   const parts = predicates(conditions, allowed)
+  // The current user is bound as an integer; an unresolved placeholder must not reach SQL.
+  if (usesActor(conditions))
+    throw new Error('Rule conditions use $actor.id; resolve them with resolveActorConditions')
   const bindings: Knex.RawBinding[] = []
   const text = parts
     .map(({ field, operator, value }) => {
@@ -32,7 +35,8 @@ export function conditionSql(conditions: Conditions | undefined, resource: Resou
       const expected =
         ['id', 'orgUnitId', 'createdBy', 'updatedBy', 'version', 'docStatus'].includes(field) ||
         type === 'integer' ||
-        type === 'belongsTo'
+        type === 'belongsTo' ||
+        type === 'user'
           ? 'number'
           : type === 'boolean'
             ? 'boolean'

@@ -96,6 +96,11 @@ export function createResourceController(
               : this.#positiveId(ctx.request.input('id')),
           search: ctx.request.input('search'),
           cursor: ctx.request.input('cursor'),
+          orgUnitId:
+            ctx.request.input('orgUnitId') === undefined || ctx.request.input('orgUnitId') === ''
+              ? undefined
+              : this.#positiveId(ctx.request.input('orgUnitId')),
+          purpose: ctx.request.input('purpose') === 'filter' ? 'filter' : 'form',
         })
       )
     }
