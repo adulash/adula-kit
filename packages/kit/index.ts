@@ -83,6 +83,8 @@ export { Assignments } from './src/collaboration/assignments.js'
 export type {
   Assignment,
   AssignmentPage,
+  AssignmentOptions,
+  CloseNotePolicy,
   AssignmentStatus,
 } from './src/collaboration/assignments.js'
 export { RecordCollaboration, followerListeners } from './src/collaboration/record_collaboration.js'

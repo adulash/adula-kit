@@ -1,6 +1,6 @@
 # ADR 029 — System writes, inherited scope and managed assignments (1.1.0)
 
-Date: 2026-09-29. Status: proposed for 1.1.0; owner review pending.
+Date: 2026-09-29. Status: proposed for 1.1.0; the closing-note rule in decision 3 was set by the owner on 2026-09-29.
 
 Issues #44, #45 and #51 came from an independent consumer: clinic supervisory-visit
 modules with 20 resources, 14 listeners and 9 custom pages. Each workaround in those
@@ -29,15 +29,22 @@ issues reimplemented kit rules in module code. All three are additive minor chan
    does not send it. `ResourceService.rehome(parent, id, options)` moves the children
    of a moved parent through `systemSave`. It is idempotent and meant for a listener
    on the parent's `updated` event.
-3. **Managed assignments.** `Assignments.create(db, { managed: true })` marks a task
-   that represents open work on the record. Neither the assignee nor the assigner can
-   complete or cancel it by hand (`409 E_ASSIGNMENT_MANAGED`). Module code closes it
-   with `Assignments.close(resource, recordId, { actorId, outcome, reason, trx })`.
-   The close is recorded in the record's activity log (`assignment_closed`) with the
-   reason, and the assigner or the assignee is notified as for a manual close. The
-   additive kit migration `1770000000011_kit_managed_assignments` adds `managed` and
-   `close_reason`. "My tasks" shows the task as closing with the record, with a link
-   to the record instead of «تم الإنجاز».
+3. **Managed assignments and closing notes.** `Assignments.create(db, { managed: true })`
+   marks a task that represents open work on the record. Module code closes it with
+   `Assignments.close(resource, recordId, { actorId, outcome, reason, trx })`. The close
+   is recorded in the record's activity log (`assignment_closed`) with the reason, and
+   the assigner or the assignee is notified as for a manual close.
+   The owner then decided: "يجب اضافة ملاحظة على الاقل لأغلاقها وليس فور ضغط الزر" and
+   "للمستخدم حرية ابقائها اختيارية او الزامية حسب تطبيقه او وجهة نظره". So pressing
+   «تم الإنجاز» or «إلغاء المهمة» never closes a task at once: a dialog asks for a
+   closing note, and `complete(id, actor, outcome, { note })` stores it as the close
+   reason. Each application sets the policy with
+   `new Assignments(db, resources, actors, { closeNote: 'optional' | 'required' })`.
+   The default is `optional`, which keeps 1.0 behavior for API clients. A managed task
+   may also be closed by hand, but only with a note, and that note goes to the
+   record's activity log.
+   The additive kit migration `1770000000011_kit_managed_assignments` adds `managed`
+   and `close_reason`.
 
 ## Consequences
 

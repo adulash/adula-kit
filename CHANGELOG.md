@@ -12,9 +12,12 @@ Minor release: additive APIs and one additive kit migration
   organization unit from its parent before authorization. The form hides the unit
   picker, and `ResourceService.rehome()` moves the children after the parent moves
   (#45). Projects with a copied `resource-form` need the updated component.
-* Assignments: managed tasks (`Assignments.create(..., { managed: true })`) cannot be
-  completed by hand, and `Assignments.close()` closes them from module code with a
-  reason in the activity log. "My tasks" shows them as closing with the record (#51).
+* Assignments: «تم الإنجاز» and «إلغاء المهمة» open a dialog for a closing note, kept
+  with the task. Each application makes the note optional (default) or required with
+  `new Assignments(..., { closeNote })`. Managed tasks
+  (`Assignments.create(..., { managed: true })`) close with the record through
+  `Assignments.close()`, or by hand only with a note. Both closes are recorded in the
+  activity log (#51). The starter "My tasks" page and `app/services/kit.ts` changed.
 
 ## 1.0.1 — unreleased
 

@@ -58,7 +58,11 @@
     },
     "Assignment": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ id: number; resource: string; resourceLabel: string; recordId: number; assigneeId: number; assigneeName: string | null; assignedBy: number | null; assignedByName: string | null; kind: string; title: string; note: string | null; dueOn: string | null; status: AssignmentStatus; outcome: string | null; createdAt: string; completedAt: string | null; workflowRunId: string | null; managed: boolean; closeReason: string | null; canComplete: boolean; canCancel: boolean; }"
+      "type": "{ id: number; resource: string; resourceLabel: string; recordId: number; assigneeId: number; assigneeName: string | null; assignedBy: number | null; assignedByName: string | null; kind: string; title: string; note: string | null; dueOn: string | null; status: AssignmentStatus; outcome: string | null; createdAt: string; completedAt: string | null; workflowRunId: string | null; managed: boolean; closeNote: CloseNotePolicy; closeReason: string | null; canComplete: boolean; canCancel: boolean; }"
+    },
+    "AssignmentOptions": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ closeNote?: CloseNotePolicy | undefined; }"
     },
     "AssignmentPage": {
       "kind": "TypeAliasDeclaration",
@@ -139,6 +143,10 @@
     "ClaimInput": {
       "kind": "TypeAliasDeclaration",
       "type": "{ attachmentId: number; actor: { id: number; }; resource: string; field: string; recordId?: number | undefined; orgUnitId?: number | null | undefined; scoped: boolean; }"
+    },
+    "CloseNotePolicy": {
+      "kind": "TypeAliasDeclaration",
+      "type": "\"optional\" | \"required\""
     },
     "columnName": {
       "kind": "FunctionDeclaration",

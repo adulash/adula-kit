@@ -76,9 +76,12 @@ test.group('Assignments and my tasks over HTTP', (group) => {
       .loginAs(clerk.user)
       .withCsrfToken()
       .headers(json)
+      .json({ note: 'تمت المراجعة دون ملاحظات' })
     done.assertStatus(200)
     const listed = await client.get(`${base}/assignments`).loginAs(manager.user).headers(json)
     assert.equal(listed.body().data[0].status, 'done')
+    // The closing note from the dialog is kept with the task.
+    assert.equal(listed.body().data[0].closeReason, 'تمت المراجعة دون ملاحظات')
   })
 
   test('a read-only user cannot assign and outsiders never see the record tasks', async ({

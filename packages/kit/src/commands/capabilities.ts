@@ -96,7 +96,7 @@ export const SERVICES: Record<string, string[]> = {
 export const EXTENSION_POINTS = [
   'Resource hooks (beforeSave, afterSave) inside the save transaction',
   'ResourceService.systemSave for module-decided writes (validator, hooks and audit, no role rules); ResourceService.rehome after a parent moves',
-  'Managed assignments (Assignments.create with managed: true) closed by module code with Assignments.close',
+  'Assignment closing notes (Assignments closeNote: optional or required); managed assignments (managed: true) closed by module code with Assignments.close',
   'Page override: inertia/pages/<resource>/{index,form,show}.tsx replaces the generated page',
   'Domain events <module>.<resource>.{created,updated,deleted,submitted,cancelled,amended} with idempotent listeners',
   'Module workflows (Module.workflows) with versioned definitions',

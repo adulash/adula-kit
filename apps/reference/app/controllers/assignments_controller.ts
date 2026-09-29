@@ -23,14 +23,18 @@ export default class AssignmentsController {
 
   async complete(ctx: HttpContext) {
     return this.#run(ctx, async (actor) => {
-      await kit().assignments.complete(ctx.params.assignment, actor, 'done')
+      await kit().assignments.complete(ctx.params.assignment, actor, 'done', {
+        note: ctx.request.input('note'),
+      })
       return { data: true }
     })
   }
 
   async cancel(ctx: HttpContext) {
     return this.#run(ctx, async (actor) => {
-      await kit().assignments.complete(ctx.params.assignment, actor, 'cancelled')
+      await kit().assignments.complete(ctx.params.assignment, actor, 'cancelled', {
+        note: ctx.request.input('note'),
+      })
       return { data: true }
     })
   }
