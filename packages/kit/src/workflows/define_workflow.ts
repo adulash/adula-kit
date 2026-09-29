@@ -15,6 +15,16 @@ export type Recipients =
   | { users: number[] }
   | ((context: StepContext) => number[] | Promise<number[]>)
 
+/** One decision an approver can take at a decision step (#42). */
+export type DecisionOutcome = {
+  label: string
+  next: string
+  /** Fields of the document the approver fills for this decision, saved through the validator. */
+  fields?: string[]
+  /** Whether the decision needs a comment; defaults to optional. */
+  comment?: 'optional' | 'required'
+}
+
 export type WorkflowStep =
   | {
       type: 'condition'
@@ -45,6 +55,19 @@ export type WorkflowStep =
       dueInDays?: number
       approve: string
       reject: string
+    }
+  | {
+      /**
+       * An approval with named outcomes, for example approve, reject and reassign. Each
+       * outcome may ask the approver for document fields, which are saved through the
+       * resource validator and hooks with the step's authority, recorded in the field
+       * history and visible to the next steps.
+       */
+      type: 'decision'
+      label: string
+      assignees: Recipients
+      dueInDays?: number
+      outcomes: Record<string, DecisionOutcome>
     }
   | { type: 'delay'; label?: string; ms: number; next: string }
   | {
@@ -80,6 +103,7 @@ export type WorkflowEvent =
   | { type: 'DONE' }
   | { type: 'APPROVE' }
   | { type: 'REJECT' }
+  | { type: 'DECIDE'; outcome: string }
 
 const IDENTIFIER = /^[a-z][a-z0-9_]*$/
 export const WORKFLOW_NAME_RULE =
@@ -109,6 +133,8 @@ function targets(step: WorkflowStep) {
       return [step.then, step.else]
     case 'approval':
       return [step.approve, step.reject]
+    case 'decision':
+      return Object.values(step.outcomes).map((outcome) => outcome.next)
     case 'end':
       return []
     default:
@@ -135,6 +161,17 @@ export function defineWorkflow(input: WorkflowInput): WorkflowDefinition {
     const step = input.steps[key]
     if (step.type === 'delay' && (!Number.isInteger(step.ms) || step.ms < 0))
       throw new Error(`Step ${key} needs a non-negative integer delay`)
+    if (step.type === 'decision') {
+      const outcomes = Object.entries(step.outcomes ?? {})
+      if (outcomes.length < 2) throw new Error(`Decision step ${key} needs at least two outcomes`)
+      for (const [name, outcome] of outcomes) {
+        if (!IDENTIFIER.test(name) || name.length > 20)
+          throw new Error(
+            `Invalid outcome name "${name}" in step ${key}: ${WORKFLOW_NAME_RULE}, at most 20 characters`
+          )
+        if (!outcome.label) throw new Error(`Outcome ${name} of step ${key} needs a label`)
+      }
+    }
   }
   if (!keys.some((key) => input.steps[key].type === 'end'))
     throw new Error('A workflow needs at least one end step')
@@ -163,6 +200,19 @@ export function defineWorkflow(input: WorkflowInput): WorkflowDefinition {
             ]
           case 'approval':
             return [key, { on: { APPROVE: step.approve, REJECT: step.reject } }]
+          case 'decision':
+            return [
+              key,
+              {
+                on: {
+                  DECIDE: Object.entries(step.outcomes).map(([name, outcome]) => ({
+                    target: outcome.next,
+                    guard: ({ event }: { event: WorkflowEvent }) =>
+                      event.type === 'DECIDE' && event.outcome === name,
+                  })),
+                },
+              },
+            ]
           case 'end':
             return [key, { type: 'final' as const }]
           default:

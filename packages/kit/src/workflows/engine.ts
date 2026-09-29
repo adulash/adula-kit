@@ -2,7 +2,8 @@ import type { Knex } from 'knex'
 import type { Actor } from '../auth/ability.js'
 import type { ResourceService } from '../admin/resource_service.js'
 import type { ResourceRegistry } from '../resource/registry.js'
-import type { JsonValue, RecordData } from '../resource/types.js'
+import type { JsonValue, RecordData, SerializedRecord } from '../resource/types.js'
+import type { ResourceField } from '../admin/presentation.js'
 import type { DomainEvent, Listener } from '../events/outbox.js'
 import type { HttpPoster } from '../integrations/webhooks.js'
 import type { Assignments } from '../collaboration/assignments.js'
@@ -17,6 +18,7 @@ import {
   type StepContext,
   type WorkflowDefinition,
   type WorkflowEvent,
+  type WorkflowStep,
 } from './define_workflow.js'
 
 export type WorkflowRunStatus =
@@ -48,7 +50,25 @@ export type WorkflowRun = {
     at: string
   }[]
   /** Open approval assigned to the viewer for this run, if any. */
-  myApproval: { assignmentId: number; title: string } | null
+  myApproval: {
+    assignmentId: number
+    title: string
+    /** Set at a decision step: the outcomes with the fields each one asks for (#42). */
+    decision?: WorkflowDecisionForm
+  } | null
+}
+/** What an approver needs to take a decision at a decision step. */
+export type WorkflowDecisionForm = {
+  outcomes: {
+    key: string
+    label: string
+    comment: 'optional' | 'required'
+    fields: ResourceField[]
+  }[]
+  /** Choices of lookup and relation fields, labelled by title. */
+  options: Record<string, { value: string; label: string }[]>
+  /** The document's current values of the decision fields, as the approver may read them. */
+  values: SerializedRecord
 }
 export type WorkflowOptions = {
   post?: HttpPoster
@@ -95,6 +115,21 @@ export class WorkflowEngine {
     const resource = this.registry.get(definition.resource)
     if (!resource.submittable)
       throw new Error(`Workflow ${definition.name} needs a submittable resource`)
+    for (const [key, step] of Object.entries(definition.steps)) {
+      if (step.type !== 'decision') continue
+      for (const outcome of Object.values(step.outcomes))
+        for (const field of outcome.fields ?? []) {
+          const declared = resource.fields[field]
+          if (
+            !declared ||
+            ['hasMany', 'attachment', 'json'].includes(declared.type) ||
+            declared.sequence
+          )
+            throw new Error(
+              `Decision step ${definition.name}.${key} cannot ask for field ${field} of ${resource.name}`
+            )
+        }
+    }
     const versions = this.#definitions.get(definition.name) ?? new Map()
     if (versions.has(definition.version))
       throw new Error(`Duplicate workflow version ${definition.name}@${definition.version}`)
@@ -298,7 +333,8 @@ export class WorkflowEngine {
           )
         return move({ type: 'DONE' }, { recipients: users.length })
       }
-      case 'approval': {
+      case 'approval':
+      case 'decision': {
         const open = await trx('assignments')
           .where({ workflow_run_id: run.id, workflow_step: stepName, status: 'open' })
           .first('id')
@@ -407,9 +443,17 @@ export class WorkflowEngine {
    * Records an approver's decision. Only an open approval assigned to the actor
    * counts, and the run is locked so concurrent decisions cannot both apply.
    */
-  async decide(runId: string, actor: Actor, decision: 'approve' | 'reject', comment?: unknown) {
-    if (!['approve', 'reject'].includes(decision))
+  async decide(
+    runId: string,
+    actor: Actor,
+    decision: string,
+    comment?: unknown,
+    values: RecordData = {}
+  ) {
+    if (typeof decision !== 'string' || !decision)
       throw new KitError(422, 'E_WORKFLOW_DECISION', 'القرار غير صالح')
+    if (!values || typeof values !== 'object' || Array.isArray(values))
+      throw new KitError(422, 'E_WORKFLOW_FIELD', 'قيم القرار غير صالحة')
     const note = typeof comment === 'string' ? comment.trim().slice(0, 1000) : ''
     await this.db.transaction(async (trx) => {
       const run = await trx('workflow_runs').where('id', runId).forUpdate().first()
@@ -427,9 +471,40 @@ export class WorkflowEngine {
       if (run.status !== 'waiting' || !assignment)
         throw new KitError(409, 'E_WORKFLOW_STATE', 'لا توجد موافقة مطلوبة منك في هذه الخطوة')
       const definition = this.definition(run.definition, run.definition_version)
-      const target = nextStep(definition, run.current_step, {
-        type: decision === 'approve' ? 'APPROVE' : 'REJECT',
-      })
+      const step = definition.steps[run.current_step]
+      let event: WorkflowEvent
+      let logged: string
+      let written: string[] = []
+      if (step?.type === 'decision') {
+        const outcome = Object.hasOwn(step.outcomes, decision) ? step.outcomes[decision] : undefined
+        if (!outcome) throw new KitError(422, 'E_WORKFLOW_DECISION', 'القرار غير صالح')
+        if (outcome.comment === 'required' && !note)
+          throw new KitError(422, 'E_WORKFLOW_COMMENT', 'اكتب ملاحظة القرار')
+        const allowed = new Set(outcome.fields ?? [])
+        written = Object.keys(values)
+        for (const key of written)
+          if (!allowed.has(key))
+            throw new KitError(422, 'E_WORKFLOW_FIELD', `هذا القرار لا يغير الحقل: ${key}`)
+        // The approver's values pass the resource validator and hooks with the step's
+        // authority, even though the submitted document is otherwise locked.
+        if (written.length)
+          await this.resources.systemSave(run.resource, values, Number(run.record_id), {
+            actorId: actor.id,
+            trx,
+            reason: `${step.label}: ${outcome.label}`,
+            allowSubmitted: true,
+          })
+        event = { type: 'DECIDE', outcome: decision }
+        logged = 'decided'
+      } else {
+        if (decision !== 'approve' && decision !== 'reject')
+          throw new KitError(422, 'E_WORKFLOW_DECISION', 'القرار غير صالح')
+        if (Object.keys(values).length)
+          throw new KitError(422, 'E_WORKFLOW_FIELD', 'خطوة الموافقة لا تغير حقول المستند')
+        event = { type: decision === 'approve' ? 'APPROVE' : 'REJECT' }
+        logged = decision === 'approve' ? 'approved' : 'rejected'
+      }
+      const target = nextStep(definition, run.current_step, event)
       await trx('assignments').where('id', assignment.id).update({
         status: 'done',
         outcome: decision,
@@ -451,17 +526,12 @@ export class WorkflowEngine {
           last_error: null,
           updated_at: trx.fn.now(),
         })
-      await this.log(
-        trx,
-        run.id,
-        run.current_step,
-        decision === 'approve' ? 'approved' : 'rejected',
-        actor.id,
-        {
-          ...(note ? { comment: note } : {}),
-          next: target,
-        }
-      )
+      await this.log(trx, run.id, run.current_step, logged, actor.id, {
+        ...(logged === 'decided' ? { outcome: decision } : {}),
+        ...(written.length ? { fields: written } : {}),
+        ...(note ? { comment: note } : {}),
+        next: target,
+      })
       await this.advance(trx, run.id)
     })
     return this.run(runId, actor)
@@ -602,7 +672,38 @@ export class WorkflowEngine {
         detail: (event.detail ?? {}) as { [key: string]: JsonValue },
         at: new Date(event.created_at).toISOString(),
       })),
-      myApproval: mine ? { assignmentId: Number(mine.id), title: String(mine.title) } : null,
+      myApproval: mine
+        ? {
+            assignmentId: Number(mine.id),
+            title: String(mine.title),
+            ...(step?.type === 'decision' && actor
+              ? { decision: await this.decisionForm(row, step, actor) }
+              : {}),
+          }
+        : null,
+    }
+  }
+
+  /** Outcomes, field descriptions, choices and current values for the approver. */
+  private async decisionForm(
+    row: Record<string, any>,
+    step: Extract<WorkflowStep, { type: 'decision' }>,
+    actor: Actor
+  ): Promise<WorkflowDecisionForm> {
+    const resource = this.registry.get(row.resource)
+    const keys = [...new Set(Object.values(step.outcomes).flatMap((o) => o.fields ?? []))]
+    const shown = await this.resources.show(row.resource, Number(row.record_id), actor)
+    return {
+      outcomes: Object.entries(step.outcomes).map(([key, outcome]) => ({
+        key,
+        label: outcome.label,
+        comment: outcome.comment ?? 'optional',
+        fields: (outcome.fields ?? []).map((field) => ({ key: field, ...resource.fields[field] })),
+      })),
+      options: await this.resources.fieldOptions(row.resource, keys, actor),
+      values: Object.fromEntries(
+        keys.filter((key) => key in shown.data).map((key) => [key, shown.data[key]])
+      ),
     }
   }
 

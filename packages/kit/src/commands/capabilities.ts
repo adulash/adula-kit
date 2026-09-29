@@ -39,7 +39,16 @@ export const RESOURCE_OPTIONS = [
   'hooks.beforeSave / hooks.afterSave',
 ]
 export const CONDITION_OPERATORS = ['$eq', '$ne', '$in', '$lt', '$gt', '$like']
-export const WORKFLOW_STEPS = ['condition', 'update', 'notify', 'approval', 'delay', 'http', 'end']
+export const WORKFLOW_STEPS = [
+  'condition',
+  'update',
+  'notify',
+  'approval',
+  'decision',
+  'delay',
+  'http',
+  'end',
+]
 
 /**
  * Kit services by concern. Every name is a public export of @adula/kit; a test
