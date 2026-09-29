@@ -40,7 +40,10 @@ export function ResourceForm({
   )
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(
-      scalar.map((field) => [field.key, initialValue(field, editor.record?.[field.key])])
+      scalar.map((field) => [
+        field.key,
+        initialValue(field, editor.record?.[field.key] ?? editor.defaults?.[field.key]),
+      ])
     )
   )
   const [rows, setRows] = useState<Record<string, InlineRow[]>>(() =>

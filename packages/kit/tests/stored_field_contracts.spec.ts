@@ -213,7 +213,8 @@ test.group('Stored field contracts', (group) => {
     assert.deepEqual(shown.data, saved)
     assert.equal(shown.data.day, '2024-02-29')
     assert.equal(shown.data.instant, '2026-09-18T00:15:24.123Z')
-    assert.deepEqual(shown.related.customerId, [client])
+    // Related rows also carry the title that labels the relation (#47).
+    assert.deepEqual(shown.related.customerId, [{ ...client, _title: client.name }])
     for (const key of ['internalMemo', 'reviewCode', 'display_title', 'createdBy', 'lines'])
       assert.notProperty(shown.data, key)
     const listed = await service.list(resource.name, admin)

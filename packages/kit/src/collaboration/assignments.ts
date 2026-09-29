@@ -11,6 +11,8 @@ export type Assignment = {
   resource: string
   resourceLabel: string
   recordId: number
+  /** The record's title under the viewer's field access; null shows the id instead (#32). */
+  recordTitle: string | null
   assigneeId: number
   assigneeName: string | null
   assignedBy: number | null
@@ -74,7 +76,10 @@ export class Assignments {
       .where({ 'a.resource': name, 'a.record_id': id })
       .orderByRaw("(a.status = 'open') DESC, a.id DESC")
       .limit(100)
-    return rows.map((row) => this.present(row, actor))
+    return this.titled(
+      rows.map((row) => this.present(row, actor)),
+      actor
+    )
   }
 
   async assign(
@@ -217,7 +222,7 @@ export class Assignments {
       .where({ assignee_id: actor.id, status: 'open' })
       .count<{ count: string }[]>('* as count')
     return {
-      data,
+      data: await this.titled(data, actor),
       nextCursor: more && last !== null ? String(last) : null,
       open: Number(count),
     }
@@ -369,6 +374,7 @@ export class Assignments {
       resource: String(row.resource),
       resourceLabel: this.label(row.resource),
       recordId: Number(row.record_id),
+      recordTitle: null,
       assigneeId: Number(row.assignee_id),
       assigneeName: row.assignee_name ? String(row.assignee_name) : null,
       assignedBy: row.assigned_by === null ? null : Number(row.assigned_by),
@@ -388,6 +394,19 @@ export class Assignments {
       canComplete: open && !row.workflow_run_id && Number(row.assignee_id) === actor.id,
       canCancel: open && !row.workflow_run_id && Number(row.assigned_by) === actor.id,
     }
+  }
+
+  /** Adds record titles in one read per resource, under the viewer's field access. */
+  private async titled(list: Assignment[], actor: Actor) {
+    const byResource = new Map<string, number[]>()
+    for (const item of list)
+      byResource.set(item.resource, [...(byResource.get(item.resource) ?? []), item.recordId])
+    for (const [resource, ids] of byResource) {
+      const titles = await this.resources.titles(resource, ids, actor)
+      for (const item of list)
+        if (item.resource === resource) item.recordTitle = titles.get(item.recordId) ?? null
+    }
+    return list
   }
 
   private closeNote(row: Record<string, any>): CloseNotePolicy {

@@ -26,6 +26,8 @@ export type WorkflowRun = {
   resource: string
   resourceLabel: string
   recordId: number
+  /** The record title for the approver (#32); null in admin views or when not readable. */
+  recordTitle: string | null
   definition: string
   label: string
   version: number
@@ -568,6 +570,9 @@ export class WorkflowEngine {
           .first('id', 'title')
       : undefined
     const step = row.current_step ? definition?.steps[row.current_step] : undefined
+    const titles = actor
+      ? await this.resources.titles(row.resource, [Number(row.record_id)], actor)
+      : undefined
     let resourceLabel = String(row.resource)
     try {
       resourceLabel = this.resources.label(row.resource)
@@ -577,6 +582,7 @@ export class WorkflowEngine {
       resource: String(row.resource),
       resourceLabel,
       recordId: Number(row.record_id),
+      recordTitle: titles?.get(Number(row.record_id)) ?? null,
       definition: String(row.definition),
       label: definition?.label ?? String(row.definition),
       version: Number(row.definition_version),

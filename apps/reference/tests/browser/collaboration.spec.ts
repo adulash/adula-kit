@@ -92,6 +92,8 @@ test.group('Record collaboration browser acceptance', (group) => {
     const tasks = await visit('/my-tasks')
     await tasks.getByRole('heading', { name: 'مهامي' }).waitFor()
     await tasks.getByText('تدقيق العينة').waitFor()
+    // The record is named by its title, not its database id (issue #32).
+    await tasks.getByRole('link', { name: 'عينات الواجهة: عينة التعليقات' }).waitFor()
     // The due date uses the shared calendar formatter, not the raw ISO string (issue #33).
     await tasks.getByText('31/12/2026', { exact: true }).waitFor()
     await tasks.screenshot({ path: join(await screenshotDir(), 'my-tasks.png') })
