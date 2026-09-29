@@ -565,8 +565,7 @@
         "textarea",
         "dialog",
         "ui-preferences",
-        "resource-value",
-        "resource-field"
+        "resource-value"
       ],
       "dependencies": [
         "lucide-react@1.47.0",

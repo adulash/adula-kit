@@ -23,11 +23,14 @@ Minor release: additive APIs and one additive kit migration
   lookups active, and saving validates as usual (#48). Projects with a copied
   `resource-form` need the updated component.
 * Workflows: a `decision` step offers named outcomes, for example approve, reject and
-  reassign. Each outcome may ask the approver for document fields, which are saved on
-  the submitted document through the validator and hooks (`systemSave` with
-  `allowSubmitted`) and recorded in the field history. An outcome can require a
-  comment. The approvals inbox renders the outcomes and their fields (#42). Projects
-  with a copied `record-workflows` need the updated component.
+  return. Each outcome names its next step, which may be an earlier step, and may
+  require a comment. The approvals inbox renders one button per outcome. The submitted
+  document stays locked: a decision never edits it (#42). Projects with a copied
+  `record-workflows` need the updated component.
+* Security: the ESLint rule `adula/no-system-save-in-controllers` keeps `systemSave`
+  and `rehome` out of controllers and routes, and managed AGENTS rule 10 says so.
+  Existing projects can enable the rule in `eslint.config.js` and run `adula:install`
+  to refresh the managed rules.
 * Assignments: «تم الإنجاز» and «إلغاء المهمة» open a dialog for a closing note, kept
   with the task. Each application makes the note optional (default) or required with
   `new Assignments(..., { closeNote })`. Managed tasks

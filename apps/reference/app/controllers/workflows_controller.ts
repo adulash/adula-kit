@@ -27,20 +27,16 @@ export default class WorkflowsController {
 
   async decide(ctx: HttpContext) {
     // The engine checks the decision against the current step: approve/reject for an
-    // approval, a declared outcome with its declared fields for a decision step.
+    // approval step, one of the declared outcomes for a decision step.
     const decision = ctx.request.input('decision')
-    const values = ctx.request.input('values', {})
     if (typeof decision !== 'string' || !decision)
       throw new KitError(422, 'E_WORKFLOW_DECISION', 'القرار غير صالح')
-    if (!values || typeof values !== 'object' || Array.isArray(values))
-      throw new KitError(422, 'E_WORKFLOW_FIELD', 'قيم القرار غير صالحة')
     return {
       data: await kit().workflows.decide(
         runId(ctx.params.run),
         await requestActor(ctx),
         decision,
-        ctx.request.input('comment'),
-        values
+        ctx.request.input('comment')
       ),
     }
   }

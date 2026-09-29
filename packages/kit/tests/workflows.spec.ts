@@ -80,30 +80,36 @@ function approval(version = 1): WorkflowDefinition {
   })
 }
 
-/** The manager approves with a status, rejects with a reason, or reassigns the customer (#42). */
+/**
+ * The manager prepares, the director approves, rejects with a reason, or returns the order
+ * to the manager (#42). Decisions route the run; the submitted order itself stays locked.
+ */
 function decision(): WorkflowDefinition {
   return defineWorkflow({
     name: 'order_decision',
     version: 1,
     resource: 'orders',
     label: 'قرار الطلب',
-    start: 'decide',
+    start: 'prepare',
     steps: {
-      decide: {
+      prepare: {
         type: 'decision',
-        label: 'قرار مدير القسم',
+        label: 'إعداد مدير القسم',
         assignees: { users: [3] },
         outcomes: {
-          approve: { label: 'اعتماد', next: 'approved', fields: ['status'] },
-          reject: { label: 'رفض', next: 'rejected', comment: 'required' },
-          reassign: { label: 'تحويل', next: 'check', fields: ['customerId', 'notes'] },
+          forward: { label: 'إحالة', next: 'decide' },
+          withdraw: { label: 'سحب', next: 'rejected' },
         },
       },
-      check: {
-        type: 'condition',
-        when: (order) => order.customerId !== null && order.customerId !== undefined,
-        then: 'approved',
-        else: 'rejected',
+      decide: {
+        type: 'decision',
+        label: 'قرار المدير العام',
+        assignees: { users: [4] },
+        outcomes: {
+          approve: { label: 'اعتماد', next: 'approved' },
+          reject: { label: 'رفض', next: 'rejected', comment: 'required' },
+          back: { label: 'إعادة للإعداد', next: 'prepare', comment: 'required' },
+        },
       },
       approved: { type: 'end', outcome: 'approved' },
       rejected: { type: 'end', outcome: 'rejected', cancelDocument: true },
@@ -539,7 +545,9 @@ test.group('Workflow engine', (group) => {
     assert.equal(draft.code, 'E_DOCUMENT_STATE')
   })
 
-  test("decision steps take named outcomes and the approver's values (#42)", async ({ assert }) => {
+  test('decision steps route by named outcomes and may return to an earlier step (#42)', async ({
+    assert,
+  }) => {
     assert.throws(
       () =>
         defineWorkflow({
@@ -549,108 +557,60 @@ test.group('Workflow engine', (group) => {
             decide: {
               type: 'decision',
               label: 'x',
-              assignees: { users: [3] },
+              assignees: { users: [4] },
               outcomes: { only: { label: 'x', next: 'approved' } },
             },
           },
         }),
       /at least two outcomes/
     )
-    const badField = defineWorkflow({
-      ...decision(),
-      name: 'bad_decision',
-      steps: {
-        ...decision().steps,
-        decide: {
-          type: 'decision',
-          label: 'x',
-          assignees: { users: [3] },
-          outcomes: {
-            approve: { label: 'اعتماد', next: 'approved', fields: ['number'] },
-            reject: { label: 'رفض', next: 'rejected' },
-          },
-        },
-      },
-    })
-    assert.throws(() => engine([badField]), /cannot ask for field number/)
-
     const workflows = engine([decision()])
-    const customer = await service().save('customers', admin, { name: 'عميل التحويل' })
-    // Reassign: the approver fills declared fields on the submitted (locked) document.
     const first = await submittedOrder('10')
     await deliver(workflows)
     let [run] = await workflows.inbox(manager)
-    assert.equal(run.recordId, first)
-    const form = run.myApproval?.decision
-    assert.deepEqual(
-      form?.outcomes.map((outcome) => [outcome.key, outcome.label, outcome.comment]),
-      [
-        ['approve', 'اعتماد', 'optional'],
-        ['reject', 'رفض', 'required'],
-        ['reassign', 'تحويل', 'optional'],
-      ]
-    )
-    assert.deepEqual(
-      form?.outcomes[2].fields.map((field) => field.key),
-      ['customerId', 'notes']
-    )
-    assert.deepEqual(form?.options.status.map((option) => option.value).sort(), ['closed', 'open'])
-    assert.equal(form?.values.notes, 'طلب تدفق')
-
-    const undeclared = await failure(() =>
-      workflows.decide(run.id, manager, 'approve', '', { notes: 'x' })
-    )
-    assert.equal(undeclared.code, 'E_WORKFLOW_FIELD')
-    const noReason = await failure(() => workflows.decide(run.id, manager, 'reject'))
-    assert.equal(noReason.code, 'E_WORKFLOW_COMMENT')
-    const unknown = await failure(() => workflows.decide(run.id, manager, 'approve_all'))
+    assert.deepEqual(run.myApproval?.decision?.outcomes, [
+      { key: 'forward', label: 'إحالة', comment: 'optional' },
+      { key: 'withdraw', label: 'سحب', comment: 'optional' },
+    ])
+    run = await workflows.decide(run.id, manager, 'forward')
+    ;[run] = await workflows.inbox(director)
+    const unknown = await failure(() => workflows.decide(run.id, director, 'approve_all'))
     assert.equal(unknown.code, 'E_WORKFLOW_DECISION')
-    // The resource rules still apply to the approver's values.
-    const badLookup = await failure(() =>
-      workflows.decide(run.id, manager, 'approve', '', { status: 'unknown' })
-    )
-    assert.equal(badLookup.code, 'E_LOOKUP')
-
-    run = await workflows.decide(run.id, manager, 'reassign', 'تحويل للعميل الجديد', {
-      customerId: customer.id,
-      notes: 'محوَّل',
-    })
-    assert.equal(run.status, 'completed')
-    assert.equal(run.outcome, 'approved', "the next steps see the approver's values")
+    const noReason = await failure(() => workflows.decide(run.id, director, 'back'))
+    assert.equal(noReason.code, 'E_WORKFLOW_COMMENT')
+    // Returning opens a new task at the earlier step; the order stays submitted and unchanged.
+    run = await workflows.decide(run.id, director, 'back', 'أرفق عرض السعر')
+    assert.equal(run.step, 'prepare')
+    const [again] = await workflows.inbox(manager)
+    assert.equal(again.id, run.id)
+    run = await workflows.decide(run.id, manager, 'forward')
+    ;[run] = await workflows.inbox(director)
+    run = await workflows.decide(run.id, director, 'approve')
+    assert.equal(run.outcome, 'approved')
     const stored = await db('orders').where('id', first).first()
-    assert.deepEqual(
-      [stored.customer_id, stored.notes, stored.doc_status],
-      [customer.id, 'محوَّل', 1]
+    assert.equal(stored.doc_status, 1)
+    const returned = run.history.find(
+      (entry) => entry.event === 'decided' && entry.detail.outcome === 'back'
     )
-    const decided = run.history.find((entry) => entry.event === 'decided')
-    assert.deepInclude(decided?.detail, {
-      outcome: 'reassign',
-      fields: ['customerId', 'notes'],
-      comment: 'تحويل للعميل الجديد',
-    })
-    const change = await db('field_changes')
-      .where({ resource: 'orders', record_id: first, field: 'notes' })
-      .orderBy('id', 'desc')
-      .first()
-    assert.deepEqual([change.before, change.after], ['طلب تدفق', 'محوَّل'])
+    assert.deepInclude(returned?.detail, { comment: 'أرفق عرض السعر', next: 'prepare' })
 
     // Reject with a reason cancels the document, as the end step declares.
     const second = await submittedOrder('10')
     await deliver(workflows)
     ;[run] = await workflows.inbox(manager)
-    run = await workflows.decide(run.id, manager, 'reject', 'خارج الميزانية')
+    run = await workflows.decide(run.id, manager, 'forward')
+    ;[run] = await workflows.inbox(director)
+    run = await workflows.decide(run.id, director, 'reject', 'خارج الميزانية')
     assert.equal(run.outcome, 'rejected')
     const cancelled = await db('orders').where('id', second).first()
     assert.equal(cancelled.doc_status, 2)
-    // Plain approval steps still accept only approve and reject, without values.
+    // Plain approval steps keep their two decisions and show no outcome list.
     const plain = engine([approval()])
     await submittedOrder('200000')
     await deliver(plain)
     const [waiting] = await plain.inbox(manager)
     assert.isUndefined(waiting.myApproval?.decision)
-    const withValues = await failure(() =>
-      plain.decide(waiting.id, manager, 'approve', '', { notes: 'x' })
-    )
-    assert.equal(withValues.code, 'E_WORKFLOW_FIELD')
+    const invalid = await failure(() => plain.decide(waiting.id, manager, 'back'))
+    assert.equal(invalid.code, 'E_WORKFLOW_DECISION')
   })
 })
