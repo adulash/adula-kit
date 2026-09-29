@@ -3,8 +3,10 @@ import { fileURLToPath } from 'node:url'
 import {
   diagnose,
   diagnoseResourceSnapshots,
+  diagnoseOutbox,
   diagnoseWorkflowRoles,
 } from '../src/commands/doctor.js'
+import { runtimeHealth } from '../src/core/health.js'
 import { diagnoseAttachments } from '../src/attachments/doctor.js'
 import { Settings } from '../src/services/settings.js'
 import { MigrationRunner } from '@adonisjs/lucid/migration'
@@ -23,6 +25,7 @@ export default class Doctor extends BaseCommand {
       process.env
     )
     findings.push(await diagnoseAttachments(db.connection().getWriteClient()))
+    findings.push(diagnoseOutbox(await runtimeHealth(db.connection().getWriteClient())))
     const migrations = await new MigrationRunner(db, this.app, { direction: 'up' }).getList()
     const missing = migrations.filter((entry) => entry.status === 'corrupt')
     const pending = migrations.filter((entry) => entry.status === 'pending')

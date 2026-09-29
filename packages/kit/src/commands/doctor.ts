@@ -6,6 +6,7 @@ import { agentAssets, managedRules, digest } from './agent_assets.js'
 import { columnName } from '../resource/define_resource.js'
 import type { Field, Resource } from '../resource/types.js'
 import type { WorkflowDefinition } from '../workflows/define_workflow.js'
+import type { RuntimeHealth } from '../core/health.js'
 
 export type Finding = {
   check: string
@@ -16,6 +17,8 @@ export type Finding = {
 // The deployment volume and backup scripts share this application-relative path.
 const UPLOADS_PATH = 'storage/uploads'
 const UPLOADS_WARNING_BYTES = 5_000_000_000
+/** An event the worker has not published within this age suggests that no worker runs. */
+const OUTBOX_STALE_MS = 60_000
 
 async function assertContained(root: string, path: string) {
   const resolved = relative(await realpath(root), await realpath(path))
@@ -375,5 +378,23 @@ export function diagnoseWorkflowRoles(
     message: missing.length
       ? `Workflow steps address roles that do not exist (renamed or not created yet); approvals there fail: ${missing.join(', ')}`
       : 'Every role named by a workflow step exists',
+  }
+}
+
+/** Events wait in the outbox until a worker publishes them; a stale backlog means none runs (#50). */
+export function diagnoseOutbox(
+  health: Pick<RuntimeHealth, 'outbox'> & {
+    heartbeats: Pick<RuntimeHealth['heartbeats'], 'worker'>
+  }
+): Finding {
+  const { backlog, oldestAgeMs } = health.outbox
+  const worker = health.heartbeats.worker.healthy ? 'running' : 'not running (no recent heartbeat)'
+  const stale = backlog > 0 && oldestAgeMs !== null && oldestAgeMs >= OUTBOX_STALE_MS
+  return {
+    check: 'events.outbox',
+    status: stale ? 'warn' : 'pass',
+    message: stale
+      ? `${backlog} unpublished events, the oldest ${Math.round(oldestAgeMs / 1000)} s old; the worker is ${worker}. Listeners run only while \`node ace adula:worker\` runs`
+      : `No outbox event is older than ${OUTBOX_STALE_MS / 1000} s; the worker is ${worker}`,
   }
 }

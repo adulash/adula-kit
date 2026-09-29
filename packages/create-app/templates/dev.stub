@@ -1,0 +1,25 @@
+// Development runs the HTTP server and the event worker together (issue #50). Listeners,
+// workflows, notification e-mail, imports and webhooks wait in the outbox until the
+// worker publishes them. `node --watch` restarts the worker when application code changes.
+// Extra arguments (`npm run dev -- --no-clear`) go to the HTTP server.
+import { spawn } from 'node:child_process'
+
+const commands = [
+  ['ace', 'serve', '--hmr', ...process.argv.slice(2)],
+  ['--watch', 'ace', 'adula:worker'],
+]
+const children = commands.map((args) =>
+  spawn(process.execPath, args, { stdio: 'inherit', windowsHide: true })
+)
+let exiting = false
+const stop = (code) => {
+  if (exiting) return
+  exiting = true
+  process.exitCode = code
+  for (const child of children) if (child.exitCode === null) child.kill('SIGINT')
+}
+for (const child of children) {
+  child.once('error', () => stop(1))
+  child.once('exit', (code, signal) => stop(code ?? (signal ? 1 : 0)))
+}
+for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => stop(0))

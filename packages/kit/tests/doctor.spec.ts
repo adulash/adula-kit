@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, relative } from 'node:path'
 import {
   assessUploadSize,
+  diagnoseOutbox,
   diagnoseResourceSnapshots,
   diagnoseUi,
   diagnoseUploads,
@@ -294,5 +295,29 @@ test.group('Doctor workflow role references', () => {
     assert.equal(renamed.status, 'warn')
     assert.include(renamed.message, 'release_approval@2.review → "مدير مشروع"')
     assert.notInclude(renamed.message, 'tell')
+  })
+  test('outbox check warns when events wait longer than a minute', ({ assert }) => {
+    const worker = (healthy: boolean) => ({
+      worker: { at: null, ageMs: null, healthy },
+    })
+    const fresh = diagnoseOutbox({
+      outbox: { backlog: 3, oldestAgeMs: 5_000 },
+      heartbeats: worker(true),
+    })
+    assert.equal(fresh.status, 'pass')
+    // Development ran only the HTTP server, so 210 events never reached listeners (#50).
+    const stuck = diagnoseOutbox({
+      outbox: { backlog: 210, oldestAgeMs: 3_600_000 },
+      heartbeats: worker(false),
+    })
+    assert.equal(stuck.status, 'warn')
+    assert.include(stuck.message, '210 unpublished events')
+    assert.include(stuck.message, 'not running')
+    assert.include(stuck.message, 'adula:worker')
+    const empty = diagnoseOutbox({
+      outbox: { backlog: 0, oldestAgeMs: null },
+      heartbeats: worker(false),
+    })
+    assert.equal(empty.status, 'pass')
   })
 })

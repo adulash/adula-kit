@@ -24,7 +24,7 @@ For local archive testing, first run `pnpm test:create` in this repository to pr
 npm exec --yes --package=/path/to/adula-create-app-1.0.0.tgz -- create-adula my-app --packages /path/to/archives
 ```
 
-Run `npm run dev` inside the created application. Workers/scheduler are separate runtime processes described in its README. The creator installs application dependencies and local services; Node/Docker installation, real SMTP, OAuth, S3, off-site backup and production hosting remain explicit host/service configuration.
+Run `npm run dev` inside the created application; it starts the HTTP server and the event worker. In production the worker and scheduler are separate runtime processes described in its README. The creator installs application dependencies and local services; Node/Docker installation, real SMTP, OAuth, S3, off-site backup and production hosting remain explicit host/service configuration.
 
 ## Prerequisites for an existing application
 

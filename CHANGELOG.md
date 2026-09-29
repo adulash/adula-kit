@@ -27,6 +27,18 @@ Copied UI files changed; review them with `node ace adula:ui add all --preview`.
 * Starter: `npm test -- <args>` reaches the test runner; the test teardown formats
   `database/schema.ts` (#22). Existing projects can set their `test` script to
   `node ace test` and add the same teardown.
+* Starter: `npm run dev` also runs the event worker, restarted by `node --watch` when
+  application code changes, so listeners run during development. The new
+  `events.outbox` doctor check warns when outbox events wait longer than a minute and
+  reports the worker heartbeat (#50). Existing projects can copy `scripts/dev.mjs`
+  from a new application and set `"dev": "node scripts/dev.mjs"`.
+* Security contract: the generated `resource_contract.ts` follows the resource's
+  declared actions. Undeclared create, update and delete routes must return 403, and
+  the update fixture is needed only when `update` is declared. The attachment test
+  uploads a type the field accepts (#49). Existing projects can copy the helper from
+  a new application.
+* UI docs: how `className` merges with component variants, and which variant classes
+  (hover, dark) stay (#46).
 
 ## 1.0.0 — 2026-09-25
 

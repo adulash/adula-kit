@@ -91,8 +91,10 @@ digits and underscores, at most 50 characters); an existing name is still refuse
 Values containing dotenv interpolation or quote characters are stored in private
 `tmp/env` files and loaded through AdonisJS's `file:` identifier without alteration.
 
-After creation: `cd my-app` and `npm run dev`. Workers and scheduler are separate
-runtime processes documented in the application README. SMTP, OAuth, S3, production
+After creation: `cd my-app` and `npm run dev`. In development this starts the HTTP
+server and the event worker (`node ace adula:worker`, restarted when application code
+changes), so listeners, workflows and notification e-mail run. In production the worker
+and the scheduler are separate runtime processes documented in the application README. SMTP, OAuth, S3, production
 hosting and off-site backups need real configuration; no external accounts are
 created. Node.js and Docker themselves are host prerequisites.
 
