@@ -56,6 +56,14 @@ Minor release: additive APIs and one additive kit migration
   unresolved and the rule is refused. Hosts that build actors themselves call
   `resolveActorConditions` (#29).
 
+* Gaps: `adula:gaps report` prints, for each KIT_GAPS.md entry without an `Issue:`
+  line, a link that opens the kit's gap form prefilled with the masked entry, and
+  lists the required fields still missing. Nothing is sent: the developer reviews and
+  submits the form, then records `Issue: #<number>`. New projects get a KIT_GAPS.md
+  template with the form's fields (Package, Needed by, Tried, Blocked because, Proposed
+  kit change, Reproduction, Acceptance, Workaround, Issue). Managed AGENTS rule 17 says
+  so; run `adula:install` to refresh it.
+
 ## 1.0.1 — unreleased
 
 Patch release: fixes reported against 1.0.0, with no public API or schema change.

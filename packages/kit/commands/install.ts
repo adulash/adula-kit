@@ -2,6 +2,7 @@ import { BaseCommand } from '@adonisjs/core/ace'
 import { readFile, writeFile, access } from 'node:fs/promises'
 import { Settings } from '../src/services/settings.js'
 import { syncAgentAssets } from '../src/commands/agent_assets.js'
+import { GAPS_TEMPLATE } from '../src/commands/gap_report.js'
 import { KIT_VERSION } from '../src/version.js'
 import { fileURLToPath } from 'node:url'
 
@@ -67,10 +68,7 @@ export default class Install extends BaseCommand {
     })
     for (const [name, content] of [
       ['CLAUDE.md', 'Read and follow AGENTS.md.\nThe project rules are maintained there.\n'],
-      [
-        'KIT_GAPS.md',
-        '# Kit gaps\n\nRecord Needed by, Tried, Blocked because, Proposed kit change, Workaround.\n',
-      ],
+      ['KIT_GAPS.md', GAPS_TEMPLATE],
     ]) {
       const path = this.app.makePath(name)
       try {
