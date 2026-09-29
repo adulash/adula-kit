@@ -1,6 +1,11 @@
 # ADR 031 — Workflow decision steps (1.1.0)
 
-Date: 2026-09-29. Status: proposed for 1.1.0; owner review pending.
+Date: 2026-09-29. Status: accepted by the owner for 1.1.0. The owner asked whether a decision can gate a
+later step and whether a rejection can return to an earlier step (both yes: an outcome's
+`next` may name any step, including an earlier one, and each return opens new
+assignments). The owner then stated: "موافق، ادمج #55 بعد نجاح CI" (agreed; merge #55
+after CI passes). Returning to an earlier step does not reopen the document as a draft;
+the document stays submitted and only declared decision fields change.
 
 Issue #42: an approver sometimes decides between more than two outcomes, for example
 approve, reject or reassign to another inspector and date. The approver must also fill
