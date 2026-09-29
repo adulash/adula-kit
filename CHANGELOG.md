@@ -56,6 +56,13 @@ Minor release: additive APIs and one additive kit migration
   unresolved and the rule is refused. Hosts that build actors themselves call
   `resolveActorConditions` (#29).
 
+* Resources: `ResourceService.aggregate()` counts and totals records grouped by up to
+  three fields under the same authorization as `list()`: role rules and organization
+  scope filter the rows, and grouping, totals, filters and conditions are refused on
+  fields the actor may not query. It is served at `/resources/<name>/aggregate` and
+  `/api/v1/resources/<name>/aggregate` and described in OpenAPI. `canQueryField` is
+  exported for module services (#27).
+
 ## 1.0.1 — unreleased
 
 Patch release: fixes reported against 1.0.0, with no public API or schema change.

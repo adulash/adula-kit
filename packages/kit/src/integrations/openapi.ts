@@ -248,6 +248,72 @@ export function openApiDocument(
         parameters: [idParam],
         responses: { 200: one('Deleted'), 403: error, 404: error, 409: error },
       }
+    if (allowed.has('view'))
+      paths[`${base}/resources/${resource.name}/aggregate`] = {
+        get: {
+          tags: [tag],
+          summary: `Count and total ${resource.label.en} by group`,
+          description:
+            'Only records the token may view are counted; grouped, totalled and filtered fields must be readable without conditions.',
+          parameters: [
+            {
+              name: 'groupBy',
+              in: 'query',
+              description: 'Up to three comma-separated fields',
+              schema: { type: 'string' },
+            },
+            {
+              name: 'sum',
+              in: 'query',
+              description: 'Comma-separated integer or money fields',
+              schema: { type: 'string' },
+            },
+            {
+              name: 'where',
+              in: 'query',
+              description: 'JSON conditions ($eq, $ne, $in, $lt, $gt, $like)',
+              schema: { type: 'string' },
+            },
+            { name: 'search', in: 'query', schema: { type: 'string' } },
+          ],
+          responses: {
+            200: {
+              description: 'Groups (at most 1000)',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: {
+                        type: 'object',
+                        properties: {
+                          truncated: { type: 'boolean' },
+                          rows: {
+                            type: 'array',
+                            items: {
+                              type: 'object',
+                              properties: {
+                                group: { type: 'object' },
+                                count: { type: 'integer' },
+                                sum: {
+                                  type: 'object',
+                                  additionalProperties: { type: ['string', 'null'] },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            403: error,
+            422: error,
+          },
+        },
+      }
     if (Object.keys(collection).length) paths[`${base}/resources/${resource.name}`] = collection
     if (Object.keys(item).length) paths[`${base}/resources/${resource.name}/{id}`] = item
     for (const action of ['submit', 'cancel'] as const)

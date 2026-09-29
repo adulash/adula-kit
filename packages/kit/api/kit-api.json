@@ -52,6 +52,14 @@
       "kind": "ClassDeclaration",
       "type": "typeof AdonisJobs"
     },
+    "AggregateOptions": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ groupBy?: string[] | undefined; count?: boolean | undefined; sum?: string[] | undefined; filters?: Record<string, unknown> | undefined; where?: Conditions | undefined; search?: string | undefined; }"
+    },
+    "AggregateRow": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ group: Record<string, JsonValue>; count?: number | undefined; sum?: Record<string, string | null> | undefined; }"
+    },
     "ALL_SUBJECT_LABEL": {
       "kind": "VariableDeclaration",
       "type": "Label"
@@ -127,6 +135,10 @@
     "CalendarSystem": {
       "kind": "TypeAliasDeclaration",
       "type": "\"gregory\" | \"islamic-umalqura\""
+    },
+    "canQueryField": {
+      "kind": "FunctionDeclaration",
+      "type": "(resource: Resource, actor: Actor, ability: KitAbility, key: string) => boolean"
     },
     "canRecord": {
       "kind": "FunctionDeclaration",
@@ -395,6 +407,10 @@
     "listenForNotifications": {
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>, onSignal: (signal: NotificationSignal) => void, options?: { retryMs?: number | undefined; onError?: ((error: unknown) => void) | undefined; } | undefined) => () => Promise<void>"
+    },
+    "ListOptions": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ limit?: number | undefined; cursor?: string | undefined; search?: string | undefined; sort?: string | undefined; direction?: \"asc\" | \"desc\" | undefined; filters?: Record<string, unknown> | undefined; tag?: string | undefined; estimate?: boolean | undefined; }"
     },
     "loadAttachments": {
       "kind": "FunctionDeclaration",
