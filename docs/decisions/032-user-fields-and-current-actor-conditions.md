@@ -1,6 +1,11 @@
 # ADR 032 — User fields and the current-actor condition (1.1.0)
 
-Date: 2026-09-29. Status: proposed; awaiting the owner's decision.
+Date: 2026-09-29. Status: accepted by the owner for 1.1.0. After the decisions were explained,
+the owner accepted the two open points: that users who may edit a user field see the names
+of eligible users in ancestor units, and that `canQueryField` stays unchanged. The owner
+stated in conversation: "موافق على الأمرين، سجّل الموافقة في ADR 032" (agreed on both
+points; record the approval in ADR 032). The owner also set the rule that the kit changes
+only what serves any resource.
 
 Issues #28 and #29. Records often point at a person: an assignee, a reviewer, an
 inspector. `belongsTo` accepts only registered resources and users are core tables, so
