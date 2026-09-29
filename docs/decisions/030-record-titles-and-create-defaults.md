@@ -1,6 +1,8 @@
 # ADR 030 — Record titles and create-form defaults (1.1.0)
 
-Date: 2026-09-29. Status: proposed for 1.1.0; owner review pending.
+Date: 2026-09-29. Status: accepted by the owner for 1.1.0. After the decisions and their consequences were
+explained, the owner stated in conversation: "موافق، ادمج #54 وابدأ #42" (agreed; merge
+#54 and start #42).
 
 Issues #47, #32 and #48 came from consumers whose users saw raw lookup keys, database
 ids, or had to pick a parent record again that the page already knew.
