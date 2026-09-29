@@ -15,7 +15,8 @@ import {
   DialogTitle,
 } from '~/components/ui/dialog'
 import { useUiPreferences } from '~/components/ui/ui-preferences'
-import { formatDatetime } from '~/components/ui/resource-value'
+import { formatDatetime, inputValue, parseValue } from '~/components/ui/resource-value'
+import { ResourceField } from '~/components/ui/resource-field'
 
 const json = { headers: { Accept: 'application/json' }, withXSRFToken: true }
 export const runStatusLabel: Record<string, string> = {
@@ -38,6 +39,7 @@ const eventLabel: Record<string, string> = {
   approval_requested: 'طُلبت الموافقة',
   approved: 'موافقة',
   rejected: 'رفض',
+  decided: 'قرار',
   done: 'نُفذت الخطوة',
   delay_started: 'بدأ الانتظار',
   retry_scheduled: 'جدولة إعادة المحاولة',
@@ -48,7 +50,21 @@ const eventLabel: Record<string, string> = {
   cancelled: 'أُلغي',
 }
 
-/** Approve or reject with an optional comment, in a confirmation dialog. */
+type DecisionChoice = NonNullable<
+  NonNullable<WorkflowRun['myApproval']>['decision']
+>['outcomes'][number]
+
+// A plain approval step offers exactly these two decisions, without document fields.
+const approvalChoices: DecisionChoice[] = [
+  { key: 'approve', label: 'موافقة', comment: 'optional', fields: [] },
+  { key: 'reject', label: 'رفض', comment: 'optional', fields: [] },
+]
+const dialogTitle: Record<string, string> = { approve: 'تأكيد الموافقة', reject: 'تأكيد الرفض' }
+
+/**
+ * The approver's decision in a confirmation dialog: approve or reject, or at a decision
+ * step one of its named outcomes with the document fields that outcome asks for (#42).
+ */
 export function WorkflowDecision({
   run,
   onDecided,
@@ -56,22 +72,48 @@ export function WorkflowDecision({
   run: WorkflowRun
   onDecided: (run: WorkflowRun) => void
 }) {
-  const [decision, setDecision] = useState<'approve' | 'reject' | null>(null)
+  const [choice, setChoice] = useState<DecisionChoice | null>(null)
+  const [values, setValues] = useState<Record<string, string>>({})
   const [comment, setComment] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   if (!run.myApproval) return null
+  const form = run.myApproval.decision
+  const choices = form?.outcomes ?? approvalChoices
+  const open = (next: DecisionChoice) => {
+    setChoice(next)
+    setComment('')
+    setError('')
+    setValues(
+      Object.fromEntries(
+        next.fields.map((field) => [field.key, inputValue(field, form?.values[field.key])])
+      )
+    )
+  }
   const submit = async () => {
-    if (!decision) return
+    if (!choice) return
+    if (choice.comment === 'required' && !comment.trim()) {
+      setError('اكتب ملاحظة القرار.')
+      return
+    }
+    let payload: Record<string, unknown>
+    try {
+      payload = Object.fromEntries(
+        choice.fields.map((field) => [field.key, parseValue(field, values[field.key] ?? '')])
+      )
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'راجع قيم الحقول.')
+      return
+    }
     setBusy(true)
     setError('')
     try {
       const response = await axios.post<{ data: WorkflowRun }>(
         `/workflows/${run.id}/decide`,
-        { decision, comment },
+        { decision: choice.key, comment, values: payload },
         json
       )
-      setDecision(null)
+      setChoice(null)
       setComment('')
       onDecided(response.data.data)
     } catch (caught) {
@@ -84,37 +126,68 @@ export function WorkflowDecision({
       setBusy(false)
     }
   }
+  const rejecting = choice?.key === 'reject'
   return (
     <>
-      <div className="flex gap-2">
-        <Button size="sm" onClick={() => setDecision('approve')}>
-          <CheckCircle2 size={15} />
-          موافقة
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="text-destructive"
-          onClick={() => setDecision('reject')}
-        >
-          <XCircle size={15} />
-          رفض
-        </Button>
+      <div className="flex flex-wrap gap-2">
+        {choices.map((item, index) => (
+          <Button
+            key={item.key}
+            size="sm"
+            variant={index === 0 ? 'default' : 'outline'}
+            className={item.key === 'reject' ? 'text-destructive' : undefined}
+            onClick={() => open(item)}
+          >
+            {item.key === 'approve' && <CheckCircle2 size={15} />}
+            {item.key === 'reject' && <XCircle size={15} />}
+            {item.label}
+          </Button>
+        ))}
       </div>
-      <Dialog open={decision !== null} onOpenChange={(open) => !open && !busy && setDecision(null)}>
+      <Dialog open={choice !== null} onOpenChange={(next) => !next && !busy && setChoice(null)}>
         <DialogContent dir="rtl">
           <DialogHeader>
-            <DialogTitle>{decision === 'approve' ? 'تأكيد الموافقة' : 'تأكيد الرفض'}</DialogTitle>
+            <DialogTitle>
+              {choice && (form ? `تأكيد القرار: ${choice.label}` : dialogTitle[choice.key])}
+            </DialogTitle>
             <DialogDescription>
-              {run.myApproval.title} — {run.resourceLabel} #{run.recordId}
+              {run.myApproval.title} — {run.resourceLabel}:{' '}
+              {run.recordTitle ?? `#${run.recordId}`}
             </DialogDescription>
           </DialogHeader>
+          {choice && choice.fields.length > 0 && (
+            <div className="grid gap-4">
+              {choice.fields.map((field) => (
+                <ResourceField
+                  key={field.key}
+                  field={field}
+                  id={`decision-${run.id}-${field.key}`}
+                  value={values[field.key] ?? ''}
+                  disabled={busy}
+                  options={form?.options[field.key]}
+                  onChange={(value) => setValues((current) => ({ ...current, [field.key]: value }))}
+                />
+              ))}
+            </div>
+          )}
           <div className="space-y-2">
-            <Label htmlFor={`decision-comment-${run.id}`}>ملاحظة (اختيارية)</Label>
+            <Label htmlFor={`decision-comment-${run.id}`} className="flex items-center gap-1">
+              {choice?.comment === 'required' ? (
+                <>
+                  ملاحظة
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                </>
+              ) : (
+                'ملاحظة (اختيارية)'
+              )}
+            </Label>
             <Textarea
               id={`decision-comment-${run.id}`}
               value={comment}
               maxLength={1000}
+              required={choice?.comment === 'required'}
               onChange={(event) => setComment(event.target.value)}
             />
           </div>
@@ -124,21 +197,16 @@ export function WorkflowDecision({
             </p>
           )}
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={busy}
-              onClick={() => setDecision(null)}
-            >
+            <Button type="button" variant="outline" disabled={busy} onClick={() => setChoice(null)}>
               تراجع
             </Button>
             <Button
               type="button"
-              variant={decision === 'reject' ? 'destructive' : 'default'}
+              variant={rejecting ? 'destructive' : 'default'}
               disabled={busy}
               onClick={() => void submit()}
             >
-              {decision === 'approve' ? 'موافقة' : 'رفض'}
+              {choice?.label}
             </Button>
           </DialogFooter>
         </DialogContent>
