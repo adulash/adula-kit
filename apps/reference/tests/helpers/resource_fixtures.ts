@@ -10,7 +10,11 @@ import { kit } from '#services/kit'
 import type { FixtureContext, ResourceFixture } from '#tests/helpers/resource_contract'
 
 /** A real Drive write plus the kit metadata row, exactly what POST /attachments does. */
-async function uploadContract(userId: number, unique: string) {
+async function uploadContract(
+  userId: number,
+  unique: string,
+  target = { resource: 'orders', field: 'contract' }
+) {
   const directory = await mkdtemp(join(tmpdir(), 'adula-fixture-'))
   const source = join(directory, 'contract.pdf')
   await writeFile(source, `%PDF-1.4\n% عقد ${unique}\n`)
@@ -18,7 +22,7 @@ async function uploadContract(userId: number, unique: string) {
     const disk = env.get('DRIVE_DISK')
     const attachment = await attachmentManager.createFromPath(source, 'عقد.pdf')
     attachment.name = `${randomUUID()}.pdf`
-    attachment.setOptions({ folder: 'resources/orders/contract', disk })
+    attachment.setOptions({ folder: `resources/${target.resource}/${target.field}`, disk })
     await attachmentManager.write(attachment)
     const path = (attachment.path ?? '').replaceAll('\\', '/')
     const row = await registerUpload(db.connection().getWriteClient(), {
@@ -31,8 +35,7 @@ async function uploadContract(userId: number, unique: string) {
       extname: 'pdf',
       data: { ...attachment.toObject(), path },
       uploadedBy: userId,
-      resource: 'orders',
-      field: 'contract',
+      ...target,
     })
     return {
       id: row.id,
@@ -112,6 +115,18 @@ export const resourceFixtures: Record<string, ResourceFixture> = {
       expected: values,
       update: { ...values, quantity: 3 },
       updated: { ...values, quantity: 3 },
+    }
+  },
+  order_receipts: async ({ userId, unique }) => {
+    const scan = await uploadContract(userId, unique, {
+      resource: 'order_receipts',
+      field: 'scan',
+    })
+    const values = { reference: `إيصال ${unique}` }
+    return {
+      input: { ...values, scan: scan.id },
+      expected: { ...values, scan: scan.summary },
+      stored: { scan: scan.id },
     }
   },
   tasks: async (context) => {

@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, readFile, symlink, access } from 'node:fs/promises'
-import { execFile } from 'node:child_process'
+import { mkdir, mkdtemp, readFile, rm, symlink, access, writeFile } from 'node:fs/promises'
+import { execFile, spawn } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { parseEnv, promisify } from 'node:util'
@@ -298,3 +298,47 @@ test('starter pages compose the registry Select instead of native lists', async 
   for (const [path, source] of pages) assert.doesNotMatch(source, /<select[\s>]/, path)
 })
 
+
+test('npm run dev starts the event worker next to the HTTP server', async () => {
+  const template = JSON.parse(
+    await readFile(new URL('../build/template.json', import.meta.url), 'utf8')
+  )
+  const { scripts } = JSON.parse(template.files['package.json'])
+  // Without a worker, every listener waited in the outbox during development (issue #50).
+  assert.equal(scripts.dev, 'node scripts/dev.mjs')
+  const root = await mkdtemp(join(tmpdir(), 'adula-dev-'))
+  try {
+    await mkdir(join(root, 'scripts'))
+    await writeFile(join(root, 'scripts/dev.mjs'), template.files['scripts/dev.mjs'])
+    // A stand-in for ace: the server exits at once, the worker stays until it is stopped.
+    await writeFile(
+      join(root, 'ace'),
+      "require('fs').appendFileSync('calls.log', JSON.stringify(process.argv.slice(2)) + '\\n')\n" +
+        "if (process.argv[2] === 'adula:worker') setInterval(() => {}, 1000)\n" +
+        "else setTimeout(() => process.exit(3), 500)\n"
+    )
+    const code = await new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, ['scripts/dev.mjs', '--no-clear'], {
+        cwd: root,
+        stdio: 'ignore',
+      })
+      const timer = setTimeout(() => {
+        child.kill('SIGKILL')
+        reject(new Error('The development launcher did not stop with the server'))
+      }, 20_000)
+      child.once('exit', (exitCode) => {
+        clearTimeout(timer)
+        resolve(exitCode)
+      })
+    })
+    // The server's failure stops the worker and becomes the launcher's exit code.
+    assert.equal(code, 3)
+    const calls = (await readFile(join(root, 'calls.log'), 'utf8'))
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line))
+    assert.deepEqual(calls.sort(), [['adula:worker'], ['serve', '--hmr', '--no-clear']])
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})

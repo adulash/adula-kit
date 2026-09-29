@@ -12,6 +12,8 @@ Required host tooling: Node 24, React 19, shadcn 4.21.0, Tailwind CSS 4.3.3 and 
 
 The theme disables automatic Tailwind source discovery and explicitly scans the consumer's inertia directory. It does not scan node_modules or unrelated workspace files. Add explicit source paths for any additional application-owned frontend directories.
 
+Components merge `className` with `cn` (shadcn's clsx + tailwind-merge replacement), so a class passed by a page replaces the variant class of the same utility and modifier: `<Button variant="outline" className="bg-emerald-600 text-white">` drops `bg-background`. Classes under other modifiers stay, as in every shadcn project: the outline variant's `hover:bg-accent`, `hover:text-accent-foreground` and `dark:bg-input/30` still apply on hover and in dark mode. To restyle a selected or colored state, start from the `default` variant or override those modifiers too (`hover:bg-emerald-700 dark:bg-emerald-600`).
+
 ## Resource components
 
 Nine kit components sit on top of the primitives and are registered by `scripts/register-resource-ui.mjs`. They consume the `ResourceDescription`, `ResourceList`, `ResourceEditor`, `ResourceShow`, `ResourceChildren`, `ResourceLookups` and `ResourceActivity` contracts exported by `@adula/kit`; the copied files are project-owned like every other registry item.

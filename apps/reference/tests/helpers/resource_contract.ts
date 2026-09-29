@@ -4,8 +4,8 @@ import app from '@adonisjs/core/services/app'
 import db from '@adonisjs/lucid/services/db'
 import { kit } from '#services/kit'
 import { randomUUID } from 'node:crypto'
-import { columnName } from '@adula/kit'
-import type { Field, RecordData, Resource, SerializedRecord } from '@adula/kit'
+import { attachmentPolicy, columnName } from '@adula/kit'
+import type { Action, Field, RecordData, Resource, SerializedRecord } from '@adula/kit'
 
 export type FixtureContext = { userId: number; orgUnitId: number; unique: string }
 export type ContractFixture = {
@@ -16,9 +16,12 @@ export type ContractFixture = {
   stored?: RecordData
   /** All live child rows after creation, ordered by ID, using public field names. */
   inline?: Record<string, RecordData[]>
-  /** A valid update for this same record, including required validator fields. */
-  update: RecordData
-  updated: SerializedRecord
+  /**
+   * A valid update for this same record, including required validator fields. Required
+   * when the resource declares the `update` action.
+   */
+  update?: RecordData
+  updated?: SerializedRecord
   updatedStored?: RecordData
   updatedInline?: Record<string, RecordData[]>
 }
@@ -37,6 +40,41 @@ function storedValue(field: Field, value: unknown) {
     : value.toISOString()
 }
 
+// Small files whose content matches their extension, so uploads pass type detection.
+const SAMPLE_FILES: Record<string, { content: () => Buffer; contentType: string }> = {
+  txt: { content: () => Buffer.from(`foreign ${randomUUID()}`), contentType: 'text/plain' },
+  pdf: {
+    content: () => Buffer.from(`%PDF-1.4\n% ${randomUUID()}\n%%EOF\n`),
+    contentType: 'application/pdf',
+  },
+  png: {
+    content: () =>
+      Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+        'base64'
+      ),
+    contentType: 'image/png',
+  },
+  gif: {
+    content: () => Buffer.from('R0lGODlhAQABAAAAACwAAAAAAQABAAACAkQBADs=', 'base64'),
+    contentType: 'image/gif',
+  },
+}
+
+/** An upload the field accepts: its first accepted type with a known sample, else text. */
+function sampleUpload(field: Field) {
+  const accepted = attachmentPolicy(field).extnames
+  const extname = accepted
+    ? (Object.keys(SAMPLE_FILES).find((entry) => accepted.includes(entry)) ?? accepted[0])
+    : 'txt'
+  const sample = SAMPLE_FILES[extname] ?? SAMPLE_FILES.txt
+  return {
+    content: sample.content(),
+    filename: `foreign.${extname}`,
+    contentType: sample.contentType,
+  }
+}
+
 /** Fixtures belong to the application and exercise its real validators and HTTP routes. */
 export function resourceContract(name: string, fixture: ResourceFixture) {
   test.group(`HTTP security contract: ${name}`, (group) => {
@@ -50,6 +88,8 @@ export function resourceContract(name: string, fixture: ResourceFixture) {
     const fresh = () => fixture({ userId: writer.id, orgUnitId, unique: randomUUID() })
     const input = (values: RecordData) => ({ ...values, ...(resource.scoped ? { orgUnitId } : {}) })
     const version = (row: SerializedRecord) => (resource.version ? { version: row.version } : {})
+    // Actions the resource does not declare are refused even to a role that manages all.
+    const allows = (action: Action) => resource.actions.includes(action)
 
     group.setup(async () => {
       const knex = db.connection().getWriteClient()
@@ -124,10 +164,27 @@ export function resourceContract(name: string, fixture: ResourceFixture) {
       const response = await client.get(base).header('Accept', 'application/json')
       response.assertStatus(401)
     })
+    test('undeclared actions are refused to a role that manages all resources', async ({
+      client,
+    }) => {
+      for (const [action, method, suffix] of [
+        ['create', 'post', ''],
+        ['update', 'patch', '/999999'],
+        ['delete', 'delete', '/999999'],
+      ] as const) {
+        if (allows(action)) continue
+        const response = await client[method](`${base}${suffix}`)
+          .loginAs(writer)
+          .withCsrfToken()
+          .header('Accept', 'application/json')
+        response.assertStatus(403)
+      }
+    })
     test('existing records enforce scope on reads and writes; central resources stay shared', async ({
       client,
       assert,
     }) => {
+      if (!allows('create')) return
       const values = await fresh()
       const created = await client
         .post(base)
@@ -159,21 +216,21 @@ export function resourceContract(name: string, fixture: ResourceFixture) {
         .get(`${base}/${row.id}/edit`)
         .loginAs(outsider)
         .header('Accept', 'application/json')
-      edit.assertStatus(404)
+      edit.assertStatus(allows('update') ? 404 : 403)
       const changed = await client
         .patch(`${base}/${row.id}`)
         .loginAs(outsider)
         .withCsrfToken()
         .header('Accept', 'application/json')
-        .json({ ...values.update, ...version(row) })
-      changed.assertStatus(404)
+        .json({ ...(values.update ?? values.input), ...version(row) })
+      changed.assertStatus(allows('update') ? 404 : 403)
       const deleted = await client
         .delete(`${base}/${row.id}`)
         .loginAs(outsider)
         .withCsrfToken()
         .header('Accept', 'application/json')
         .json(version(row))
-      deleted.assertStatus(404)
+      deleted.assertStatus(allows('delete') ? 404 : 403)
       const after = await client
         .get(`${base}/${row.id}`)
         .loginAs(writer)
@@ -185,6 +242,7 @@ export function resourceContract(name: string, fixture: ResourceFixture) {
       client,
       assert,
     }) => {
+      if (!allows('create')) return
       const values = await fresh()
       for (const key of resource.form)
         assert.property(values.input, key, `Missing ${name}.${key} fixture`)
@@ -268,75 +326,111 @@ export function resourceContract(name: string, fixture: ResourceFixture) {
         if (field.permissionLevel || resource.hidden?.includes(key))
           assert.notProperty(shown.body().data, key)
       }
-      for (const key of ['createdBy', 'updatedBy', 'deletedAt', 'orgPath', 'searchVector']) {
-        const invalid = await client
+      const stored = async () => db.connection().getWriteClient()(name).where('id', row.id).first()
+      const inserted = await stored()
+      assert.equal(inserted.created_by, writer.id)
+      if (!allows('update')) {
+        const refused = await client
           .patch(`${base}/${row.id}`)
           .loginAs(writer)
           .withCsrfToken()
           .header('Accept', 'application/json')
-          .json({ ...values.update, ...version(row), [key]: writer.id })
-        invalid.assertStatus(422)
-        assert.equal(invalid.body().error.code, 'E_FIELD_NOT_WRITABLE')
+          .json({ ...values.input, ...version(row) })
+        refused.assertStatus(403)
       }
-      const updated = await client
-        .patch(`${base}/${row.id}`)
-        .loginAs(writer)
-        .withCsrfToken()
-        .header('Accept', 'application/json')
-        .json({ ...values.update, ...version(row) })
-      updated.assertStatus(200)
-      for (const [key, value] of Object.entries(values.updated))
-        assert.deepEqual(updated.body().data[key], value, key)
-      await assertStored(values.update, values.updated, values.updatedStored, values.updatedInline)
-      if (resource.version) {
-        assert.equal(updated.body().data.version, Number(row.version) + 1)
-        const stale = await client
-          .patch(`${base}/${row.id}`)
+      const current = allows('update') ? await updateRecord() : row
+      if (!allows('delete')) {
+        const refused = await client
+          .delete(`${base}/${row.id}`)
           .loginAs(writer)
           .withCsrfToken()
           .header('Accept', 'application/json')
-          .json({ ...values.update, ...version(row) })
-        stale.assertStatus(409)
+          .json(version(current))
+        refused.assertStatus(403)
+        const kept = await client
+          .get(`${base}/${row.id}`)
+          .loginAs(writer)
+          .header('Accept', 'application/json')
+        kept.assertStatus(200)
+        assert.deepEqual(kept.body().data, current)
+        return
       }
-      const persisted = await client
-        .get(`${base}/${row.id}`)
-        .loginAs(writer)
-        .header('Accept', 'application/json')
-      persisted.assertStatus(200)
-      assert.deepEqual(persisted.body().data, updated.body().data)
       const removed = await client
         .delete(`${base}/${row.id}`)
         .loginAs(writer)
         .withCsrfToken()
         .header('Accept', 'application/json')
-        .json(version(updated.body().data))
+        .json(version(current))
       removed.assertStatus(200)
-      const stored = await db.connection().getWriteClient()(name).where('id', row.id).first()
-      assert.exists(stored.deleted_at)
-      assert.equal(stored.created_by, writer.id)
+      const deleted = await stored()
+      assert.exists(deleted.deleted_at)
       const missing = await client
         .get(`${base}/${row.id}`)
         .loginAs(writer)
         .header('Accept', 'application/json')
       missing.assertStatus(404)
+
+      async function updateRecord() {
+        assert.exists(values.update, `Missing ${name} update fixture`)
+        assert.exists(values.updated, `Missing ${name} updated fixture`)
+        const update = values.update!
+        for (const key of ['createdBy', 'updatedBy', 'deletedAt', 'orgPath', 'searchVector']) {
+          const invalid = await client
+            .patch(`${base}/${row.id}`)
+            .loginAs(writer)
+            .withCsrfToken()
+            .header('Accept', 'application/json')
+            .json({ ...update, ...version(row), [key]: writer.id })
+          invalid.assertStatus(422)
+          assert.equal(invalid.body().error.code, 'E_FIELD_NOT_WRITABLE')
+        }
+        const updated = await client
+          .patch(`${base}/${row.id}`)
+          .loginAs(writer)
+          .withCsrfToken()
+          .header('Accept', 'application/json')
+          .json({ ...update, ...version(row) })
+        updated.assertStatus(200)
+        for (const [key, value] of Object.entries(values.updated!))
+          assert.deepEqual(updated.body().data[key], value, key)
+        await assertStored(update, values.updated!, values.updatedStored, values.updatedInline)
+        if (resource.version) {
+          assert.equal(updated.body().data.version, Number(row.version) + 1)
+          const stale = await client
+            .patch(`${base}/${row.id}`)
+            .loginAs(writer)
+            .withCsrfToken()
+            .header('Accept', 'application/json')
+            .json({ ...update, ...version(row) })
+          stale.assertStatus(409)
+        }
+        const persisted = await client
+          .get(`${base}/${row.id}`)
+          .loginAs(writer)
+          .header('Accept', 'application/json')
+        persisted.assertStatus(200)
+        assert.deepEqual(persisted.body().data, updated.body().data)
+        return updated.body().data as SerializedRecord
+      }
     })
     test('attachment fields reject uploads owned by another user and never serve them', async ({
       client,
       assert,
     }) => {
       const keys = resource.form.filter((key) => resource.fields[key].type === 'attachment')
-      if (!keys.length) return
+      if (!keys.length || !allows('create')) return
       const values = await fresh()
       for (const key of keys) {
+        const upload = sampleUpload(resource.fields[key])
         const foreign = await client
           .post('/attachments')
           .loginAs(outsider)
           .withCsrfToken()
           .header('Accept', 'application/json')
           .fields({ resource: name, field: key })
-          .file('file', Buffer.from(`foreign ${randomUUID()}`), {
-            filename: 'foreign.txt',
-            contentType: 'text/plain',
+          .file('file', upload.content, {
+            filename: upload.filename,
+            contentType: upload.contentType,
           })
         foreign.assertStatus(201)
         const rejected = await client
@@ -359,7 +453,7 @@ export function resourceContract(name: string, fixture: ResourceFixture) {
       assert,
     }) => {
       const keys = Object.entries(resource.fields).filter(([, field]) => field.unique)
-      if (!keys.length) return
+      if (!keys.length || !allows('create')) return
       const values = await fresh()
       const created = await client
         .post(base)
@@ -403,6 +497,7 @@ export function resourceContract(name: string, fixture: ResourceFixture) {
         rejected.assertStatus(409)
         assert.equal(rejected.body().error.code, 'E_DUPLICATE')
       }
+      if (!allows('delete')) return
       const removed = await client
         .delete(`${base}/${row.id}`)
         .loginAs(writer)

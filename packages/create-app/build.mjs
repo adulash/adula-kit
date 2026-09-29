@@ -136,6 +136,7 @@ files['bin/console.ts'] =
   files['bin/console.ts'] +
   `\n  .finally(async () => {\n    if (cleanupCodegen) {\n      const { default: app } = await import('@adonisjs/core/services/app')\n      if (app.container.hasBinding('cache.manager')) {\n        const cache = await app.container.make('cache.manager')\n        await cache.disconnectAll()\n      }\n      if (app.container.hasBinding('redis')) {\n        const redis = await app.container.make('redis')\n        await redis.quitAll()\n      }\n    }\n  })\n`
 files['commands/adula_setup.ts'] = await readFile(join(here, 'templates/adula_setup.stub'), 'utf8')
+files['scripts/dev.mjs'] = await readFile(join(here, 'templates/dev.stub'), 'utf8')
 files['tests/functional/starter.spec.ts'] = await readFile(
   join(here, 'templates/starter.spec.stub'),
   'utf8'
@@ -158,6 +159,8 @@ app.devDependencies.pnpm = workspace.packageManager.split('@')[1]
 app.dependencies['@adula/kit'] = own.version
 app.dependencies['@adula/ui'] = own.version
 app.scripts.typecheck = 'tsc --noEmit && tsc --noEmit --project inertia/tsconfig.json'
+if (app.scripts.dev !== 'node ace serve --hmr') throw new Error('Unexpected reference dev script')
+app.scripts.dev = 'node scripts/dev.mjs'
 // A single command: pnpm and npm append `test -- <args>` to it. The test runner's teardown
 // formats database/schema.ts, which Lucid regenerates during the first test migration.
 if (app.scripts.test !== 'node ace test') throw new Error('Unexpected reference test script')
