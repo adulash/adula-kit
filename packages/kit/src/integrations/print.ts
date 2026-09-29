@@ -41,6 +41,7 @@ function text(
       return (
         input.lookups?.[field.key]?.find((option) => option.value === value)?.label ?? String(value)
       )
+    case 'user':
     case 'belongsTo': {
       const related = input.related?.[field.key]?.find((row) => row.id === value)
       const label = related ? Object.entries(related).find(([key]) => key !== 'id')?.[1] : null

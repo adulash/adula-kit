@@ -1,6 +1,7 @@
 import type { ResourceRegistry } from '../resource/registry.js'
 import { KIT_VERSION } from '../version.js'
 import { WORKFLOW_NAME_RULE } from '../workflows/define_workflow.js'
+import { ACTOR_ID } from '../auth/conditions.js'
 
 /** Field kinds accepted by defineResource, with their storage. */
 export const FIELD_TYPES: Record<string, string> = {
@@ -14,6 +15,7 @@ export const FIELD_TYPES: Record<string, string> = {
   json: 'jsonb',
   attachment: 'attachments row id; per-field accept/maxSize',
   belongsTo: 'foreign key, preloaded, restrict on delete',
+  user: 'users foreign key, restrict on delete; choices are active members of the record unit or its ancestors; related as { id, fullName }',
   hasMany: 'child resource; inline rows saved with the parent',
   lookup: 'lookups group key',
 }
@@ -132,7 +134,7 @@ export function capabilityCatalog(
     '',
     `Resource options: ${RESOURCE_OPTIONS.join(', ')}.`,
     '',
-    `Role rule conditions: ${CONDITION_OPERATORS.join(', ')} on scalar fields; unsupported conditions are refused. Organization scope is always added with AND.`,
+    `Role rule conditions: ${CONDITION_OPERATORS.join(', ')} on scalar fields; unsupported conditions are refused. Organization scope is always added with AND. \`${ACTOR_ID}\` names the signed-in user on user fields, createdBy and updatedBy ($eq, $ne, $in), bound per request.`,
     '',
     `Workflow steps: ${WORKFLOW_STEPS.join(', ')}. Workflow and step names: ${WORKFLOW_NAME_RULE} (for example release_approval, notify_approved).`,
     '',

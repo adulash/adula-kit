@@ -52,9 +52,10 @@ export function fieldValue(field: Field, value: unknown): unknown {
     }
     case 'integer':
     case 'belongsTo':
+    case 'user':
       if (
         !Number.isInteger(value) ||
-        Number(value) < (field.type === 'belongsTo' ? 1 : -2147483648) ||
+        Number(value) < (field.type === 'integer' ? -2147483648 : 1) ||
         Number(value) > 2147483647
       )
         throw new Error('Expected a PostgreSQL integer')

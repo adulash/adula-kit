@@ -20,7 +20,9 @@ export function selectedFields(
       ...(options.write
         ? Object.keys(resource.fields)
         : (resource.serialize ?? [...resource.list, ...resource.show])),
-      ...Object.keys(resource.fields).filter((k) => resource.fields[k].type === 'belongsTo'),
+      ...Object.keys(resource.fields).filter((k) =>
+        ['belongsTo', 'user'].includes(resource.fields[k].type)
+      ),
       ...(options.extra ?? []),
       ...conditionFields(ability, resource),
     ]),

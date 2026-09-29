@@ -160,6 +160,10 @@ test.group('Generic resource browser acceptance', (group) => {
     await page.getByRole('option', { name: customerName, exact: true }).click()
     await page.getByRole('combobox', { name: 'الحالة', exact: true }).click()
     await page.getByRole('option', { name: 'مفتوح', exact: true }).click()
+    // User fields list active members of the chosen unit and search them by name (#28).
+    await page.getByRole('combobox', { name: 'المراجع', exact: true }).click()
+    await page.getByPlaceholder('ابحث بالاسم').fill('قارئ')
+    await page.getByRole('option', { name: 'قارئ العملاء', exact: true }).click()
     await page
       .getByLabel('المرفق', { exact: true })
       .setInputFiles({ name: 'note.txt', mimeType: 'text/plain', buffer: Buffer.from('مرفق') })
@@ -174,6 +178,7 @@ test.group('Generic resource browser acceptance', (group) => {
     await page.assertVisible(page.getByText('1,234.50'))
     await page.assertVisible(page.getByText('مفتوح', { exact: true }))
     await page.assertVisible(page.getByText(customerName, { exact: true }))
+    await page.assertVisible(page.getByText('قارئ العملاء', { exact: true }))
     // Dates render in reading order: no bidi marks and no forced LTR container (issue #19).
     const day = page.locator('dd bdi', { hasText: '18/09/2026' }).first()
     await page.assertVisible(day)
@@ -328,6 +333,7 @@ test.group('Generic resource browser acceptance', (group) => {
         enabled: quantity === 2,
         status: quantity === 3 ? 'closed' : 'open',
         customerId: quantity === 2 ? customer.id : null,
+        reviewer: quantity === 1 ? admin.user.id : null,
       })
     await browserContext.loginAs(admin.user)
     const page = await visit('/resources/ui_samples')
@@ -396,6 +402,14 @@ test.group('Generic resource browser acceptance', (group) => {
     await page.getByRole('option', { name: 'الكل', exact: true }).click()
     await page.waitForURL((url) => !url.search.includes('filters'))
     await page.assertElementsCount('tbody tr[aria-rowindex]', 3)
+    await page.getByRole('combobox', { name: 'المراجع' }).click()
+    await page.getByRole('option', { name: 'مدير الواجهة', exact: true }).click()
+    await page.waitForURL(new RegExp(`filters%5Breviewer%5D=${admin.user.id}`))
+    await page.assertElementsCount('tbody tr[aria-rowindex]', 1)
+    await page.assertVisible(page.locator('tbody').getByText('مدير الواجهة', { exact: true }))
+    await page.getByRole('button', { name: 'مسح التصفية' }).click()
+    await page.waitForURL((url) => !url.search.includes('filters'))
+    await page.assertElementsCount('tbody tr[aria-rowindex]', 3)
     const download = page.waitForEvent('download')
     await page.getByRole('button', { name: 'تصدير المعروض', exact: true }).click()
     const file = await download
@@ -403,7 +417,9 @@ test.group('Generic resource browser acceptance', (group) => {
     const chunks: Buffer[] = []
     for await (const chunk of await file.createReadStream()) chunks.push(Buffer.from(chunk))
     const csv = Buffer.concat(chunks).toString('utf8')
-    assert.isTrue(csv.startsWith('﻿"العنوان","الكمية","المبلغ","مفعل","اليوم","العميل","الحالة"'))
+    assert.isTrue(
+      csv.startsWith('﻿"العنوان","الكمية","المبلغ","مفعل","اليوم","العميل","الحالة","المراجع"')
+    )
     assert.include(csv, `"عينة الفرز 3 ${stamp}","3"`)
     assert.include(csv, '"مغلق"')
   })

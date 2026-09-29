@@ -1,5 +1,6 @@
 import type { Knex } from 'knex'
 import type { Actor, Rule } from './ability.js'
+import { resolveActorConditions } from './conditions.js'
 import type { ResourceRegistry } from '../resource/registry.js'
 
 export interface ActorCache {
@@ -37,7 +38,8 @@ export class ActorStore {
       const rule: Rule = {
         subject: row.subject,
         action: row.action,
-        conditions: row.conditions ?? undefined,
+        // "$actor.id" becomes this user's id, so CASL and SQL compare a bound integer.
+        conditions: resolveActorConditions(row.conditions ?? undefined, id),
         fields: row.fields ?? undefined,
         inverted: row.inverted,
       }

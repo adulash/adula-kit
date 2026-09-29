@@ -449,6 +449,23 @@ export class ResourceService {
     const related: Record<string, SerializedRecord[]> = {}
     const ability = buildAbility(actor.rules, this.registry.all())
     for (const [key, field] of Object.entries(resource.fields)) {
+      if (field.type === 'user' && records.length) {
+        const ids = records
+          .filter((record) => key in serialize(resource, record, ability, actor))
+          .map((record) => record[key])
+          .filter((v) => v !== null && v !== undefined) as number[]
+        // A display name only: readers of the record need not read account e-mails.
+        if (ids.length) {
+          const users = await this.db('users')
+            .whereIn('id', [...new Set(ids)])
+            .select('id', 'full_name')
+          related[key] = users.map((row) => ({
+            id: Number(row.id),
+            fullName: String(row.full_name ?? ''),
+          }))
+        }
+        continue
+      }
       if (field.type !== 'belongsTo' || !records.length) continue
       const target = this.registry.get(field.resource)
       if (!ability.can('view', target.name)) continue
@@ -547,8 +564,18 @@ export class ResourceService {
     name: string,
     key: string,
     actor: Actor,
-    options: { id?: number; search?: string; cursor?: string } = {}
+    options: {
+      id?: number
+      search?: string
+      cursor?: string
+      /** User fields: the organization unit chosen in the form. */
+      orgUnitId?: number
+      /** User fields: choices for a list filter instead of a form. */
+      purpose?: 'form' | 'filter'
+    } = {}
   ) {
+    if (this.registry.get(name).fields[key]?.type === 'user')
+      return this.userOptions(name, key, actor, options)
     const editor = await this.editor(name, actor, options.id)
     const field = editor.fields.find((entry) => entry.key === key)
     if (!field || field.type !== 'belongsTo')
@@ -568,6 +595,93 @@ export class ResourceService {
       })),
       nextCursor: page.meta.nextCursor,
     }
+  }
+
+  /**
+   * Choices for a user field. A form lists active members of the record's unit or its
+   * ancestors (the users the record is visible to through membership); a filter lists
+   * active users who share organization scope with the actor. Only names are returned.
+   */
+  private async userOptions(
+    name: string,
+    key: string,
+    actor: Actor,
+    options: { id?: number; search?: string; cursor?: string; orgUnitId?: number; purpose?: string }
+  ) {
+    const resource = this.registry.get(name)
+    let path: string | null = null
+    if (options.purpose === 'filter') {
+      const field = this.describe(name, actor).fields.find((entry) => entry.key === key)
+      if (!field?.filterable)
+        throw new KitError(403, 'E_FIELD_FORBIDDEN', 'ليس لديك صلاحية لهذا الحقل')
+    } else {
+      const editor = await this.editor(name, actor, options.id)
+      if (!editor.fields.some((entry) => entry.key === key))
+        throw new KitError(403, 'E_FIELD_FORBIDDEN', 'ليس لديك صلاحية لهذا الحقل')
+      if (resource.scoped) {
+        const unit =
+          options.orgUnitId ??
+          (editor.record?.orgUnitId === undefined ? undefined : Number(editor.record.orgUnitId))
+        // Without a unit (for example an inline row) the choices follow the actor's scope;
+        // saving still checks the record's unit.
+        if (unit !== undefined) {
+          const row = await this.db('org_units').where('id', unit).first('path')
+          // Only units the actor works in (or the record's current unit) may be probed.
+          if (
+            !row ||
+            (!inOrgScope(row.path, actor.orgPaths) &&
+              Number(unit) !== Number(editor.record?.orgUnitId))
+          )
+            return { data: [], nextCursor: null }
+          path = String(row.path)
+        }
+      }
+    }
+    let after = 0
+    if (options.cursor !== undefined && options.cursor !== '') {
+      after = Number(options.cursor)
+      if (!Number.isSafeInteger(after) || after < 0)
+        throw new KitError(422, 'E_CURSOR', 'Invalid cursor')
+    }
+    const query = this.eligibleUsers(this.db, path, actor)
+      .where('u.id', '>', after)
+      .orderBy('u.id')
+      .limit(51)
+      .select('u.id', 'u.full_name')
+    if (options.search)
+      query.whereILike('u.full_name', `%${options.search.replace(/[\\%_]/g, '\\$&')}%`)
+    const rows = await query
+    return {
+      data: rows.slice(0, 50).map((row) => ({
+        value: String(row.id),
+        label: String(row.full_name || `#${row.id}`),
+      })),
+      nextCursor: rows.length > 50 ? String(rows[49].id) : null,
+    }
+  }
+
+  /**
+   * Active users eligible for a user field: members of the unit at `path` or of one of
+   * its ancestors, or (without a path) users sharing organization scope with the actor.
+   * A system write on an unscoped resource passes no actor: any active member qualifies.
+   */
+  private eligibleUsers(db: Knex, path: string | null, actor: Actor | null) {
+    return db('users as u')
+      .whereNull('u.disabled_at')
+      .whereExists((members) => {
+        members
+          .from('user_org_units as m')
+          .join('org_units as o', 'o.id', 'm.org_unit_id')
+          .whereRaw('m.user_id = u.id')
+        if (path !== null) members.whereRaw('?::ltree <@ o.path', [path])
+        else if (actor)
+          members.where((scope) => {
+            if (!actor.orgPaths.length) scope.whereRaw('FALSE')
+            for (const own of actor.orgPaths)
+              scope.orWhereRaw('o.path <@ ?::ltree', [own]).orWhereRaw('o.path @> ?::ltree', [own])
+          })
+      })
+      .distinct()
   }
 
   /** Deferred relation reads re-authorize the parent and each child on every request. */
@@ -798,6 +912,21 @@ export class ResourceService {
             }
           }
         } else options[field.key] = []
+      } else if (field.type === 'user') {
+        // Choices depend on the unit chosen in the form; they load from relationOptions.
+        relationSearch[field.key] = true
+        options[field.key] = []
+        const selected = record?.[field.key]
+        if (selected !== null && selected !== undefined) {
+          const current = await this.db('users')
+            .where('id', Number(selected))
+            .first('id', 'full_name')
+          if (current)
+            options[field.key].push({
+              value: String(current.id),
+              label: String(current.full_name || `#${current.id}`),
+            })
+        }
       }
     }
     const units =
@@ -825,7 +954,7 @@ export class ResourceService {
         if (typeof raw !== 'string' && typeof raw !== 'number' && typeof raw !== 'boolean') continue
         let value: unknown = raw
         try {
-          if (['integer', 'belongsTo'].includes(field.type)) value = Number(raw)
+          if (['integer', 'belongsTo', 'user'].includes(field.type)) value = Number(raw)
           else if (field.type === 'boolean') value = raw === true || raw === 'true'
           else value = String(raw)
           value = fieldValue(field, value)
@@ -833,6 +962,16 @@ export class ResourceService {
           continue
         }
         if (['attachment', 'json', 'hasMany'].includes(field.type)) continue
+        if (field.type === 'user') {
+          // The unit is chosen later in the form; saving checks the record's unit.
+          const user = await this.eligibleUsers(this.db, null, actor)
+            .where('u.id', Number(value))
+            .first('u.id', 'u.full_name')
+          if (!user) continue
+          const choices = options[field.key] ?? (options[field.key] = [])
+          if (!choices.some((option) => option.value === String(user.id)))
+            choices.push({ value: String(user.id), label: String(user.full_name || `#${user.id}`) })
+        }
         if (field.type === 'lookup' || field.type === 'belongsTo') {
           const choices = options[field.key] ?? []
           if (!choices.some((option) => option.value === String(value))) {
@@ -1054,6 +1193,31 @@ export class ResourceService {
           const related = this.registry.get(field.resource)
           const target = await load(trx, related, Number(candidate[key]))
           check(related, 'view', target)
+        }
+        // A new user, or a record moved by a user to another unit, needs an eligible user.
+        // An unchanged value never blocks other edits, even after the account is disabled.
+        if (
+          field.type === 'user' &&
+          candidate[key] !== null &&
+          candidate[key] !== undefined &&
+          (Number(candidate[key]) !== Number(existing[key]) ||
+            (!system &&
+              resource.scoped &&
+              Number(candidate.orgUnitId) !== Number(existing.orgUnitId)))
+        ) {
+          const eligible = await this.eligibleUsers(
+            trx,
+            resource.scoped ? String(candidate.orgPath ?? '') || null : null,
+            system ? null : actor
+          )
+            .where('u.id', Number(candidate[key]))
+            .first('u.id')
+          if (!eligible || (resource.scoped && !candidate.orgPath))
+            throw new KitError(
+              422,
+              'E_USER_FIELD',
+              `${key}: اختر مستخدماً نشطاً من الوحدة التنظيمية للسجل أو الوحدات الأعلى منها`
+            )
         }
         if (field.type === 'lookup' && candidate[key] !== null && candidate[key] !== undefined) {
           if (

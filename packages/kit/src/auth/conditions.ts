@@ -4,6 +4,41 @@ import { columnName } from '../resource/define_resource.js'
 export type Operator = '$eq' | '$ne' | '$in' | '$lt' | '$gt' | '$like'
 export type Conditions = Record<string, Scalar | Partial<Record<Operator, Scalar | Scalar[]>>>
 export type Predicate = { field: string; operator: Operator; value: Scalar | Scalar[] }
+/**
+ * Role rule operand replaced by the signed-in user's id when the actor is loaded
+ * (for example `{ createdBy: '$actor.id' }`). It is bound as a query parameter.
+ */
+export const ACTOR_ID = '$actor.id'
+
+/** Replaces ACTOR_ID operands with the actor's id; other values are returned unchanged. */
+export function resolveActorConditions(
+  conditions: Conditions | undefined,
+  actorId: number
+): Conditions | undefined {
+  if (!conditions || typeof conditions !== 'object' || Array.isArray(conditions)) return conditions
+  const resolve = (value: unknown): unknown =>
+    value === ACTOR_ID ? actorId : Array.isArray(value) ? value.map(resolve) : value
+  return Object.fromEntries(
+    Object.entries(conditions).map(([field, condition]) => [
+      field,
+      condition !== null && typeof condition === 'object' && !Array.isArray(condition)
+        ? Object.fromEntries(
+            Object.entries(condition).map(([operator, value]) => [operator, resolve(value)])
+          )
+        : resolve(condition),
+    ])
+  ) as Conditions
+}
+
+/** Whether a condition object uses the ACTOR_ID placeholder as an operand. */
+export function usesActor(conditions: Conditions | undefined | null): boolean {
+  const found = (value: unknown): boolean =>
+    value === ACTOR_ID ||
+    (Array.isArray(value)
+      ? value.some(found)
+      : value !== null && typeof value === 'object' && Object.values(value).some(found))
+  return found(conditions ?? {})
+}
 const operators = new Set(['$eq', '$ne', '$in', '$lt', '$gt', '$like'])
 const scalar = (v: unknown): v is Scalar =>
   v === null ||

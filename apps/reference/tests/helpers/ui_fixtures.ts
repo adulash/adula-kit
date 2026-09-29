@@ -107,6 +107,7 @@ export const samples = defineResource({
       filterable: true,
       label: { ar: 'الحالة', en: 'Status' },
     },
+    reviewer: { type: 'user', filterable: true, label: { ar: 'المراجع', en: 'Reviewer' } },
     lines: {
       type: 'hasMany',
       resource: 'ui_sample_lines',
@@ -115,7 +116,7 @@ export const samples = defineResource({
       label: { ar: 'البنود', en: 'Lines' },
     },
   },
-  list: ['title', 'quantity', 'amount', 'enabled', 'day', 'customerId', 'status'],
+  list: ['title', 'quantity', 'amount', 'enabled', 'day', 'customerId', 'status', 'reviewer'],
   form: [
     'title',
     'notes',
@@ -128,6 +129,7 @@ export const samples = defineResource({
     'file',
     'customerId',
     'status',
+    'reviewer',
     'lines',
   ],
   show: [
@@ -142,6 +144,7 @@ export const samples = defineResource({
     'file',
     'customerId',
     'status',
+    'reviewer',
     'lines',
   ],
   actions: ['view', 'create', 'update', 'delete'],
