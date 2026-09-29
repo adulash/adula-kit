@@ -11,7 +11,7 @@ import {
   type KitAbility,
 } from '../auth/ability.js'
 import { accessibleBy, conditionSql } from '../auth/sql.js'
-import { fromRow, selectedFields, serialize, writableInput } from './contracts.js'
+import { fromRow, selectedFields, serialize, systemInput, writableInput } from './contracts.js'
 import { KitError } from './errors.js'
 import { sequence } from '../services/settings.js'
 import { recordMutation, type FieldChange } from '../events/record_mutation.js'
@@ -66,6 +66,18 @@ export function canQueryField(resource: Resource, actor: Actor, ability: KitAbil
         (rule.subject === resource.name || rule.subject === 'all')
     )
   )
+}
+
+/** Options of ResourceService.systemSave. */
+export type SystemSaveOptions = {
+  /** The user recorded as the author: created/updated by, activity and events. */
+  actorId: number
+  /** Write inside the module's transaction. */
+  trx?: Knex.Transaction
+  /** Why module code wrote the record; stored with the activity entry. */
+  reason?: string
+  /** Optimistic lock: when given, it must match the stored version. */
+  version?: number
 }
 
 export class ResourceService {
@@ -230,6 +242,21 @@ export class ResourceService {
       .where('r.id', id)
       .select(this.columns(resource, ability, lock))
     if (resource.scoped) query.select('ou.path as org_path')
+    if (lock) query.forUpdate('r')
+    const row = await query.first()
+    if (!row) throw new KitError(404, 'E_NOT_FOUND', 'السجل غير موجود')
+    return fromRow(row, resource)
+  }
+  /** A live record regardless of any actor's scope, for system writes. */
+  private async findAny(db: Knex, resource: Resource, id: number, lock = false) {
+    const query = db(`${resource.name} as r`).whereNull('r.deleted_at').where('r.id', id)
+    query.select(
+      selectedFields(resource, buildAbility([], []), { write: true }).map(
+        (key) => `r.${resource.fields[key]?.column ?? columnName(key)}`
+      )
+    )
+    if (resource.scoped)
+      query.leftJoin('org_units as ou', 'ou.id', 'r.org_unit_id').select('ou.path as org_path')
     if (lock) query.forUpdate('r')
     const row = await query.first()
     if (!row) throw new KitError(404, 'E_NOT_FOUND', 'السجل غير موجود')
@@ -703,16 +730,17 @@ export class ResourceService {
         } else options[field.key] = []
       }
     }
-    const units = resource.scoped
-      ? await this.db('org_units')
-          .where((query) => {
-            if (!actor.orgPaths.length) query.whereRaw('FALSE')
-            for (const path of actor.orgPaths) query.orWhereRaw('path <@ ?::ltree', [path])
-          })
-          .orderBy('path')
-          .limit(100)
-          .select('id', 'name')
-      : []
+    const units =
+      resource.scoped && !resource.scope
+        ? await this.db('org_units')
+            .where((query) => {
+              if (!actor.orgPaths.length) query.whereRaw('FALSE')
+              for (const path of actor.orgPaths) query.orWhereRaw('path <@ ?::ltree', [path])
+            })
+            .orderBy('path')
+            .limit(100)
+            .select('id', 'name')
+        : []
     if (record?.orgUnitId && !units.some((unit) => Number(unit.id) === Number(record.orgUnitId))) {
       const current = await this.db('org_units')
         .where('id', Number(record.orgUnitId))
@@ -729,6 +757,8 @@ export class ResourceService {
       relationSearch,
       orgUnits: units.map((row) => ({ value: String(row.id), label: String(row.name) })),
       scoped: resource.scoped,
+      /** The belongsTo field whose record decides the unit; the form shows no unit picker. */
+      scopeFrom: resource.scope?.from ?? null,
       record: record
         ? serialize(resource, await this.hydrateOne(this.db, resource, record), ability, actor)
         : null,
@@ -743,27 +773,108 @@ export class ResourceService {
   ): Promise<SerializedRecord> {
     return this.persist(name, actor, input, id, transaction)
   }
+
+  /**
+   * A write decided by module code rather than by a user's role rules: state transitions,
+   * snapshots and listener updates. It runs the validator, hooks, lookup, relation and
+   * attachment checks, versioning and the audit trail exactly like save(), and skips only
+   * the actor's role rules and organization scope. Values may set any stored field except
+   * sequences and inline children. Updates merge the given values into the stored record.
+   * Returns the full stored record; module code must not send it to users unfiltered.
+   */
+  async systemSave(
+    name: string,
+    values: RecordData,
+    id: number | undefined,
+    options: SystemSaveOptions
+  ): Promise<RecordData> {
+    if (!Number.isSafeInteger(options.actorId) || options.actorId <= 0)
+      throw new KitError(422, 'E_ACTOR', 'systemSave requires the author user id')
+    const actor: Actor = { id: options.actorId, orgPaths: [], permissionLevel: 0, rules: [] }
+    return this.persist(name, actor, values, id, options.trx, undefined, {
+      reason: options.reason,
+      version: options.version,
+    })
+  }
+
+  /**
+   * Moves the records whose scope follows this parent (`scope: { from }`) to the parent's
+   * current organization unit, through systemSave. Call it from a listener on the parent's
+   * `updated` event, or right after moving the parent. Returns the number of moved records.
+   */
+  async rehome(
+    parentName: string,
+    parentId: number,
+    options: Omit<SystemSaveOptions, 'version'>
+  ): Promise<number> {
+    const run = async (trx: Knex.Transaction) => {
+      const parent = await this.findAny(trx, this.registry.get(parentName), parentId)
+      let moved = 0
+      for (const child of this.registry.all()) {
+        const field = child.scope && child.fields[child.scope.from]
+        if (!field || field.type !== 'belongsTo' || field.resource !== parentName) continue
+        const column = field.column ?? columnName(child.scope!.from)
+        const ids = await trx(child.name)
+          .where(column, parentId)
+          .whereNull('deleted_at')
+          .whereNot('org_unit_id', Number(parent.orgUnitId))
+          .orderBy('id')
+          .pluck('id')
+        for (const id of ids) {
+          await this.systemSave(child.name, {}, Number(id), { ...options, trx })
+          moved++
+        }
+      }
+      return moved
+    }
+    return options.trx ? run(options.trx) : this.db.transaction(run)
+  }
+
   private async persist(
     name: string,
     actor: Actor,
     input: RecordData,
     id?: number,
     transaction?: Knex.Transaction,
-    parentWrite?: { name: string; id: number; action: 'create' | 'update' }
+    parentWrite?: { name: string; id: number; action: 'create' | 'update' },
+    system?: { reason?: string; version?: number }
   ): Promise<SerializedRecord> {
     const resource = this.registry.get(name)
     const action = id === undefined ? 'create' : 'update'
-    const ability = this.authorizeAction(resource, actor, action)
-    const form = writableInput(resource, input)
-    const validated = await resource.validator.validate(form)
+    // System writes carry no role rules; this ability is used only for serialization shape.
+    const ability = system
+      ? buildAbility([{ action: 'manage', subject: 'all' }], this.registry.all())
+      : this.authorizeAction(resource, actor, action)
+    const form = system ? systemInput(resource, input) : writableInput(resource, input)
+    const load = (db: Knex, target: Resource, key: number, lock = false) =>
+      system
+        ? this.findAny(db, target, key, lock)
+        : this.find(db, target, actor, ability, key, lock)
+    const check = (target: Resource, act: Action, record: RecordData) => {
+      if (!system) this.requireRecord(ability, actor, target, act, record)
+    }
+    const validated = system ? {} : await resource.validator.validate(form)
     const work = async (trx: Knex.Transaction) => {
-      const existing =
-        id === undefined ? {} : await this.find(trx, resource, actor, ability, id, true)
+      const existing = id === undefined ? {} : await load(trx, resource, id, true)
       if (id !== undefined) {
-        this.requireRecord(ability, actor, resource, action, existing)
-        this.requireVersion(resource, existing, input.version)
+        check(resource, action, existing)
+        if (!system || system.version !== undefined)
+          this.requireVersion(resource, existing, system ? system.version : input.version)
         if (resource.submittable && existing.docStatus !== 0)
           throw new KitError(409, 'E_DOCUMENT_LOCKED', 'Only draft documents can be edited')
+      }
+      if (system) {
+        // The validator sees the complete form, so a partial update keeps required values.
+        const formKeys = resource.form.filter((key) => resource.fields[key].type !== 'hasMany')
+        const pick = (record: RecordData) =>
+          Object.fromEntries(
+            formKeys.filter((key) => key in record).map((key) => [key, record[key]])
+          )
+        Object.assign(
+          validated,
+          await resource.validator.validate({ ...pick(existing), ...pick(form) }),
+          Object.fromEntries(Object.entries(form).filter(([key]) => !formKeys.includes(key)))
+        )
       }
       const candidate: RecordData = {
         ...existing,
@@ -773,19 +884,37 @@ export class ResourceService {
       }
       if (resource.submittable) candidate.docStatus = existing.docStatus ?? 0
       this.normalizeValues(resource, candidate)
-      if (resource.scoped) {
-        candidate.orgUnitId = input.orgUnitId ?? existing.orgUnitId
+      const locate = async () => {
+        if (!resource.scoped) return
+        if (resource.scope) {
+          // Inherited scope: the parent decides the unit before any authorization (#45).
+          const field = resource.fields[resource.scope.from]
+          const parentId = Number(candidate[resource.scope.from])
+          if (field.type !== 'belongsTo' || !Number.isSafeInteger(parentId) || parentId <= 0)
+            throw new KitError(422, 'E_REQUIRED', `Required field: ${resource.scope.from}`)
+          const parentResource = this.registry.get(field.resource)
+          const parent = await load(trx, parentResource, parentId)
+          check(parentResource, 'view', parent)
+          candidate.orgUnitId = parent.orgUnitId
+        } else if (!system || 'orgUnitId' in input || id === undefined)
+          candidate.orgUnitId = input.orgUnitId ?? existing.orgUnitId
         const unit = await trx('org_units')
           .where('id', Number(candidate.orgUnitId) || -1)
           .first('path')
+        if (system && !unit) throw new KitError(422, 'E_ORG_UNIT', 'الوحدة التنظيمية غير موجودة')
         candidate.orgPath = unit?.path
       }
-      this.requireRecord(ability, actor, resource, action, candidate)
+      await locate()
+      check(resource, action, candidate)
       // Validators may add fields (defaults, transforms); those are written too, so check them.
-      const written = new Set([
-        ...Object.keys(form),
-        ...Object.keys(validated).filter((key) => key in resource.fields),
-      ])
+      const written = new Set(
+        system
+          ? []
+          : [
+              ...Object.keys(form),
+              ...Object.keys(validated).filter((key) => key in resource.fields),
+            ]
+      )
       for (const key of written) {
         const field = resource.fields[key]
         if (
@@ -803,6 +932,8 @@ export class ResourceService {
       const context = { trx, userId: actor.id, action } as const
       await resource.hooks?.beforeSave?.(candidate, context)
       this.normalizeValues(resource, candidate)
+      // A hook may change the parent of an inherited scope; the unit follows it.
+      if (resource.scope) await locate()
       for (const [key, field] of Object.entries(resource.fields)) {
         if (
           field.required &&
@@ -812,8 +943,8 @@ export class ResourceService {
           throw new KitError(422, 'E_REQUIRED', `Required field: ${key}`)
         if (field.type === 'belongsTo' && candidate[key] !== null && candidate[key] !== undefined) {
           const related = this.registry.get(field.resource)
-          const target = await this.find(trx, related, actor, ability, Number(candidate[key]))
-          this.requireRecord(ability, actor, related, 'view', target)
+          const target = await load(trx, related, Number(candidate[key]))
+          check(related, 'view', target)
         }
         if (field.type === 'lookup' && candidate[key] !== null && candidate[key] !== undefined) {
           if (
@@ -846,8 +977,16 @@ export class ResourceService {
         candidate.orgPath = unit?.path
       }
       // Hooks may calculate fields, but may never move a record past authorization.
-      this.requireRecord(ability, actor, resource, action, candidate)
-      await this.requireInlineParents(trx, resource, actor, candidate, existing, parentWrite)
+      check(resource, action, candidate)
+      await this.requireInlineParents(
+        trx,
+        resource,
+        actor,
+        candidate,
+        existing,
+        parentWrite,
+        Boolean(system)
+      )
       if (
         id !== undefined &&
         resource.scoped &&
@@ -955,7 +1094,9 @@ export class ResourceService {
             {
               ...data,
               [field.foreignKey]: row.id,
-              ...(childResource.scoped ? { orgUnitId: candidate.orgUnitId } : {}),
+              ...(childResource.scoped && !childResource.scope
+                ? { orgUnitId: candidate.orgUnitId }
+                : {}),
             },
             childId === undefined ? undefined : Number(childId),
             trx,
@@ -972,8 +1113,9 @@ export class ResourceService {
           if (JSON.stringify(before) !== JSON.stringify(after))
             changes.push({ field: key, before, after })
         }
-      await this.audit(trx, resource, actor, action, saved, Object.keys(form), changes)
+      await this.audit(trx, resource, actor, action, saved, Object.keys(form), changes, system)
       await resource.hooks?.afterSave?.(saved, context)
+      if (system) return (await this.hydrateOne(trx, resource, saved)) as SerializedRecord
       return serialize(resource, await this.hydrateOne(trx, resource, saved), ability, actor)
     }
     return transaction ? work(transaction) : this.db.transaction(work)
@@ -993,7 +1135,8 @@ export class ResourceService {
     actor: Actor,
     candidate: RecordData,
     existing: RecordData = {},
-    parentWrite?: { name: string; id: number; action: 'create' | 'update' }
+    parentWrite?: { name: string; id: number; action: 'create' | 'update' },
+    system = false
   ) {
     for (const parent of this.registry.all()) {
       for (const [key, field] of Object.entries(parent.fields)) {
@@ -1013,15 +1156,19 @@ export class ResourceService {
           parentWrite?.name === parent.name && parentWrite.id === Number(parentId)
             ? parentWrite.action
             : 'update'
-        const ability = this.authorizeAction(parent, actor, action)
-        const record = await this.find(trx, parent, actor, ability, Number(parentId), true)
-        this.requireRecord(ability, actor, parent, action, record)
-        if (
-          !ability.can(action, subject(parent.name, record), key) ||
-          actor.permissionLevel <
-            Math.max(field.permissionLevel ?? 0, parent.hidden?.includes(key) ? 1 : 0)
-        )
-          throw new KitError(403, 'E_FIELD_FORBIDDEN', 'ليس لديك صلاحية تعديل البنود')
+        let record: RecordData
+        if (system) record = await this.findAny(trx, parent, Number(parentId), true)
+        else {
+          const ability = this.authorizeAction(parent, actor, action)
+          record = await this.find(trx, parent, actor, ability, Number(parentId), true)
+          this.requireRecord(ability, actor, parent, action, record)
+          if (
+            !ability.can(action, subject(parent.name, record), key) ||
+            actor.permissionLevel <
+              Math.max(field.permissionLevel ?? 0, parent.hidden?.includes(key) ? 1 : 0)
+          )
+            throw new KitError(403, 'E_FIELD_FORBIDDEN', 'ليس لديك صلاحية تعديل البنود')
+        }
         if (parent.submittable && record.docStatus !== 0)
           throw new KitError(409, 'E_DOCUMENT_LOCKED', 'Only draft document lines can be edited')
         if (
@@ -1164,9 +1311,11 @@ export class ResourceService {
     action: Action,
     record: RecordData,
     fields: string[],
-    changes?: FieldChange[]
+    changes?: FieldChange[],
+    system?: { reason?: string }
   ) {
     await recordMutation(trx, {
+      ...(system ? { system: true, reason: system.reason } : {}),
       module: this.registry.owner(resource.name),
       resource: resource.name,
       id: record.id,

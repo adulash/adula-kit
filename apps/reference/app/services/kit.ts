@@ -28,7 +28,8 @@ export function kit() {
       await cache.set({ key, value, ttl: '5m' })
     },
   })
-  const assignments = new Assignments(knex, resources, actors)
+  // closeNote: 'optional' shows a closing note field; 'required' refuses an empty note.
+  const assignments = new Assignments(knex, resources, actors, { closeNote: 'optional' })
   return {
     registry,
     resources,

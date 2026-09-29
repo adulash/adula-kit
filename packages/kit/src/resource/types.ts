@@ -42,6 +42,13 @@ export type Resource = {
   label: Label
   model: LucidModel
   scoped: boolean
+  /**
+   * The organization unit of a scoped record follows a required belongsTo parent, for
+   * example a clinic follows its facility. The unit is copied from the parent before
+   * authorization, the actor must be able to view the parent, and the form has no unit
+   * picker. `ResourceService.rehome` moves the children after the parent moves.
+   */
+  scope?: { from: string }
   submittable?: boolean
   version?: boolean
   customFields?: boolean

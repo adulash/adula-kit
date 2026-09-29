@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.1.0 — unreleased
+
+Minor release: additive APIs and one additive kit migration
+(`1770000000011_kit_managed_assignments`). See ADR 029.
+
+* Resources: `ResourceService.systemSave()` writes a record for module code through the
+  validator, hooks, lookup/relation/attachment checks, versioning and the audit trail,
+  without the actor's role rules. The activity entry records the reason (#44).
+* Resources: `scope: { from: '<belongsTo>' }` makes a scoped record inherit its
+  organization unit from its parent before authorization. The form hides the unit
+  picker, and `ResourceService.rehome()` moves the children after the parent moves
+  (#45). Projects with a copied `resource-form` need the updated component.
+* Assignments: «تم الإنجاز» and «إلغاء المهمة» open a dialog for a closing note, kept
+  with the task. Each application makes the note optional (default) or required with
+  `new Assignments(..., { closeNote })`. Managed tasks
+  (`Assignments.create(..., { managed: true })`) close with the record through
+  `Assignments.close()`, or by hand only with a note. Both closes are recorded in the
+  activity log (#51). The starter "My tasks" page and `app/services/kit.ts` changed.
+
 ## 1.0.1 — unreleased
 
 Patch release: fixes reported against 1.0.0, with no public API or schema change.

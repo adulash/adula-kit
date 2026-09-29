@@ -51,7 +51,10 @@ export function resourceContract(name: string, fixture: ResourceFixture) {
     let resource: Resource
     const base = `/resources/${name}`
     const fresh = () => fixture({ userId: writer.id, orgUnitId, unique: randomUUID() })
-    const input = (values: RecordData) => ({ ...values, ...(resource.scoped ? { orgUnitId } : {}) })
+    const input = (values: RecordData) => ({
+      ...values,
+      ...(resource.scoped && !resource.scope ? { orgUnitId } : {}),
+    })
     const version = (row: SerializedRecord) => (resource.version ? { version: row.version } : {})
     // Actions the resource does not declare are refused even to a role that manages all.
     const allows = (action: Action) => resource.actions.includes(action)

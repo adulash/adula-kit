@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from 'react'
+import { useEffect, useState, type FormEvent, type ReactElement } from 'react'
 import { Head, router } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
 import axios from 'axios'
@@ -8,6 +8,16 @@ import Workspace from '~/layouts/workspace'
 import { useDateTimeFormatter } from '~/components/admin-nav'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog'
+import { Label } from '~/components/ui/label'
+import { Textarea } from '~/components/ui/textarea'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { formatDate } from '~/components/ui/resource-value'
 import { useUiPreferences } from '~/components/ui/ui-preferences'
@@ -27,6 +37,13 @@ export default function MyTasks({ assignments, status }: Props) {
   const [cursor, setCursor] = useState(assignments.nextCursor)
   const [busy, setBusy] = useState<number | null>(null)
   const [error, setError] = useState('')
+  // Closing asks for a note first; the application decides whether it is required.
+  const [closing, setClosing] = useState<{
+    item: Assignment
+    action: 'complete' | 'cancel'
+  } | null>(null)
+  const [note, setNote] = useState('')
+  const [noteError, setNoteError] = useState('')
   useEffect(() => {
     setRows(assignments.data)
     setCursor(assignments.nextCursor)
@@ -41,18 +58,31 @@ export default function MyTasks({ assignments, status }: Props) {
     setRows((current) => [...current, ...response.data.data])
     setCursor(response.data.nextCursor)
   }
-  const act = async (assignment: Assignment, action: 'complete' | 'cancel') => {
-    setBusy(assignment.id)
+  const act = (item: Assignment, action: 'complete' | 'cancel') => {
+    setClosing({ item, action })
+    setNote('')
+    setNoteError('')
+  }
+  const submitClose = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!closing) return
+    const { item, action } = closing
+    if (item.closeNote === 'required' && !note.trim()) {
+      setNoteError('اكتب ملاحظة الإغلاق.')
+      return
+    }
+    setBusy(item.id)
     setError('')
     try {
       await axios.post(
-        `/my-tasks/${assignment.id}/${action}`,
-        {},
+        `/my-tasks/${item.id}/${action}`,
+        { note: note.trim() },
         { headers: { Accept: 'application/json' }, withXSRFToken: true }
       )
+      setClosing(null)
       router.reload({ only: ['assignments'] })
     } catch (caught) {
-      setError(
+      setNoteError(
         axios.isAxiosError(caught) && caught.response?.data?.error?.message
           ? String(caught.response.data.error.message)
           : 'تعذر تحديث المهمة.'
@@ -97,6 +127,7 @@ export default function MyTasks({ assignments, status }: Props) {
                   {statusLabel[item.status]}
                 </Badge>
                 {item.kind === 'approval' && <Badge variant="outline">موافقة</Badge>}
+                {item.managed && <Badge variant="outline">تُغلق مع السجل</Badge>}
               </p>
               <Link
                 href={`/resources/${item.resource}/${item.recordId}`}
@@ -105,6 +136,15 @@ export default function MyTasks({ assignments, status }: Props) {
                 {item.resourceLabel} #{item.recordId}
               </Link>
               {item.note && <p className="text-sm text-muted-foreground">{item.note}</p>}
+              {item.managed && item.status === 'open' && (
+                <p className="text-sm text-muted-foreground">
+                  تُغلق هذه المهمة تلقائياً عند إنجاز العمل المطلوب في السجل، أو يدوياً مع
+                  ملاحظة.
+                </p>
+              )}
+              {item.closeReason && (
+                <p className="text-sm text-muted-foreground">سبب الإغلاق: {item.closeReason}</p>
+              )}
               <p className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                 <span>أسندها: {item.assignedByName ?? 'النظام'}</span>
                 <span>{formatDateTime(item.createdAt)}</span>
@@ -140,6 +180,11 @@ export default function MyTasks({ assignments, status }: Props) {
                   إلغاء المهمة
                 </Button>
               )}
+              {item.managed && item.status === 'open' && (
+                <Button size="sm" asChild>
+                  <Link href={`/resources/${item.resource}/${item.recordId}`}>فتح السجل</Link>
+                </Button>
+              )}
               {item.workflowRunId && item.status === 'open' && (
                 <Button size="sm" variant="outline" asChild>
                   <Link href="/approvals">صندوق الموافقات</Link>
@@ -162,6 +207,51 @@ export default function MyTasks({ assignments, status }: Props) {
           </Button>
         </div>
       )}
+      <Dialog open={closing !== null} onOpenChange={(open) => !open && setClosing(null)}>
+        <DialogContent>
+          <form onSubmit={submitClose} className="space-y-5">
+            <DialogHeader>
+              <DialogTitle>
+                {closing?.action === 'cancel' ? 'إلغاء المهمة' : 'إنجاز المهمة'}
+              </DialogTitle>
+              <DialogDescription>{closing?.item.title}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="close-note" className="flex items-center gap-2">
+                ملاحظة الإغلاق
+                {closing?.item.closeNote === 'required' ? (
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">(اختيارية)</span>
+                )}
+              </Label>
+              <Textarea
+                id="close-note"
+                value={note}
+                maxLength={500}
+                required={closing?.item.closeNote === 'required'}
+                aria-invalid={Boolean(noteError)}
+                onChange={(event) => setNote(event.target.value)}
+              />
+              {noteError && (
+                <p role="alert" className="text-sm text-destructive">
+                  {noteError}
+                </p>
+              )}
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setClosing(null)}>
+                تراجع
+              </Button>
+              <Button type="submit" disabled={busy === closing?.item.id}>
+                {closing?.action === 'cancel' ? 'تأكيد الإلغاء' : 'تأكيد الإنجاز'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

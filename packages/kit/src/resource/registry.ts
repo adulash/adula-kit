@@ -23,6 +23,11 @@ export class ResourceRegistry {
       }
     }
     for (const resource of next.all()) {
+      if (resource.scope) {
+        const field = resource.fields[resource.scope.from]
+        if (field.type === 'belongsTo' && !next.get(field.resource).scoped)
+          throw new Error(`${resource.name}: scope.from must reference a scoped resource`)
+      }
       for (const field of Object.values(resource.fields)) {
         if (field.type !== 'belongsTo' && field.type !== 'hasMany') continue
         const target = next.get(field.resource)

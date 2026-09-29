@@ -25,13 +25,27 @@ export type Assignment = {
   completedAt: string | null
   /** Set for approval steps; completion goes through the workflow engine instead. */
   workflowRunId: string | null
+  /** Opened and closed by module code with the record's state; a manual close needs a note. */
+  managed: boolean
+  /** Whether closing this task by hand needs a note. */
+  closeNote: CloseNotePolicy
+  /** The note written when the task was closed, by hand or by module code. */
+  closeReason: string | null
   canComplete: boolean
   canCancel: boolean
 }
+/**
+ * Whether closing a task by hand needs a note. Each application chooses: `optional`
+ * (the default) shows the note field but accepts it empty; `required` refuses an empty
+ * note. Managed tasks always need a note when closed by hand.
+ */
+export type CloseNotePolicy = 'optional' | 'required'
+export type AssignmentOptions = { closeNote?: CloseNotePolicy }
 export type AssignmentPage = { data: Assignment[]; nextCursor: string | null; open: number }
 
 const TITLE_LIMIT = 200
 const NOTE_LIMIT = 2000
+const REASON_LIMIT = 500
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 
 function dateOnly(value: unknown) {
@@ -50,7 +64,8 @@ export class Assignments {
   constructor(
     private db: Knex,
     private resources: ResourceService,
-    private actors: ActorLoader
+    private actors: ActorLoader,
+    private options: AssignmentOptions = {}
   ) {}
 
   async forRecord(name: string, id: number, actor: Actor): Promise<Assignment[]> {
@@ -122,6 +137,11 @@ export class Assignments {
       kind?: string
       workflowRunId?: string
       workflowStep?: string
+      /**
+       * The task represents open work on the record, such as a ticket to resolve. The
+       * assignee cannot mark it done; module code closes it with close() (#51).
+       */
+      managed?: boolean
     }
   ) {
     const insert = async (trx: Knex) => {
@@ -137,6 +157,7 @@ export class Assignments {
           due_on: input.dueOn ?? null,
           workflow_run_id: input.workflowRunId ?? null,
           workflow_step: input.workflowStep ?? null,
+          managed: input.managed ?? false,
         })
         .returning('id')
       await notifyWithTemplate(
@@ -202,11 +223,24 @@ export class Assignments {
     }
   }
 
-  /** The assignee marks the task done, or the assigner cancels it. */
-  async complete(assignmentId: unknown, actor: Actor, outcome: 'done' | 'cancelled' = 'done') {
+  /**
+   * The assignee marks the task done, or the assigner cancels it, with a closing note. The
+   * note is required when the application's policy says so and for managed tasks.
+   */
+  async complete(
+    assignmentId: unknown,
+    actor: Actor,
+    outcome: 'done' | 'cancelled' = 'done',
+    input: { note?: unknown } = {}
+  ) {
     const id = Number(assignmentId)
     if (!Number.isSafeInteger(id) || id <= 0)
       throw new KitError(404, 'E_ASSIGNMENT_NOT_FOUND', 'المهمة غير موجودة')
+    if (input.note !== undefined && input.note !== null && typeof input.note !== 'string')
+      throw new KitError(422, 'E_ASSIGNMENT_NOTE', 'ملاحظة الإغلاق غير صالحة')
+    const note = typeof input.note === 'string' ? input.note.trim() : ''
+    if (note.length > REASON_LIMIT)
+      throw new KitError(422, 'E_ASSIGNMENT_NOTE', 'ملاحظة الإغلاق لا تتجاوز 500 حرف')
     return this.db.transaction(async (trx) => {
       const row = await trx('assignments').where('id', id).forUpdate().first()
       if (!row) throw new KitError(404, 'E_ASSIGNMENT_NOT_FOUND', 'المهمة غير موجودة')
@@ -221,9 +255,30 @@ export class Assignments {
         throw new KitError(403, 'E_FORBIDDEN', 'يلغي المهمة من أسندها فقط')
       if (row.status !== 'open')
         throw new KitError(409, 'E_ASSIGNMENT_CLOSED', 'المهمة مغلقة بالفعل')
+      if (!note && this.closeNote(row) === 'required')
+        throw new KitError(422, 'E_ASSIGNMENT_NOTE', 'اكتب ملاحظة الإغلاق قبل إغلاق المهمة')
       await trx('assignments')
         .where('id', id)
-        .update({ status: outcome, completed_at: trx.fn.now(), completed_by: actor.id })
+        .update({
+          status: outcome,
+          completed_at: trx.fn.now(),
+          completed_by: actor.id,
+          close_reason: note || null,
+        })
+      // A managed task closed by hand leaves the note in the record's history.
+      if (row.managed)
+        await trx('activities').insert({
+          resource: row.resource,
+          record_id: row.record_id,
+          actor_id: actor.id,
+          action: 'assignment_closed',
+          changes: JSON.stringify({
+            fields: [],
+            assignmentId: id,
+            outcome,
+            reason: note,
+          }),
+        })
       const notify = outcome === 'done' ? row.assigned_by : row.assignee_id
       if (notify && notify !== actor.id)
         await notifyWithTemplate(
@@ -233,6 +288,71 @@ export class Assignments {
           { title: row.title, resource: this.label(row.resource), id: row.record_id }
         )
     })
+  }
+
+  /**
+   * Closes the open managed tasks of a record when module code decides that its work is
+   * finished (or no longer needed), for example from a listener on the record's final
+   * state. Recorded in the record's activity log with the reason; the assigner (done) or
+   * the assignee (cancelled) is notified as for a manual close. Returns the closed count.
+   */
+  async close(
+    resource: string,
+    recordId: number,
+    options: {
+      /** The user recorded as closing the tasks, usually the author of the final change. */
+      actorId: number
+      outcome?: 'done' | 'cancelled'
+      reason?: string
+      trx?: Knex.Transaction
+    }
+  ): Promise<number> {
+    const outcome = options.outcome ?? 'done'
+    if (outcome !== 'done' && outcome !== 'cancelled')
+      throw new KitError(422, 'E_ASSIGNMENT_OUTCOME', 'Unsupported assignment outcome')
+    if (!Number.isSafeInteger(options.actorId) || options.actorId <= 0)
+      throw new KitError(422, 'E_ACTOR', 'Closing tasks requires the author user id')
+    const reason = options.reason?.trim() || null
+    if (reason && reason.length > REASON_LIMIT)
+      throw new KitError(422, 'E_ASSIGNMENT_REASON', 'سبب الإغلاق لا يتجاوز 500 حرف')
+    const run = async (trx: Knex.Transaction) => {
+      const rows = await trx('assignments')
+        .where({ resource, record_id: recordId, status: 'open', managed: true })
+        .whereNull('workflow_run_id')
+        .forUpdate()
+        .orderBy('id')
+      for (const row of rows) {
+        await trx('assignments').where('id', row.id).update({
+          status: outcome,
+          completed_at: trx.fn.now(),
+          completed_by: options.actorId,
+          close_reason: reason,
+        })
+        await trx('activities').insert({
+          resource,
+          record_id: recordId,
+          actor_id: options.actorId,
+          action: 'assignment_closed',
+          changes: JSON.stringify({
+            fields: [],
+            system: true,
+            assignmentId: Number(row.id),
+            outcome,
+            ...(reason ? { reason } : {}),
+          }),
+        })
+        const notify = outcome === 'done' ? row.assigned_by : row.assignee_id
+        if (notify && notify !== options.actorId)
+          await notifyWithTemplate(
+            trx,
+            notify,
+            outcome === 'done' ? 'assignment.done' : 'assignment.cancelled',
+            { title: row.title, resource: this.label(row.resource), id: row.record_id }
+          )
+      }
+      return rows.length
+    }
+    return options.trx ? run(options.trx) : this.db.transaction(run)
   }
 
   private query(db: Knex = this.db) {
@@ -262,9 +382,16 @@ export class Assignments {
       createdAt: new Date(row.created_at).toISOString(),
       completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
       workflowRunId: row.workflow_run_id ? String(row.workflow_run_id) : null,
+      managed: Boolean(row.managed),
+      closeNote: this.closeNote(row),
+      closeReason: row.close_reason ? String(row.close_reason) : null,
       canComplete: open && !row.workflow_run_id && Number(row.assignee_id) === actor.id,
       canCancel: open && !row.workflow_run_id && Number(row.assigned_by) === actor.id,
     }
+  }
+
+  private closeNote(row: Record<string, any>): CloseNotePolicy {
+    return row.managed || this.options.closeNote === 'required' ? 'required' : 'optional'
   }
 
   private label(name: string) {

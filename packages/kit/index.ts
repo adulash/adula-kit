@@ -33,6 +33,7 @@ export {
   createWebhooksSchema,
   createImportsSchema,
   createWorkflowSchema,
+  createManagedAssignmentsSchema,
 } from './src/database/schema.js'
 export { defineWorkflow, nextStep } from './src/workflows/define_workflow.js'
 export type {
@@ -82,6 +83,8 @@ export { Assignments } from './src/collaboration/assignments.js'
 export type {
   Assignment,
   AssignmentPage,
+  AssignmentOptions,
+  CloseNotePolicy,
   AssignmentStatus,
 } from './src/collaboration/assignments.js'
 export { RecordCollaboration, followerListeners } from './src/collaboration/record_collaboration.js'

@@ -345,6 +345,17 @@ export async function createAssignmentsSchema(db: Knex) {
 }
 
 /**
+ * Managed assignments (1.1): opened and closed by module code with the record's state,
+ * never completed by hand. The close reason is shown with the closed task.
+ */
+export async function createManagedAssignmentsSchema(db: Knex) {
+  await db.schema.alterTable('assignments', (t) => {
+    t.boolean('managed').notNullable().defaultTo(false)
+    t.string('close_reason', 500)
+  })
+}
+
+/**
  * Message templates, notification e-mail delivery state and the realtime signal.
  * The trigger's NOTIFY is delivered only when the inserting transaction commits.
  */

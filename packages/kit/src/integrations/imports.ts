@@ -132,7 +132,8 @@ export class ImportBatches {
         type: resource.fields[key].type,
         required: Boolean(resource.fields[key].required),
       }))
-    if (resource.scoped)
+    // An inherited scope takes the unit from the parent row instead (#45).
+    if (resource.scoped && !resource.scope)
       fields.push({
         key: 'orgUnitId',
         label: 'الوحدة التنظيمية (رقم)',

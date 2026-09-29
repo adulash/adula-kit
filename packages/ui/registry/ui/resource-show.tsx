@@ -28,6 +28,7 @@ const activityLabels: Record<string, string> = {
   submit: 'اعتماد المستند',
   cancel: 'إلغاء الاعتماد',
   amend: 'تعديل بعد الاعتماد',
+  assignment_closed: 'إغلاق مهمة مع السجل',
 }
 
 export function documentStatus(status: unknown) {

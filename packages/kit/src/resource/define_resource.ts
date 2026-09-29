@@ -48,6 +48,12 @@ export function defineResource<const F extends Record<string, Field>>(
   ]) {
     for (const key of keys) if (!(key in input.fields)) throw new Error(`Unknown field: ${key}`)
   }
+  if (input.scope) {
+    const parent = input.fields[input.scope.from]
+    if (!input.scoped) throw new Error(`${input.name}: scope.from requires scoped: true`)
+    if (parent?.type !== 'belongsTo' || !parent.required)
+      throw new Error(`${input.name}: scope.from must name a required belongsTo field`)
+  }
   if (!input.submittable && input.actions.some((a) => ['submit', 'cancel', 'amend'].includes(a)))
     throw new Error('Document actions require submittable')
   return Object.freeze({ ...input, version: input.version ?? input.submittable ?? false })

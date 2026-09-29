@@ -95,7 +95,10 @@ test.group('Record collaboration browser acceptance', (group) => {
     // The due date uses the shared calendar formatter, not the raw ISO string (issue #33).
     await tasks.getByText('31/12/2026', { exact: true }).waitFor()
     await tasks.screenshot({ path: join(await screenshotDir(), 'my-tasks.png') })
+    // The button opens a closing-note dialog; nothing closes until it is confirmed.
     await tasks.getByRole('button', { name: 'تم الإنجاز' }).click()
+    await tasks.getByRole('dialog').getByLabel('ملاحظة الإغلاق').fill('تم التدقيق')
+    await tasks.getByRole('button', { name: 'تأكيد الإنجاز' }).click()
     await tasks.getByText('لا مهام في هذا العرض.').waitFor()
     const [row] = await kit().assignments.forRecord(
       'ui_samples',
@@ -103,5 +106,6 @@ test.group('Record collaboration browser acceptance', (group) => {
       await kit().actors.load(owner.user.id)
     )
     assert.equal(row.status, 'done')
+    assert.equal(row.closeReason, 'تم التدقيق')
   })
 })
