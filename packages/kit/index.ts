@@ -44,9 +44,15 @@ export type {
   WorkflowEvent,
   StepContext,
   Recipients,
+  DecisionOutcome,
 } from './src/workflows/define_workflow.js'
 export { WorkflowEngine, workflowListeners } from './src/workflows/engine.js'
-export type { WorkflowRun, WorkflowRunStatus, WorkflowOptions } from './src/workflows/engine.js'
+export type {
+  WorkflowRun,
+  WorkflowRunStatus,
+  WorkflowOptions,
+  WorkflowDecisionForm,
+} from './src/workflows/engine.js'
 export { ImportBatches, importCell, IMPORT_ROW_LIMIT } from './src/integrations/imports.js'
 export type {
   ImportBatch,

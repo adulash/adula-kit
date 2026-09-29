@@ -167,7 +167,7 @@
       "component": "resource-import"
     },
     "inertia/components/ui/record-workflows.tsx": {
-      "hash": "c1eac083491ffc4463767b1e07aa0a6c472f71f34edcc90c47b77eef9f4b1fdd",
+      "hash": "3fac9ea2f9d5a5e3f591756eb96bb851859479fb379400c7cacb9aae3946f7b1",
       "component": "record-workflows"
     }
   }

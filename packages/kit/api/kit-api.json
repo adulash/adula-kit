@@ -220,6 +220,10 @@
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>) => Promise<void>"
     },
+    "DecisionOutcome": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ label: string; next: string; fields?: string[] | undefined; comment?: \"optional\" | \"required\" | undefined; }"
+    },
     "DEFAULT_ATTACHMENT_EXTENSIONS": {
       "kind": "VariableDeclaration",
       "type": "readonly string[]"
@@ -844,6 +848,10 @@
       "kind": "VariableDeclaration",
       "type": "string[]"
     },
+    "WorkflowDecisionForm": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ outcomes: { key: string; label: string; comment: \"optional\" | \"required\"; fields: ResourceField[]; }[]; options: Record<string, { value: string; label: string; }[]>; values: SerializedRecord; }"
+    },
     "WorkflowDefinition": {
       "kind": "TypeAliasDeclaration",
       "type": "WorkflowInput & { machine: AnyStateMachine; }"
@@ -854,7 +862,7 @@
     },
     "WorkflowEvent": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ type: \"EVALUATE\"; record: RecordData; } | { type: \"DONE\"; } | { type: \"APPROVE\"; } | { type: \"REJECT\"; }"
+      "type": "{ type: \"EVALUATE\"; record: RecordData; } | { type: \"DONE\"; } | { type: \"APPROVE\"; } | { type: \"REJECT\"; } | { type: \"DECIDE\"; outcome: string; }"
     },
     "WorkflowInput": {
       "kind": "TypeAliasDeclaration",
@@ -870,7 +878,7 @@
     },
     "WorkflowRun": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ id: string; resource: string; resourceLabel: string; recordId: number; recordTitle: string | null; definition: string; label: string; version: number; status: WorkflowRunStatus; step: string | null; stepLabel: string | null; outcome: string | null; attempts: number; lastError: string | null; wakeAt: string | null; createdAt: string; completedAt: string | null; history: { step: string | null; event: string; actorName: string | null; detail: { [key: string]: JsonValue; }; at: string; }[]; myApproval: { assignmentId: number; title: string; } | null; }"
+      "type": "{ id: string; resource: string; resourceLabel: string; recordId: number; recordTitle: string | null; definition: string; label: string; version: number; status: WorkflowRunStatus; step: string | null; stepLabel: string | null; outcome: string | null; attempts: number; lastError: string | null; wakeAt: string | null; createdAt: string; completedAt: string | null; history: { step: string | null; event: string; actorName: string | null; detail: { [key: string]: JsonValue; }; at: string; }[]; myApproval: { assignmentId: number; title: string; decision?: WorkflowDecisionForm | undefined; } | null; }"
     },
     "WorkflowRunStatus": {
       "kind": "TypeAliasDeclaration",
@@ -878,7 +886,7 @@
     },
     "WorkflowStep": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ type: \"condition\"; label?: string | undefined; when: (record: RecordData) => boolean; then: string; else: string; } | { type: \"update\"; label?: string | undefined; values: RecordData | ((context: StepContext) => RecordData); next: string; } | { type: \"notify\"; label?: string | undefined; to: Recipients; template?: string | undefined; variables?: ((context: StepContext) => Record<string, unknown>) | undefined; next: string; } | { type: \"approval\"; label: string; assignees: Recipients; dueInDays?: number | undefined; approve: string; reject: string; } | { type: \"delay\"; label?: string | undefined; ms: number; next: string; } | { type: \"http\"; label?: string | undefined; url: string | ((context: StepContext) => string); body?: ((context: StepContext) => unknown) | undefined; next: string; } | { type: \"end\"; label?: string | undefined; outcome: \"approved\" | \"rejected\" | \"completed\"; cancelDocument?: boolean | undefined; }"
+      "type": "{ type: \"condition\"; label?: string | undefined; when: (record: RecordData) => boolean; then: string; else: string; } | { type: \"update\"; label?: string | undefined; values: RecordData | ((context: StepContext) => RecordData); next: string; } | { type: \"notify\"; label?: string | undefined; to: Recipients; template?: string | undefined; variables?: ((context: StepContext) => Record<string, unknown>) | undefined; next: string; } | { type: \"approval\"; label: string; assignees: Recipients; dueInDays?: number | undefined; approve: string; reject: string; } | { type: \"decision\"; label: string; assignees: Recipients; dueInDays?: number | undefined; outcomes: Record<string, DecisionOutcome>; } | { type: \"delay\"; label?: string | undefined; ms: number; next: string; } | { type: \"http\"; label?: string | undefined; url: string | ((context: StepContext) => string); body?: ((context: StepContext) => unknown) | undefined; next: string; } | { type: \"end\"; label?: string | undefined; outcome: \"approved\" | \"rejected\" | \"completed\"; cancelDocument?: boolean | undefined; }"
     },
     "writableInput": {
       "kind": "FunctionDeclaration",

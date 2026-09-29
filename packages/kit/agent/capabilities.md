@@ -26,7 +26,7 @@ Resource options: scoped (required), scope.from (the unit follows a required bel
 
 Role rule conditions: $eq, $ne, $in, $lt, $gt, $like on scalar fields; unsupported conditions are refused. Organization scope is always added with AND. `$actor.id` names the signed-in user on user fields, createdBy and updatedBy ($eq, $ne, $in), bound per request.
 
-Workflow steps: condition, update, notify, approval, delay, http, end. Workflow and step names: use lower-case letters, digits and underscores, starting with a letter (for example release_approval, notify_approved).
+Workflow steps: condition, update, notify, approval, decision, delay, http, end. Workflow and step names: use lower-case letters, digits and underscores, starting with a letter (for example release_approval, notify_approved).
 
 ## Services
 
