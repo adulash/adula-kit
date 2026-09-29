@@ -1,6 +1,8 @@
 # ADR 029 — System writes, inherited scope and managed assignments (1.1.0)
 
-Date: 2026-09-29. Status: proposed for 1.1.0; the closing-note rule in decision 3 was set by the owner on 2026-09-29.
+Date: 2026-09-29. Status: accepted by the owner for 1.1.0. After the decisions were explained, the owner
+stated in conversation: "موافق، ادمج #53 بعد نجاح CI" (agreed; merge #53 after CI passes).
+The closing-note rule in decision 3 was also set by the owner.
 
 Issues #44, #45 and #51 came from an independent consumer: clinic supervisory-visit
 modules with 20 resources, 14 listeners and 9 custom pages. Each workaround in those
