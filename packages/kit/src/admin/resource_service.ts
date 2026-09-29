@@ -80,6 +80,12 @@ export type SystemSaveOptions = {
   /** Optimistic lock: when given, it must match the stored version. */
   version?: number
   /**
+   * The person who chose the values, such as a workflow approver. A new value of a user
+   * field must then be eligible for them as in a user save; without it, any active member
+   * qualifies on unscoped resources.
+   */
+  chooser?: Actor
+  /**
    * Write to a submitted document. Only for a workflow decision step, which limits the
    * values to the fields the step declares (#42).
    */
@@ -504,10 +510,11 @@ export class ResourceService {
   }
 
   /**
-   * Choices for lookup and relation fields outside a form, such as a workflow decision:
-   * active lookups, and related records the actor may view, labelled by their title.
+   * Choices for lookup, relation and user fields outside a form, such as a workflow
+   * decision: active lookups, related records the actor may view, labelled by their title,
+   * and the users eligible for the record (pass its id for scoped resources).
    */
-  async fieldOptions(name: string, keys: readonly string[], actor: Actor) {
+  async fieldOptions(name: string, keys: readonly string[], actor: Actor, recordId?: number) {
     const resource = this.registry.get(name)
     const ability = buildAbility(actor.rules, this.registry.all())
     const options: Record<string, { value: string; label: string }[]> = {}
@@ -530,6 +537,26 @@ export class ResourceService {
         options[key] = page.data.map((row) => ({
           value: String(row.id),
           label: title(row) ?? `#${row.id}`,
+        }))
+      } else if (field?.type === 'user') {
+        // The same users saving accepts: members of the record's unit or its ancestors.
+        let path: string | null = null
+        if (resource.scoped) {
+          if (recordId === undefined) {
+            options[key] = []
+            continue
+          }
+          const record = await this.findAny(this.db, resource, recordId)
+          path = String(record.orgPath)
+        }
+        const rows = await this.eligibleUsers(this.db, path, actor)
+          .orderBy('u.full_name')
+          .orderBy('u.id')
+          .limit(50)
+          .select('u.id', 'u.full_name')
+        options[key] = rows.map((row) => ({
+          value: String(row.id),
+          label: String(row.full_name || `#${row.id}`),
         }))
       }
     }
@@ -1081,6 +1108,7 @@ export class ResourceService {
       reason: options.reason,
       version: options.version,
       allowSubmitted: options.allowSubmitted,
+      chooser: options.chooser,
     })
   }
 
@@ -1124,7 +1152,7 @@ export class ResourceService {
     id?: number,
     transaction?: Knex.Transaction,
     parentWrite?: { name: string; id: number; action: 'create' | 'update' },
-    system?: { reason?: string; version?: number; allowSubmitted?: boolean }
+    system?: { reason?: string; version?: number; allowSubmitted?: boolean; chooser?: Actor }
   ): Promise<SerializedRecord> {
     const resource = this.registry.get(name)
     const action = id === undefined ? 'create' : 'update'
@@ -1221,6 +1249,13 @@ export class ResourceService {
       this.normalizeValues(resource, candidate)
       // A hook may change the parent of an inherited scope; the unit follows it.
       if (resource.scope) await locate()
+      // A hook may also move the record: later checks use the unit it chose.
+      if (resource.scoped) {
+        const unit = await trx('org_units')
+          .where('id', Number(candidate.orgUnitId) || -1)
+          .first('path')
+        candidate.orgPath = unit?.path
+      }
       for (const [key, field] of Object.entries(resource.fields)) {
         if (
           field.required &&
@@ -1247,7 +1282,7 @@ export class ResourceService {
           const eligible = await this.eligibleUsers(
             trx,
             resource.scoped ? String(candidate.orgPath ?? '') || null : null,
-            system ? null : actor
+            system ? (system.chooser ?? null) : actor
           )
             .where('u.id', Number(candidate[key]))
             .first('u.id')
@@ -1281,12 +1316,6 @@ export class ResourceService {
             orgUnitId: resource.scoped ? Number(candidate.orgUnitId) : null,
             scoped: resource.scoped,
           })
-      }
-      if (resource.scoped) {
-        const unit = await trx('org_units')
-          .where('id', Number(candidate.orgUnitId) || -1)
-          .first('path')
-        candidate.orgPath = unit?.path
       }
       // Hooks may calculate fields, but may never move a record past authorization.
       check(resource, action, candidate)

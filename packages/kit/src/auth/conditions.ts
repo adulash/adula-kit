@@ -10,10 +10,15 @@ export type Predicate = { field: string; operator: Operator; value: Scalar | Sca
  */
 export const ACTOR_ID = '$actor.id'
 
-/** Replaces ACTOR_ID operands with the actor's id; other values are returned unchanged. */
+/**
+ * Replaces ACTOR_ID operands with the actor's id; other values are returned unchanged.
+ * With `accepts`, only the fields it accepts are resolved: a placeholder left on another
+ * field makes buildAbility refuse the rule instead of comparing an id with text.
+ */
 export function resolveActorConditions(
   conditions: Conditions | undefined,
-  actorId: number
+  actorId: number,
+  accepts?: (field: string) => boolean
 ): Conditions | undefined {
   if (!conditions || typeof conditions !== 'object' || Array.isArray(conditions)) return conditions
   const resolve = (value: unknown): unknown =>
@@ -21,13 +26,26 @@ export function resolveActorConditions(
   return Object.fromEntries(
     Object.entries(conditions).map(([field, condition]) => [
       field,
-      condition !== null && typeof condition === 'object' && !Array.isArray(condition)
-        ? Object.fromEntries(
-            Object.entries(condition).map(([operator, value]) => [operator, resolve(value)])
-          )
-        : resolve(condition),
+      accepts && !accepts(field)
+        ? condition
+        : condition !== null && typeof condition === 'object' && !Array.isArray(condition)
+          ? Object.fromEntries(
+              Object.entries(condition).map(([operator, value]) => [operator, resolve(value)])
+            )
+          : resolve(condition),
     ])
   ) as Conditions
+}
+
+/** Fields whose conditions may name the current user: user fields, createdBy and updatedBy. */
+export function actorConditionField(
+  resource: Pick<Resource, 'fields'> | undefined,
+  field: string
+): boolean {
+  return (
+    resource !== undefined &&
+    (field === 'createdBy' || field === 'updatedBy' || resource.fields[field]?.type === 'user')
+  )
 }
 
 /** Whether a condition object uses the ACTOR_ID placeholder as an operand. */

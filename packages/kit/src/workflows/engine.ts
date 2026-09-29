@@ -493,6 +493,8 @@ export class WorkflowEngine {
             trx,
             reason: `${step.label}: ${outcome.label}`,
             allowSubmitted: true,
+            // The approver chose the values: a user field must be eligible for them.
+            chooser: actor,
           })
         event = { type: 'DECIDE', outcome: decision }
         logged = 'decided'
@@ -700,7 +702,7 @@ export class WorkflowEngine {
         comment: outcome.comment ?? 'optional',
         fields: (outcome.fields ?? []).map((field) => ({ key: field, ...resource.fields[field] })),
       })),
-      options: await this.resources.fieldOptions(row.resource, keys, actor),
+      options: await this.resources.fieldOptions(row.resource, keys, actor, Number(row.record_id)),
       values: Object.fromEntries(
         keys.filter((key) => key in shown.data).map((key) => [key, shown.data[key]])
       ),

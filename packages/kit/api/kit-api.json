@@ -578,7 +578,7 @@
     },
     "resolveActorConditions": {
       "kind": "FunctionDeclaration",
-      "type": "(conditions: Conditions | undefined, actorId: number) => Conditions | undefined"
+      "type": "(conditions: Conditions | undefined, actorId: number, accepts?: ((field: string) => boolean) | undefined) => Conditions | undefined"
     },
     "Resource": {
       "kind": "TypeAliasDeclaration",

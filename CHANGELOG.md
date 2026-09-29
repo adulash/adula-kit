@@ -38,15 +38,22 @@ Minor release: additive APIs and one additive kit migration
 * Resources: a `user` field type stores a user id (foreign key to `users`, `RESTRICT`).
   Choices are active members of the record's unit or its ancestors, searched by name;
   saving checks the same rule. Lists and details return `{ id, fullName }` without the
-  e-mail. The field filters, sorts, imports by id and accepts create defaults (#28).
-  Code that switches exhaustively over `Field['type']` needs the new case. Projects
+  e-mail. The field filters, sorts, imports by id and accepts create defaults. Workflow
+  decision forms offer the users eligible for the document, and `systemSave(...,
+  { chooser })` checks a chosen user against that person's scope; decision steps pass
+  the approver (#28). `ResourceService.fieldOptions` takes the record id for scoped
+  user fields. Code that switches exhaustively over `Field['type']` needs the new case
+  (`pnpm check:api` also reports `createResourceController` and `ResourceEditor`,
+  whose types include it; `SettingScope` only prints in a new order). Projects
   with copied `data-table`, `resource-field`, `resource-form` or `resource-value` need
   the updated components. See ADR 032 (proposed).
 * Authorization: role rule conditions accept `'$actor.id'` (`ACTOR_ID`) on user fields,
   `createdBy` and `updatedBy`, for example `{ inspector: '$actor.id' }`. It is resolved
   per actor and bound as a query parameter; `buildAbility` and `conditionSql` refuse an
   unresolved placeholder. The starter role screen (`inertia/pages/admin/roles/show.tsx`) offers «المستخدم الحالي» for those fields.
-  Hosts that build actors themselves call `resolveActorConditions` (#29).
+  A placeholder on any other field, even one written without `RolesAdmin`, stays
+  unresolved and the rule is refused. Hosts that build actors themselves call
+  `resolveActorConditions` (#29).
 
 ## 1.0.1 — unreleased
 

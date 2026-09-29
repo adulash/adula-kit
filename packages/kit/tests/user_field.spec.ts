@@ -36,6 +36,12 @@ const ticket = defineResource({
   show: ['title', 'assignee'],
   actions: ['view', 'create', 'update', 'delete'],
   validator: { validate: async (data) => data as RecordData },
+  hooks: {
+    // Test hook: a record titled this way is moved to unit B.
+    beforeSave: async (record) => {
+      if (record.title === 'نقل بالخطاف') record.orgUnitId = 3
+    },
+  },
 })
 /** Unscoped: shared across the organization. */
 const desk = defineResource({
@@ -344,5 +350,53 @@ test.group('User fields', (group) => {
         .describe('tickets', sara)
         .fields.find((field) => field.key === 'assignee')?.filterable
     )
+  })
+
+  test('a hook that moves the record is checked against the unit it chose', async ({ assert }) => {
+    const root: Actor = { ...agent, orgPaths: ['1'] }
+    // User 2 belongs to unit A only; the hook moves the record to unit B.
+    const moved = await failure(() =>
+      service().save('tickets', root, { title: 'نقل بالخطاف', assignee: 2, orgUnitId: 2 })
+    )
+    assert.equal(moved.code, 'E_USER_FIELD')
+    const kept = await service().save('tickets', root, {
+      title: 'نقل بالخطاف',
+      assignee: 3,
+      orgUnitId: 2,
+    })
+    assert.equal(kept.orgUnitId, 3)
+  })
+
+  test('choices outside a form and chosen system writes follow the record and the chooser', async ({
+    assert,
+  }) => {
+    const [ticketRow] = await db('tickets').where('org_unit_id', 2).limit(1)
+    const options = await service().fieldOptions('tickets', ['assignee'], agent, ticketRow.id)
+    assert.sameMembers(
+      options.assignee.map((option) => option.value),
+      ['1', '2', '4']
+    )
+    assert.notInclude(JSON.stringify(options), 'example.test')
+    // Scoped choices need the record; without it nobody is offered.
+    const withoutRecord = await service().fieldOptions('tickets', ['assignee'], agent)
+    assert.deepEqual(withoutRecord.assignee, [])
+    const desks = await service().fieldOptions('desks', ['owner'], agent)
+    assert.sameMembers(
+      desks.owner.map((option) => option.value),
+      ['1', '2', '4', '6']
+    )
+    // A person chose the value (a workflow approver): it must be eligible for them.
+    const chosen = await failure(() =>
+      service().systemSave('desks', { code: 'D-9', owner: 3 }, undefined, {
+        actorId: 2,
+        chooser: agent,
+      })
+    )
+    assert.equal(chosen.code, 'E_USER_FIELD')
+    const eligible = await service().systemSave('desks', { code: 'D-9', owner: 6 }, undefined, {
+      actorId: 2,
+      chooser: agent,
+    })
+    assert.equal(eligible.owner, 6)
   })
 })

@@ -3,6 +3,7 @@ import {
   ACTOR_ID,
   ActorStore,
   KitError,
+  ResourceRegistry,
   ResourceService,
   RolesAdmin,
   accessibleBy,
@@ -121,5 +122,30 @@ test.group('Current-actor conditions ($actor.id)', (group) => {
     const matrix = roles.matrix().subjects.find((entry) => entry.name === 'orders')!
     const actorFields = matrix.conditionFields.filter((field) => field.actor).map((f) => f.key)
     assert.deepEqual(actorFields, ['createdBy', 'updatedBy'])
+  })
+
+  test('a placeholder stored outside setRule on another field fails closed', async ({ assert }) => {
+    // Written by SQL, bypassing RolesAdmin: resolving it would compare an id with text,
+    // so `$ne` would allow every record. The rule stays unresolved and is refused.
+    const [rule] = await db('role_rules')
+      .insert({
+        role_id: roleId,
+        subject: 'orders',
+        action: 'delete',
+        conditions: { notes: { $ne: ACTOR_ID } },
+      })
+      .returning('id')
+    try {
+      const actor = await new ActorStore(db, registry).load(2)
+      const stored = actor.rules.find((entry) => entry.action === 'delete')
+      assert.deepEqual(stored?.conditions, { notes: { $ne: ACTOR_ID } })
+      assert.throws(() => buildAbility(actor.rules, registry.all()), /resolveActorConditions/)
+      await assert.rejects(() => service().list('orders', actor), /resolveActorConditions/)
+      // Stores built without the resource (core checks such as invitations) still load.
+      const core = await new ActorStore(db, new ResourceRegistry()).load(2)
+      assert.doesNotThrow(() => buildAbility(core.rules))
+    } finally {
+      await db('role_rules').where('id', rule.id).del()
+    }
   })
 })

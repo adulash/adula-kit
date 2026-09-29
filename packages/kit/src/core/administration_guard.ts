@@ -19,7 +19,12 @@ async function administrators(db: Knex): Promise<Set<number>> {
       subject: row.subject,
       action: row.action,
       inverted: row.inverted,
-      conditions: resolveActorConditions(row.conditions ?? undefined, Number(row.user_id)),
+      // Only subject 'all' is read here, so no field accepts the placeholder.
+      conditions: resolveActorConditions(
+        row.conditions ?? undefined,
+        Number(row.user_id),
+        () => false
+      ),
       fields: row.fields ?? undefined,
     })
     users.set(row.user_id, rules)
