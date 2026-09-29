@@ -40,7 +40,14 @@ export function createResourceController(
   return class ResourcesController {
     async create(ctx: HttpContext) {
       return this.#execute(ctx, async ({ resources, actor }, resource) => {
-        const editor = await resources.editor(resource.name, actor)
+        // `?defaults[field]=value` pre-fills the form; the service authorizes each value.
+        const defaults = ctx.request.qs().defaults
+        const editor = await resources.editor(resource.name, actor, undefined, {
+          defaults:
+            defaults && typeof defaults === 'object' && !Array.isArray(defaults)
+              ? (defaults as Record<string, unknown>)
+              : undefined,
+        })
         return renderForm && ctx.request.accepts(['html', 'json']) === 'html'
           ? renderForm(ctx, resource, editor)
           : editor

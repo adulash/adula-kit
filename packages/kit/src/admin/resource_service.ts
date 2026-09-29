@@ -15,6 +15,7 @@ import { fromRow, selectedFields, serialize, systemInput, writableInput } from '
 import { KitError } from './errors.js'
 import { sequence } from '../services/settings.js'
 import { recordMutation, type FieldChange } from '../events/record_mutation.js'
+import { formatTitle, titleFields } from './record_title.js'
 import { fieldValue } from '../resource/values.js'
 import {
   claimAttachment,
@@ -470,9 +471,65 @@ export class ResourceService {
         target,
         rows.map((r: RecordData) => fromRow(r, target))
       )
-      related[key] = targets.map((r) => serialize(target, r, ability, actor))
+      const title = await this.titler(target)
+      related[key] = targets.map((r) => {
+        const row = serialize(target, r, ability, actor)
+        // `_title` cannot collide with a field key; clients label the relation with it.
+        return { ...row, _title: title(row) }
+      })
     }
     return related
+  }
+
+  /** Formats record titles of one resource, loading the labels of its title lookups once. */
+  private async titler(resource: Resource) {
+    const groups = titleFields(resource).flatMap((key) => {
+      const field = resource.fields[key]
+      return field.type === 'lookup' ? [field.group] : []
+    })
+    const labels = new Map<string, string>()
+    if (groups.length)
+      for (const row of await this.db('lookups')
+        .whereIn('group', groups)
+        .select('group', 'key', 'label_ar'))
+        labels.set(`${row.group}\u0000${row.key}`, String(row.label_ar))
+    return (record: SerializedRecord) =>
+      formatTitle(resource, record, (group, key) => labels.get(`${group}\u0000${key}`))
+  }
+
+  /**
+   * Titles of records the actor may view, read under the actor's field access (#32).
+   * Records the actor cannot view are left out; callers fall back to the record id.
+   */
+  async titles(name: string, ids: readonly number[], actor: Actor): Promise<Map<number, string>> {
+    const result = new Map<number, string>()
+    let resource: Resource
+    try {
+      resource = this.registry.get(name)
+    } catch {
+      return result
+    }
+    const wanted = [...new Set(ids.filter((id) => Number.isSafeInteger(id) && id > 0))]
+    const ability = buildAbility(actor.rules, this.registry.all())
+    if (!wanted.length || !resource.actions.includes('view') || !ability.can('view', name))
+      return result
+    const query = accessibleBy(
+      this.db(`${resource.name} as r`).whereIn('r.id', wanted).whereNull('r.deleted_at'),
+      ability,
+      actor,
+      'view',
+      resource
+    ).select(this.columns(resource, ability))
+    if (resource.scoped) query.select('ou.path as org_path')
+    const rows: RecordData[] = await query
+    const records = rows.map((row) => fromRow(row, resource))
+    const title = await this.titler(resource)
+    for (const record of records) {
+      if (!canRecord(ability, actor, resource, 'view', record)) continue
+      const text = title(serialize(resource, record, ability, actor))
+      if (text) result.set(Number(record.id), text)
+    }
+    return result
   }
   async show(name: string, id: number, actor: Actor) {
     const resource = this.registry.get(name)
@@ -503,10 +560,11 @@ export class ResourceService {
       limit: 50,
       estimate: false,
     })
+    const title = await this.titler(target)
     return {
       data: page.data.map((row) => ({
         value: String(row.id),
-        label: String(row[target.list[0]] ?? row.id),
+        label: title(row) ?? `#${row.id}`,
       })),
       nextCursor: page.meta.nextCursor,
     }
@@ -601,7 +659,18 @@ export class ResourceService {
       createdAt: new Date(row.created_at).toISOString(),
     }))
   }
-  async editor(name: string, actor: Actor, id?: number) {
+  /**
+   * The form description for create (no id) or update. `defaults` pre-fills a create form
+   * (#48), for example `?defaults[violation]=13`: only visible form fields are used, a
+   * related record must be viewable by the actor and a lookup must be active. Anything else
+   * is dropped. Defaults are only initial values; saving validates as usual.
+   */
+  async editor(
+    name: string,
+    actor: Actor,
+    id?: number,
+    request: { defaults?: Record<string, unknown> } = {}
+  ) {
     const resource = this.registry.get(name)
     const action = id === undefined ? 'create' : 'update'
     const ability = this.authorizeAction(resource, actor, action)
@@ -707,9 +776,10 @@ export class ResourceService {
         if (ability.can('view', target.name)) {
           relationSearch[field.key] = this.describe(target.name, actor).searchable
           const page = await this.list(target.name, actor, { limit: 50, estimate: false })
+          const title = await this.titler(target)
           options[field.key] = page.data.map((row) => ({
             value: String(row.id),
-            label: String(row[target.list[0]] ?? row.id),
+            label: title(row) ?? `#${row.id}`,
           }))
           const selected = record?.[field.key]
           if (
@@ -721,7 +791,7 @@ export class ResourceService {
               const current = await this.show(target.name, Number(selected), actor)
               options[field.key].push({
                 value: String(current.data.id),
-                label: String(current.data[target.list[0]] ?? current.data.id),
+                label: title(current.data) ?? `#${current.data.id}`,
               })
             } catch (error) {
               if (!(error instanceof KitError) || ![403, 404].includes(error.status)) throw error
@@ -747,11 +817,50 @@ export class ResourceService {
         .first('id', 'name')
       if (current) units.push(current)
     }
+    const defaults: SerializedRecord = {}
+    const requested = request.defaults
+    if (id === undefined && requested && typeof requested === 'object')
+      for (const field of fields) {
+        const raw = Object.hasOwn(requested, field.key) ? requested[field.key] : undefined
+        if (typeof raw !== 'string' && typeof raw !== 'number' && typeof raw !== 'boolean') continue
+        let value: unknown = raw
+        try {
+          if (['integer', 'belongsTo'].includes(field.type)) value = Number(raw)
+          else if (field.type === 'boolean') value = raw === true || raw === 'true'
+          else value = String(raw)
+          value = fieldValue(field, value)
+        } catch {
+          continue
+        }
+        if (['attachment', 'json', 'hasMany'].includes(field.type)) continue
+        if (field.type === 'lookup' || field.type === 'belongsTo') {
+          const choices = options[field.key] ?? []
+          if (!choices.some((option) => option.value === String(value))) {
+            if (field.type === 'lookup') continue
+            try {
+              // Authorized exactly like opening the related record.
+              const target = this.registry.get(field.resource)
+              const current = await this.show(target.name, Number(value), actor)
+              const title = await this.titler(target)
+              choices.push({
+                value: String(current.data.id),
+                label: title(current.data) ?? `#${current.data.id}`,
+              })
+            } catch (error) {
+              if (!(error instanceof KitError) || ![403, 404].includes(error.status)) throw error
+              continue
+            }
+          }
+        }
+        defaults[field.key] = value as SerializedRecord[string]
+      }
     return {
       mode: action,
       name,
       label: resource.label.ar,
       fields,
+      /** Initial values of a create form, already checked against the actor's access. */
+      defaults,
       inline,
       options,
       relationSearch,

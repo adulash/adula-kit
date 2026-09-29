@@ -449,6 +449,22 @@ test.group('Generic resource browser acceptance', (group) => {
     await page.screenshot({ path: join(shots, 'index-mobile.png'), fullPage: false })
   })
 
+  test('a create link with defaults opens the form already filled (#48)', async ({
+    browserContext,
+    visit,
+    assert,
+  }) => {
+    await browserContext.loginAs(admin.user)
+    const title = `عينة من رابط ${randomUUID().slice(0, 8)}`
+    const page = await visit(
+      `/resources/ui_samples/create?defaults[title]=${encodeURIComponent(title)}&defaults[quantity]=7`
+    )
+    const input = page.getByLabel('العنوان', { exact: true })
+    await input.waitFor()
+    assert.equal(await input.inputValue(), title)
+    assert.equal(await page.getByLabel('الكمية', { exact: true }).inputValue(), '7')
+  })
+
   test('a viewer without write permissions sees no create, edit or delete controls', async ({
     browserContext,
     visit,

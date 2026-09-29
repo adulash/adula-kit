@@ -115,11 +115,11 @@
       "component": "can"
     },
     "inertia/components/ui/resource-value.tsx": {
-      "hash": "bb519fa92643877b790f99b27c12628099d1696570674bb8aa5a09eecc1b0b8a",
+      "hash": "c213fb3fb95fe50ff1242527b60f5c6a2bfcd6642d6b7db4b9217d888fc1cfb0",
       "component": "resource-value"
     },
     "inertia/components/ui/resource-form.tsx": {
-      "hash": "5f713040f8ef3a6deb0823c41e4863634c8a0918f30b8a936e953ddbab5cd466",
+      "hash": "4d2b711482c64453fb52e4d6be3a977b227fe5f190c2fac410931e805eda227f",
       "component": "resource-form"
     },
     "inertia/components/ui/resource-field.tsx": {

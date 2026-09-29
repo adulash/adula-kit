@@ -133,7 +133,7 @@ export default function MyTasks({ assignments, status }: Props) {
                 href={`/resources/${item.resource}/${item.recordId}`}
                 className="text-sm text-primary underline-offset-4 hover:underline"
               >
-                {item.resourceLabel} #{item.recordId}
+                {item.resourceLabel}: {item.recordTitle ?? `#${item.recordId}`}
               </Link>
               {item.note && <p className="text-sm text-muted-foreground">{item.note}</p>}
               {item.managed && item.status === 'open' && (

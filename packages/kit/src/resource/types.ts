@@ -58,6 +58,12 @@ export type Resource = {
   show: readonly string[]
   serialize?: readonly string[]
   hidden?: readonly string[]
+  /**
+   * Fields that name a record wherever it is referenced: relation cells and pickers,
+   * "My tasks" and the approvals inbox. Joined with « · ». Defaults to the first
+   * sequence field and the first text field in `list`.
+   */
+  title?: readonly string[]
   actions: readonly Action[]
   validator: { validate(data: unknown): Promise<RecordData> }
   hooks?: {
@@ -77,7 +83,7 @@ export type Module = {
 }
 export type ResourceInput<F extends Record<string, Field>> = Omit<
   Resource,
-  'fields' | 'list' | 'form' | 'show' | 'hidden' | 'serialize'
+  'fields' | 'list' | 'form' | 'show' | 'hidden' | 'serialize' | 'title'
 > & {
   fields: F
   list: readonly (keyof F & string)[]
@@ -85,4 +91,5 @@ export type ResourceInput<F extends Record<string, Field>> = Omit<
   show: readonly (keyof F & string)[]
   hidden?: readonly (keyof F & string)[]
   serialize?: readonly (keyof F & string)[]
+  title?: readonly (keyof F & string)[]
 }

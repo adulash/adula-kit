@@ -12,6 +12,16 @@ Minor release: additive APIs and one additive kit migration
   organization unit from its parent before authorization. The form hides the unit
   picker, and `ResourceService.rehome()` moves the children after the parent moves
   (#45). Projects with a copied `resource-form` need the updated component.
+* Resources: `title: ['field', ...]` names a record wherever it is referenced. The
+  default is the sequence and the first text field, and a lookup shows its Arabic label.
+  Titles are read under the viewer's field access. Relation cells and pickers, My tasks
+  (`recordTitle`) and the approvals inbox use them instead of a raw lookup key or `#id`.
+  `ResourceService.titles()` returns them for module pages (#47, #32). Projects with a
+  copied `resource-value` need the updated component.
+* Resources: `/resources/<name>/create?defaults[field]=value` opens the create form
+  pre-filled. Only visible form fields are used, related records must be viewable and
+  lookups active, and saving validates as usual (#48). Projects with a copied
+  `resource-form` need the updated component.
 * Assignments: «تم الإنجاز» and «إلغاء المهمة» open a dialog for a closing note, kept
   with the task. Each application makes the note optional (default) or required with
   `new Assignments(..., { closeNote })`. Managed tasks
