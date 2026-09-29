@@ -160,4 +160,64 @@ test.group('Assignments', (group) => {
     const inbox = await db('notifications').where('user_id', 4)
     assert.equal(inbox[0].title, 'موافقة مطلوبة منك')
   })
+
+  test('managed tasks refuse manual completion and close with the record (#51)', async ({
+    assert,
+  }) => {
+    const created = await assignments().create(db, {
+      resource: 'orders',
+      recordId: orderId,
+      assigneeId: 4,
+      assignedBy: 2,
+      title: 'حل المخالفة',
+      managed: true,
+    })
+    const open = await assignments().mine(viewer)
+    const [task] = open.data
+    assert.isTrue(task.managed)
+    assert.isFalse(task.canComplete)
+    // A second, manual task on the same record stays under the user's control.
+    const manual = await assignments().create(db, {
+      resource: 'orders',
+      recordId: orderId,
+      assigneeId: 4,
+      assignedBy: 2,
+      title: 'متابعة يدوية',
+    })
+    const refused = await failure(() => assignments().complete(created.id, viewer))
+    assert.equal(refused.code, 'E_ASSIGNMENT_MANAGED')
+    assert.equal(refused.status, 409)
+    const cancel = await failure(() => assignments().complete(created.id, reader, 'cancelled'))
+    assert.equal(cancel.code, 'E_ASSIGNMENT_MANAGED')
+
+    await db('notifications').del()
+    const closed = await db.transaction((trx) =>
+      assignments().close('orders', orderId, { actorId: 1, reason: 'قُبل الحل', trx })
+    )
+    assert.equal(closed, 1)
+    const stored = await db('assignments').where('id', created.id).first()
+    assert.equal(stored.status, 'done')
+    assert.equal(stored.completed_by, 1)
+    assert.equal(stored.close_reason, 'قُبل الحل')
+    const untouched = await db('assignments').where('id', manual.id).first()
+    assert.equal(untouched.status, 'open')
+    const activity = await db('activities')
+      .where({ resource: 'orders', record_id: orderId, action: 'assignment_closed' })
+      .first()
+    assert.deepInclude(activity.changes, {
+      assignmentId: Number(created.id),
+      outcome: 'done',
+      reason: 'قُبل الحل',
+    })
+    const notified = await db('notifications').where('user_id', 2)
+    assert.lengthOf(notified, 1, 'the assigner learns that the task closed')
+    const closedPage = await assignments().mine(viewer, { status: 'done' })
+    const [done] = closedPage.data
+    assert.equal(done.closeReason, 'قُبل الحل')
+    assert.equal(await assignments().close('orders', orderId, { actorId: 1 }), 0)
+    const invalid = await failure(() =>
+      assignments().close('orders', orderId, { actorId: 1, outcome: 'lost' as 'done' })
+    )
+    assert.equal(invalid.code, 'E_ASSIGNMENT_OUTCOME')
+  })
 })

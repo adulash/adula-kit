@@ -97,6 +97,7 @@ export default function MyTasks({ assignments, status }: Props) {
                   {statusLabel[item.status]}
                 </Badge>
                 {item.kind === 'approval' && <Badge variant="outline">موافقة</Badge>}
+                {item.managed && <Badge variant="outline">تُغلق مع السجل</Badge>}
               </p>
               <Link
                 href={`/resources/${item.resource}/${item.recordId}`}
@@ -105,6 +106,14 @@ export default function MyTasks({ assignments, status }: Props) {
                 {item.resourceLabel} #{item.recordId}
               </Link>
               {item.note && <p className="text-sm text-muted-foreground">{item.note}</p>}
+              {item.managed && item.status === 'open' && (
+                <p className="text-sm text-muted-foreground">
+                  تُغلق هذه المهمة تلقائياً عند إنجاز العمل المطلوب في السجل.
+                </p>
+              )}
+              {item.closeReason && (
+                <p className="text-sm text-muted-foreground">سبب الإغلاق: {item.closeReason}</p>
+              )}
               <p className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                 <span>أسندها: {item.assignedByName ?? 'النظام'}</span>
                 <span>{formatDateTime(item.createdAt)}</span>
@@ -138,6 +147,11 @@ export default function MyTasks({ assignments, status }: Props) {
                 >
                   <XCircle size={15} />
                   إلغاء المهمة
+                </Button>
+              )}
+              {item.managed && item.status === 'open' && (
+                <Button size="sm" asChild>
+                  <Link href={`/resources/${item.resource}/${item.recordId}`}>فتح السجل</Link>
                 </Button>
               )}
               {item.workflowRunId && item.status === 'open' && (

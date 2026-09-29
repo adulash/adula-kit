@@ -168,7 +168,7 @@ export function ResourceForm({
       setFailure({ message: 'راجع الحقول المحددة ثم أعد المحاولة.', conflict: false })
       return
     }
-    if (editor.scoped) payload.orgUnitId = Number(unit)
+    if (editor.scoped && !editor.scopeFrom) payload.orgUnitId = Number(unit)
     if (editor.record?.version !== undefined && editor.record.version !== null)
       payload.version = editor.record.version
     setBusy(true)
@@ -226,7 +226,7 @@ export function ResourceForm({
           </p>
         </div>
         <div className="grid gap-6 p-7 md:grid-cols-2">
-          {editor.scoped && (
+          {editor.scoped && !editor.scopeFrom && (
             <div className="min-w-0 space-y-2">
               <Label htmlFor="orgUnitId" className="flex items-center gap-2 text-sm font-medium">
                 الوحدة التنظيمية

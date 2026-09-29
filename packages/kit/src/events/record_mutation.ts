@@ -18,6 +18,10 @@ export async function recordMutation(
     fields: string[]
     /** Before/after values of the changed fields; read back per viewer's field access. */
     changes?: FieldChange[]
+    /** Written by module code through ResourceService.systemSave, not by a user's edit. */
+    system?: boolean
+    /** Why module code made the change; shown with the activity entry. */
+    reason?: string
   }
 ) {
   const past: Record<string, string> = {
@@ -46,6 +50,8 @@ export async function recordMutation(
       changes: JSON.stringify({
         fields: mutation.fields,
         ...(mutation.impersonatorId ? { impersonatedBy: mutation.impersonatorId } : {}),
+        ...(mutation.system ? { system: true } : {}),
+        ...(mutation.reason ? { reason: mutation.reason } : {}),
       }),
     })
     .returning('id')

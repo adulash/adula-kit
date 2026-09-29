@@ -129,6 +129,16 @@ export const resourceFixtures: Record<string, ResourceFixture> = {
       stored: { scan: scan.id },
     }
   },
+  order_deliveries: async (context) => {
+    const order = await parentOrder(context)
+    const values = { orderId: order.id, recipient: `مستلم ${context.unique}` }
+    return {
+      input: values,
+      expected: values,
+      update: { ...values, recipient: `مستلم محدث ${context.unique}` },
+      updated: { ...values, recipient: `مستلم محدث ${context.unique}` },
+    }
+  },
   tasks: async (context) => {
     const order = await parentOrder(context)
     const values = { title: `مهمة ${context.unique}`, orderId: order.id, done: false }

@@ -29,6 +29,7 @@ export const FIELD_OPTIONS = [
 ]
 export const RESOURCE_OPTIONS = [
   'scoped (required)',
+  'scope.from (the unit follows a required belongsTo parent)',
   'submittable (docStatus, submit/cancel/amend-by-copy)',
   'version (optimistic locking, default with submittable)',
   'customFields',
@@ -94,6 +95,8 @@ export const SERVICES: Record<string, string[]> = {
 }
 export const EXTENSION_POINTS = [
   'Resource hooks (beforeSave, afterSave) inside the save transaction',
+  'ResourceService.systemSave for module-decided writes (validator, hooks and audit, no role rules); ResourceService.rehome after a parent moves',
+  'Managed assignments (Assignments.create with managed: true) closed by module code with Assignments.close',
   'Page override: inertia/pages/<resource>/{index,form,show}.tsx replaces the generated page',
   'Domain events <module>.<resource>.{created,updated,deleted,submitted,cancelled,amended} with idempotent listeners',
   'Module workflows (Module.workflows) with versioned definitions',

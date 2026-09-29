@@ -25,6 +25,10 @@ export type Assignment = {
   completedAt: string | null
   /** Set for approval steps; completion goes through the workflow engine instead. */
   workflowRunId: string | null
+  /** Opened and closed by module code with the record's state; never completed by hand. */
+  managed: boolean
+  /** Why module code closed a managed task. */
+  closeReason: string | null
   canComplete: boolean
   canCancel: boolean
 }
@@ -32,6 +36,7 @@ export type AssignmentPage = { data: Assignment[]; nextCursor: string | null; op
 
 const TITLE_LIMIT = 200
 const NOTE_LIMIT = 2000
+const REASON_LIMIT = 500
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 
 function dateOnly(value: unknown) {
@@ -122,6 +127,11 @@ export class Assignments {
       kind?: string
       workflowRunId?: string
       workflowStep?: string
+      /**
+       * The task represents open work on the record, such as a ticket to resolve. The
+       * assignee cannot mark it done; module code closes it with close() (#51).
+       */
+      managed?: boolean
     }
   ) {
     const insert = async (trx: Knex) => {
@@ -137,6 +147,7 @@ export class Assignments {
           due_on: input.dueOn ?? null,
           workflow_run_id: input.workflowRunId ?? null,
           workflow_step: input.workflowStep ?? null,
+          managed: input.managed ?? false,
         })
         .returning('id')
       await notifyWithTemplate(
@@ -215,6 +226,8 @@ export class Assignments {
         throw new KitError(404, 'E_ASSIGNMENT_NOT_FOUND', 'المهمة غير موجودة')
       if (row.workflow_run_id)
         throw new KitError(409, 'E_ASSIGNMENT_WORKFLOW', 'تُحسم خطوات الموافقة من صندوق الموافقات')
+      if (row.managed)
+        throw new KitError(409, 'E_ASSIGNMENT_MANAGED', 'تُغلق هذه المهمة تلقائياً عند إنجاز السجل')
       if (outcome === 'done' && row.assignee_id !== actor.id)
         throw new KitError(403, 'E_FORBIDDEN', 'يُنجز المهمة المكلف بها فقط')
       if (outcome === 'cancelled' && row.assigned_by !== actor.id)
@@ -233,6 +246,71 @@ export class Assignments {
           { title: row.title, resource: this.label(row.resource), id: row.record_id }
         )
     })
+  }
+
+  /**
+   * Closes the open managed tasks of a record when module code decides that its work is
+   * finished (or no longer needed), for example from a listener on the record's final
+   * state. Recorded in the record's activity log with the reason; the assigner (done) or
+   * the assignee (cancelled) is notified as for a manual close. Returns the closed count.
+   */
+  async close(
+    resource: string,
+    recordId: number,
+    options: {
+      /** The user recorded as closing the tasks, usually the author of the final change. */
+      actorId: number
+      outcome?: 'done' | 'cancelled'
+      reason?: string
+      trx?: Knex.Transaction
+    }
+  ): Promise<number> {
+    const outcome = options.outcome ?? 'done'
+    if (outcome !== 'done' && outcome !== 'cancelled')
+      throw new KitError(422, 'E_ASSIGNMENT_OUTCOME', 'Unsupported assignment outcome')
+    if (!Number.isSafeInteger(options.actorId) || options.actorId <= 0)
+      throw new KitError(422, 'E_ACTOR', 'Closing tasks requires the author user id')
+    const reason = options.reason?.trim() || null
+    if (reason && reason.length > REASON_LIMIT)
+      throw new KitError(422, 'E_ASSIGNMENT_REASON', 'سبب الإغلاق لا يتجاوز 500 حرف')
+    const run = async (trx: Knex.Transaction) => {
+      const rows = await trx('assignments')
+        .where({ resource, record_id: recordId, status: 'open', managed: true })
+        .whereNull('workflow_run_id')
+        .forUpdate()
+        .orderBy('id')
+      for (const row of rows) {
+        await trx('assignments').where('id', row.id).update({
+          status: outcome,
+          completed_at: trx.fn.now(),
+          completed_by: options.actorId,
+          close_reason: reason,
+        })
+        await trx('activities').insert({
+          resource,
+          record_id: recordId,
+          actor_id: options.actorId,
+          action: 'assignment_closed',
+          changes: JSON.stringify({
+            fields: [],
+            system: true,
+            assignmentId: Number(row.id),
+            outcome,
+            ...(reason ? { reason } : {}),
+          }),
+        })
+        const notify = outcome === 'done' ? row.assigned_by : row.assignee_id
+        if (notify && notify !== options.actorId)
+          await notifyWithTemplate(
+            trx,
+            notify,
+            outcome === 'done' ? 'assignment.done' : 'assignment.cancelled',
+            { title: row.title, resource: this.label(row.resource), id: row.record_id }
+          )
+      }
+      return rows.length
+    }
+    return options.trx ? run(options.trx) : this.db.transaction(run)
   }
 
   private query(db: Knex = this.db) {
@@ -262,8 +340,12 @@ export class Assignments {
       createdAt: new Date(row.created_at).toISOString(),
       completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
       workflowRunId: row.workflow_run_id ? String(row.workflow_run_id) : null,
-      canComplete: open && !row.workflow_run_id && Number(row.assignee_id) === actor.id,
-      canCancel: open && !row.workflow_run_id && Number(row.assigned_by) === actor.id,
+      managed: Boolean(row.managed),
+      closeReason: row.close_reason ? String(row.close_reason) : null,
+      canComplete:
+        open && !row.workflow_run_id && !row.managed && Number(row.assignee_id) === actor.id,
+      canCancel:
+        open && !row.workflow_run_id && !row.managed && Number(row.assigned_by) === actor.id,
     }
   }
 

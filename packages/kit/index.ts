@@ -33,6 +33,7 @@ export {
   createWebhooksSchema,
   createImportsSchema,
   createWorkflowSchema,
+  createManagedAssignmentsSchema,
 } from './src/database/schema.js'
 export { defineWorkflow, nextStep } from './src/workflows/define_workflow.js'
 export type {

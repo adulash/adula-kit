@@ -103,14 +103,14 @@ function schemas(resource: Resource, registry: ResourceRegistry) {
           ),
         ])
       ),
-      ...(resource.scoped ? { orgUnitId: { type: 'integer' } } : {}),
+      ...(resource.scoped && !resource.scope ? { orgUnitId: { type: 'integer' } } : {}),
       ...(resource.version
         ? { version: { type: 'integer', description: 'Required on update (optimistic locking)' } }
         : {}),
     },
     required: [
       ...writable.filter((key) => resource.fields[key].required),
-      ...(resource.scoped ? ['orgUnitId'] : []),
+      ...(resource.scoped && !resource.scope ? ['orgUnitId'] : []),
     ],
   }
   return { read, input }

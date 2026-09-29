@@ -100,11 +100,25 @@ export function serialize(
 export function writableInput(resource: Resource, input: RecordData) {
   const allowed = new Set([
     ...resource.form,
-    ...(resource.scoped ? ['orgUnitId'] : []),
+    ...(resource.scoped && !resource.scope ? ['orgUnitId'] : []),
     ...(resource.version ? ['version'] : []),
   ])
   for (const key of Object.keys(input))
     if (!allowed.has(key))
       throw new KitError(422, 'E_FIELD_NOT_WRITABLE', `Field is not writable: ${key}`)
   return Object.fromEntries(Object.entries(input).filter(([key]) => resource.form.includes(key)))
+}
+
+/**
+ * Values module code may write through ResourceService.systemSave: every stored field
+ * except sequences and inline children, plus the organization unit when it is not inherited.
+ */
+export function systemInput(resource: Resource, input: RecordData) {
+  for (const key of Object.keys(input)) {
+    const field = resource.fields[key]
+    const unit = key === 'orgUnitId' && resource.scoped && !resource.scope
+    if (!unit && (!field || field.type === 'hasMany' || field.sequence))
+      throw new KitError(422, 'E_FIELD_NOT_WRITABLE', `Field is not writable: ${key}`)
+  }
+  return Object.fromEntries(Object.entries(input).filter(([key]) => key in resource.fields))
 }
