@@ -12,6 +12,9 @@ import {
   registerUpload,
   releaseAttachment,
   findAttachment,
+  grantUpload,
+  redeemUploadGrant,
+  pruneUploadGrants,
 } from '../index.js'
 import type { Actor, RecordData, StorageDisk, UploadInput } from '../index.js'
 import { admin, customer, db, setup } from './helpers.js'
@@ -271,6 +274,131 @@ test.group('Attachment ownership and hydration', (group) => {
       orgUnitId: 3,
     })
     assert.equal(await stored(otherUnit.id, 'record_id'), Number(scoped.id))
+  })
+
+  test('an upload grant lets one user upload for one record field, and only for that record', async ({
+    assert,
+  }) => {
+    // The inspector (user 2) holds no rule on documents; module code authorized them itself.
+    const inspector: Actor = { id: 2, orgPaths: ['1.2'], permissionLevel: 0, rules: [] }
+    const visit = await service.save('documents', admin, { title: 'زيارة', orgUnitId: 2 })
+    const other = await service.save('documents', admin, { title: 'زيارة أخرى', orgUnitId: 2 })
+    const refused = async (run: () => Promise<unknown>, pattern: RegExp) =>
+      assert.rejects(run, pattern)
+
+    await refused(
+      () =>
+        grantUpload(db, registry, {
+          resource: 'documents',
+          recordId: visit.id as number,
+          field: 'title',
+          userId: inspector.id,
+        }),
+      /مرفقات/
+    )
+    await refused(
+      () =>
+        grantUpload(db, registry, {
+          resource: 'documents',
+          recordId: 999999,
+          field: 'file',
+          userId: inspector.id,
+        }),
+      /السجل غير موجود/
+    )
+    await refused(
+      () =>
+        grantUpload(db, registry, {
+          resource: 'documents',
+          recordId: visit.id as number,
+          field: 'file',
+          userId: inspector.id,
+          ttlMs: 2 * 60 * 60 * 1000,
+        }),
+      /1 hour/
+    )
+
+    const grant = await grantUpload(db, registry, {
+      resource: 'documents',
+      recordId: visit.id as number,
+      field: 'file',
+      userId: inspector.id,
+      actorId: admin.id,
+    })
+    assert.match(grant.token, /^[A-Za-z0-9_-]{43}$/)
+    const storedGrant = await db('upload_grants').orderBy('id', 'desc').first()
+    assert.notEqual(storedGrant.token_hash, grant.token, 'only the token hash is stored')
+    const issued = await db('activities')
+      .where({ resource: 'documents', record_id: visit.id, action: 'upload_granted' })
+      .first()
+    assert.deepInclude(issued.changes, { field: 'file', userId: inspector.id })
+    assert.equal(Number(issued.actor_id), admin.id)
+
+    // Another user, a malformed token and an expired grant redeem to nothing.
+    assert.isNull(await redeemUploadGrant(db, grant.token, admin.id))
+    assert.isNull(await redeemUploadGrant(db, 'x'.repeat(43), inspector.id))
+    assert.isNull(await redeemUploadGrant(db, { token: grant.token }, inspector.id))
+    const redeemed = await redeemUploadGrant(db, grant.token, inspector.id)
+    assert.deepEqual(redeemed, {
+      id: Number(storedGrant.id),
+      resource: 'documents',
+      recordId: visit.id as number,
+      field: 'file',
+      orgUnitId: 2,
+    })
+
+    // The grant must match the upload's resource and field; the unit comes from the record.
+    await refused(
+      () => upload(inspector.id, { field: 'privateFile', grant: redeemed! }),
+      /another field/
+    )
+    const evidence = await upload(inspector.id, { orgUnitId: 3, grant: redeemed! })
+    assert.equal(evidence.orgUnitId, 2)
+    assert.deepInclude(evidence.data, { uploadGrant: { id: redeemed!.id, recordId: visit.id } })
+    const logged = await db('activities')
+      .where({ resource: 'documents', record_id: visit.id, action: 'upload_via_grant' })
+      .first()
+    assert.deepInclude(logged.changes, { attachmentId: evidence.id, field: 'file' })
+
+    // A plain upload cannot pretend to be granted.
+    const forged = await upload(inspector.id, {
+      data: { uploadGrant: { id: 1, recordId: visit.id } },
+    })
+    assert.notProperty(forged.data, 'uploadGrant')
+
+    // The granted upload binds to the granted record only, never to another or a new one.
+    await refused(
+      () =>
+        service.systemSave('documents', { file: evidence.id }, other.id as number, {
+          actorId: inspector.id,
+          reason: 'evidence',
+        }),
+      /لسجل آخر/
+    )
+    await refused(
+      () =>
+        service.systemSave(
+          'documents',
+          { title: 'جديد', file: evidence.id, orgUnitId: 2 },
+          undefined,
+          {
+            actorId: inspector.id,
+            reason: 'evidence',
+          }
+        ),
+      /لسجل آخر/
+    )
+    await service.systemSave('documents', { file: evidence.id }, visit.id as number, {
+      actorId: inspector.id,
+      reason: 'inspection evidence',
+    })
+    assert.equal(await stored(evidence.id, 'record_id'), visit.id)
+
+    // Grants expire and are pruned.
+    await db('upload_grants').update({ expires_at: db.raw("now() - interval '1 second'") })
+    assert.isNull(await redeemUploadGrant(db, grant.token, inspector.id))
+    assert.isAtLeast(Number(await pruneUploadGrants(db)), 1)
+    assert.lengthOf(await db('upload_grants'), 0)
   })
 
   test('replacing and clearing release the previous upload while keeping its metadata', async ({

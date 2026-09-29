@@ -212,6 +212,10 @@
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>) => Promise<void>"
     },
+    "createUploadGrantsSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
     "createWebhooksSchema": {
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>) => Promise<void>"
@@ -287,6 +291,10 @@
     "forgetUpload": {
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>, id: number) => Promise<boolean>"
+    },
+    "grantUpload": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, registry: Pick<ResourceRegistry, \"all\" | \"get\">, input: UploadGrantInput) => Promise<UploadGrant>"
     },
     "heartbeat": {
       "kind": "FunctionDeclaration",
@@ -520,6 +528,10 @@
       "kind": "VariableDeclaration",
       "type": "string[]"
     },
+    "pruneUploadGrants": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<number>"
+    },
     "publishOutbox": {
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>, jobs: Jobs, limit?: number | undefined) => Promise<number>"
@@ -555,6 +567,14 @@
     "RecordPermissions": {
       "kind": "TypeAliasDeclaration",
       "type": "{ view?: boolean | undefined; create?: boolean | undefined; update?: boolean | undefined; delete?: boolean | undefined; submit?: boolean | undefined; cancel?: boolean | undefined; amend?: boolean | undefined; }"
+    },
+    "RedeemedUploadGrant": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ id: number; resource: string; recordId: number; field: string; orgUnitId: number | null; }"
+    },
+    "redeemUploadGrant": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, token: unknown, userId: number) => Promise<RedeemedUploadGrant | null>"
     },
     "registerUpload": {
       "kind": "FunctionDeclaration",
@@ -784,9 +804,21 @@
       "kind": "VariableDeclaration",
       "type": "number"
     },
+    "UPLOAD_GRANT_MAX_TTL_MS": {
+      "kind": "VariableDeclaration",
+      "type": "number"
+    },
+    "UploadGrant": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ token: string; expiresAt: string; }"
+    },
+    "UploadGrantInput": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ resource: string; recordId: number; field: string; userId: number; actorId?: number | undefined; ttlMs?: number | undefined; }"
+    },
     "UploadInput": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ disk: string; path: string; name: string; originalName: string; size: number; mimeType: string; extname: string; data: Record<string, unknown>; uploadedBy: number; orgUnitId?: number | null | undefined; resource?: string | null | undefined; field?: string | null | undefined; }"
+      "type": "{ disk: string; path: string; name: string; originalName: string; size: number; mimeType: string; extname: string; data: Record<string, unknown>; uploadedBy: number; orgUnitId?: number | null | undefined; resource?: string | null | undefined; field?: string | null | undefined; grant?: { id: number; resource: string; recordId: number; field: string; orgUnitId: number | null; } | null | undefined; }"
     },
     "UserInvitations": {
       "kind": "ClassDeclaration",

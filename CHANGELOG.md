@@ -56,6 +56,16 @@ Minor release: additive APIs and one additive kit migration
   unresolved and the rule is refused. Hosts that build actors themselves call
   `resolveActorConditions` (#29).
 
+* Attachments: `grantUpload()` lets module code allow one user to upload to one
+  attachment field of one record without a role rule, for ten minutes by default and
+  one hour at most (additive migration `1770000000014_kit_upload_grants`; only the token
+  hash is stored). The starter upload endpoint accepts the token as `grant` and takes
+  the grant's resource, field and unit; type, size and the pending-upload limit still
+  apply. The upload binds to the granted record only, through the module's own write.
+  Issuing and using a grant are recorded in the record's activity log. `UploadInput`
+  gains the optional `grant`. See ADR 033 (#43). Projects with a copied
+  `attachments_controller.ts` need the updated controller to use grants.
+
 ## 1.0.1 — unreleased
 
 Patch release: fixes reported against 1.0.0, with no public API or schema change.

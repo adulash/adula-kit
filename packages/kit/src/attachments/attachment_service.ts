@@ -2,6 +2,7 @@ import type { Knex } from 'knex'
 import { KitError } from '../admin/errors.js'
 import { identifier } from '../resource/define_resource.js'
 import type { Field, JsonValue } from '../resource/types.js'
+import { logActivity } from '../core/activity.js'
 
 export type AttachmentSummary = {
   id: number
@@ -41,6 +42,18 @@ export type UploadInput = {
   orgUnitId?: number | null
   resource?: string | null
   field?: string | null
+  /**
+   * The redeemed upload grant that authorized this upload instead of a role rule. The upload
+   * takes the grant's resource, field and unit, can bind to the granted record only, and is
+   * recorded in that record's activity log.
+   */
+  grant?: {
+    id: number
+    resource: string
+    recordId: number
+    field: string
+    orgUnitId: number | null
+  } | null
 }
 export type ClaimInput = {
   attachmentId: number
@@ -222,6 +235,19 @@ export async function registerUpload(db: Knex, input: UploadInput): Promise<Atta
       throw new KitError(422, 'E_ATTACHMENT_INPUT', `Invalid ${key}`)
   }
   if (input.resource) identifier(input.resource)
+  const grant = input.grant
+  if (
+    grant &&
+    (!isAttachmentId(grant.id) ||
+      !isAttachmentId(grant.recordId) ||
+      grant.resource !== input.resource ||
+      grant.field !== input.field)
+  )
+    throw new KitError(422, 'E_ATTACHMENT_INPUT', 'The upload grant names another field')
+  // Only a redeemed grant may mark an upload as granted.
+  const data: Record<string, unknown> = { ...input.data }
+  delete data.uploadGrant
+  if (grant) data.uploadGrant = { id: grant.id, recordId: grant.recordId }
   const [row] = await db('attachments')
     .insert({
       disk: input.disk,
@@ -231,13 +257,21 @@ export async function registerUpload(db: Knex, input: UploadInput): Promise<Atta
       size: input.size,
       mime_type: input.mimeType || 'application/octet-stream',
       extname: input.extname,
-      data: JSON.stringify(input.data),
+      data: JSON.stringify(data),
       uploaded_by: input.uploadedBy,
-      org_unit_id: input.orgUnitId ?? null,
+      org_unit_id: grant ? grant.orgUnitId : (input.orgUnitId ?? null),
       resource: input.resource ?? null,
       field: input.field ?? null,
     })
     .returning('*')
+  if (grant)
+    await logActivity(db, {
+      resource: grant.resource,
+      recordId: grant.recordId,
+      actorId: input.uploadedBy,
+      action: 'upload_via_grant',
+      changes: { field: grant.field, attachmentId: Number(row.id), grantId: grant.id },
+    })
   return fromRow(row)
 }
 
@@ -275,6 +309,13 @@ export async function claimAttachment(trx: Knex.Transaction, input: ClaimInput) 
     (row.field !== null && row.field !== input.field)
   )
     throw new KitError(422, 'E_ATTACHMENT', 'المرفق مخصص لحقل آخر')
+  // An upload authorized by a grant binds to the granted record only, never to a new one.
+  const granted = (row.data as { uploadGrant?: { recordId?: unknown } } | null)?.uploadGrant
+  if (
+    granted &&
+    (input.recordId === undefined || Number(granted.recordId) !== Number(input.recordId))
+  )
+    throw new KitError(422, 'E_ATTACHMENT', 'المرفق مخصص لسجل آخر')
   const bound = row.record_id !== null
   const sameRecord =
     bound &&
