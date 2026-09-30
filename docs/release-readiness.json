@@ -143,13 +143,13 @@
   "releases": [
     {
       "version": "1.2.0",
-      "authorized": false,
-      "reviewedBy": "",
-      "reviewedAt": "",
+      "authorized": true,
+      "reviewedBy": "repository owner (conversation)",
+      "reviewedAt": "2026-09-30",
       "evidence": [
         "docs/evidence/release-1-2-0-2026-09-30.json"
       ],
-      "remaining": "Awaiting the owner's explicit authorization to publish 1.2.0 on latest (ADR 038). Includes the unpublished 1.0.1 and 1.1.0 changes."
+      "remaining": "Authorized by the owner on 2026-09-30 (ADR 038): «أأذن بنشر 1.2.0 على latest». Publication path: v1.2.0 tag on the merge commit, then Release npm packages on latest."
     }
   ]
 }
