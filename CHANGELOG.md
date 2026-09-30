@@ -63,6 +63,14 @@ Minor release: additive APIs and one additive kit migration
   a role no longer detaches its workflows, and the `workflows.roles` doctor check warns
   about references that match only a display name. The starter role screens show and
   set the key (#25). Projects with copied `admin/roles` pages need the updated pages.
+* Notifications: an optional `{ resource, recordId }` target (additive migration
+  `1770000000013_kit_notification_targets`). `notify()` and `notifyWithTemplate()`
+  accept it, and the kit's collaboration, assignment and workflow notifications pass
+  it. `NotificationsAdmin` returns the target with its link only while the resource is
+  registered, and `open()` marks the notification read and returns the link; the
+  record page authorizes the reader. Notification e-mail receives the target so the
+  host can append an absolute link (#38). `Notification` gains the nullable `target`,
+  so code that builds it needs the member; the new parameters are optional.
 
 ## 1.0.1 — unreleased
 

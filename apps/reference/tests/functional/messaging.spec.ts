@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
 import transmit from '@adonisjs/transmit/services/main'
-import { notifyWithTemplate } from '@adula/kit'
+import { notify, notifyWithTemplate } from '@adula/kit'
 import { seedActor, type UiActor } from '#tests/helpers/ui_fixtures'
 
 const json = { Accept: 'application/json' }
@@ -89,6 +89,54 @@ test.group('Message templates and realtime notifications', (group) => {
     } finally {
       stop()
     }
+  })
+
+  test('a notification about a record opens it, marked read; the record page authorizes', async ({
+    client,
+    assert,
+  }) => {
+    const [customer] = await knex()('customers')
+      .insert({
+        name: `عميل الإشعار ${Date.now()}`,
+        created_by: admin.user.id,
+        updated_by: admin.user.id,
+      })
+      .returning('id')
+    await notify(knex(), member.user.id, 'عميل جديد', 'افتحه', {
+      resource: 'customers',
+      recordId: Number(customer.id),
+    })
+    await notify(knex(), member.user.id, 'بلا سجل', 'نص')
+    const list = await client.get('/notifications').loginAs(member.user).headers(json)
+    list.assertStatus(200)
+    const rows = list.body().data as {
+      id: number
+      title: string
+      target: { href: string } | null
+    }[]
+    const linked = rows.find((row) => row.title === 'عميل جديد')!
+    const plain = rows.find((row) => row.title === 'بلا سجل')!
+    assert.equal(linked.target?.href, `/resources/customers/${customer.id}`)
+    assert.isNull(plain.target)
+    const opened = await client
+      .get(`/notifications/${linked.id}/open`)
+      .loginAs(member.user)
+      .redirects(0)
+    opened.assertStatus(302)
+    assert.equal(opened.header('location'), `/resources/customers/${customer.id}`)
+    const read = await knex()('notifications').where('id', linked.id).first('read_at')
+    assert.isNotNull(read.read_at)
+    const fallback = await client
+      .get(`/notifications/${plain.id}/open`)
+      .loginAs(member.user)
+      .redirects(0)
+    assert.equal(fallback.header('location'), '/notifications')
+    // Another user's notification is not found, and never marked read.
+    const foreign = await client
+      .get(`/notifications/${plain.id}/open`)
+      .loginAs(admin.user)
+      .redirects(0)
+    foreign.assertStatus(404)
   })
 
   test('only signed-in clients reach the subscription endpoint', async ({ client, assert }) => {

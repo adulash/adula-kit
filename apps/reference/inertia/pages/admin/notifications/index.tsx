@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactElement } from 'react'
 import { Head, router } from '@inertiajs/react'
+import { Link } from '@adonisjs/inertia/react'
 import axios from 'axios'
 import { BellOff, CheckCheck } from 'lucide-react'
 import type { NotificationPage } from '@adula/kit'
@@ -62,7 +63,17 @@ export default function NotificationsIndex({ notifications }: Props) {
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-2 font-semibold">
                 {!item.readAt && <span className="size-2 rounded-full bg-primary" />}
-                {item.title}
+                {item.target ? (
+                  // Opening marks it read; the record page decides whether the reader may see it.
+                  <Link
+                    href={`/notifications/${item.id}/open`}
+                    className="underline-offset-4 hover:text-primary hover:underline"
+                  >
+                    {item.title}
+                  </Link>
+                ) : (
+                  item.title
+                )}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>
               <p className="mt-2 text-xs text-muted-foreground">{formatDateTime(item.createdAt)}</p>
