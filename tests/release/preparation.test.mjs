@@ -10,10 +10,16 @@ import { requireSyntheticRehearsal, upgradeMode } from '../../scripts/upgrade-mo
 
 test('release report exposes every phase and only the accepted stable channel passes', async () => {
   const report = await releaseStatus()
-  // 1.0.0 is accepted (ADR 028): a stable version is never an alpha or next prerelease.
+  const readiness = JSON.parse(await readFile(new URL('../../docs/release-readiness.json', import.meta.url), 'utf8'))
+  // 1.0.0 is accepted (ADR 028); a later 1.x passes latest only once the owner authorizes
+  // that exact version (ADR 038). A stable version is never an alpha or next prerelease.
+  const authorized =
+    readiness.version === readiness.target ||
+    readiness.releases?.find((entry) => entry.version === readiness.version)?.authorized === true
   assert.equal(report.channels.alpha.guardPassed, false)
   assert.equal(report.channels.next.guardPassed, false)
-  assert.equal(report.channels.latest.guardPassed, true)
+  assert.equal(report.channels.latest.guardPassed, authorized)
+  if (!authorized) assert.match(report.channels.latest.reason, /owner authorization/)
   assert.equal(report.phases.length, 8)
   assert.deepEqual(report.phases[1].requiredFor, ['next', 'latest'])
   assert.deepEqual(report.phases[2].requiredFor, ['latest'])

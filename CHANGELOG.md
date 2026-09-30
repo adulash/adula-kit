@@ -2,7 +2,11 @@
 
 ## 1.2.0 — unreleased
 
-Minor release: workspace and realtime changes decided in ADR 034 and later.
+Minor release: workspace and realtime changes decided in ADR 034 and later. 1.0.1
+and 1.1.0 were not published separately; their changes below ship in 1.2.0, so
+upgrading from 1.0.0 applies all three sections and the additive kit migrations 011 to
+015. Stable publication after 1.0.0 needs the owner's authorization of the exact
+version (ADR 038).
 
 * Realtime: the tabs of one browser share one notification stream (#36). Visible tabs
   elect a leader with a Web Lock; the leader holds the stream and relays each signal to
@@ -40,7 +44,7 @@ Minor release: workspace and realtime changes decided in ADR 034 and later.
   `1770000000015_kit_inbound_webhooks`. See ADR 037. Projects need the starter's route
   with both limiters, controller, scheduler entry and shield exception.
 
-## 1.1.0 — unreleased
+## 1.1.0 — not published separately; included in 1.2.0
 
 Minor release: additive APIs and additive kit migrations
 (`1770000000011_kit_managed_assignments`, `1770000000012_kit_role_keys`,
@@ -157,7 +161,7 @@ Minor release: additive APIs and additive kit migrations
   kit change, Reproduction, Acceptance, Workaround, Issue). Managed AGENTS rule 17 says
   so; run `adula:install` to refresh it.
 
-## 1.0.1 — unreleased
+## 1.0.1 — not published separately; included in 1.2.0
 
 Patch release: fixes reported against 1.0.0, with no public API or schema change.
 Copied UI files changed; review them with `node ace adula:ui add all --preview`.

@@ -105,11 +105,15 @@ async function columnsOf(url, table) {
   )
   return rows.map((row) => row.column_name)
 }
-// The synthetic baseline withholds saved_views; published baselines predate the phase 3 tables.
-const deliveredTable = genuine ? 'comments' : 'saved_views'
-const deliveredColumns = genuine
-  ? ['author_id', 'body', 'id', 'record_id', 'resource']
-  : ['id', 'name', 'query', 'resource', 'shared', 'user_id']
+// The synthetic baseline withholds saved_views. Published alpha baselines predate the
+// phase 3 tables; published 1.x baselines predate the 1.2 inbound webhook tables (015).
+const stableBaseline = genuine && !previous.includes('-')
+const deliveredTable = !genuine ? 'saved_views' : stableBaseline ? 'inbound_sources' : 'comments'
+const deliveredColumns = !genuine
+  ? ['id', 'name', 'query', 'resource', 'shared', 'user_id']
+  : stableBaseline
+    ? ['active', 'dedupe_body', 'id', 'key', 'name', 'secret']
+    : ['author_id', 'body', 'id', 'record_id', 'resource']
 
 const released = JSON.parse(await readFile(join(repo, 'packages/kit/package.json'), 'utf8')).version
 assert.notEqual(previous, released, 'The upgrade test needs two different versions')
