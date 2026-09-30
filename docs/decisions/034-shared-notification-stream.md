@@ -1,6 +1,6 @@
 # ADR 034 — One notification stream per browser (1.2.0)
 
-Date: 2026-09-29. Status: proposed; awaiting the owner's review in the pull request.
+Date: 2026-09-29. Status: accepted by the owner on 2026-09-30.
 
 Issue #36. Each tab held its own Transmit (SSE) stream. Over HTTP/1.1 a browser keeps at
 most six connections to one host, so the seventh tab hung. 1.0.1 released the stream of a

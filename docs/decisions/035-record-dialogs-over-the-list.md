@@ -1,6 +1,6 @@
 # ADR 035 — Record dialogs over the mounted list (1.2.0)
 
-Date: 2026-09-29. Status: proposed; awaiting the owner's review in the pull request.
+Date: 2026-09-29. Status: accepted by the owner on 2026-09-30.
 
 Issue #31. Records open in a shadcn Dialog (AGENTS rule), but the dialog was a separate
 Inertia page: opening a record replaced the list, and closing it returned to a freshly
