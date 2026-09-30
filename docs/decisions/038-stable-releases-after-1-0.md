@@ -1,7 +1,8 @@
 # ADR 038 — Stable releases after 1.0.0, and release 1.2.0
 
-Date: 2026-09-30. Status: accepted by the owner on 2026-09-30 for the release gate; the
-publication of 1.2.0 awaits the owner's separate authorization.
+Date: 2026-09-30. Status: accepted by the owner on 2026-09-30. The owner authorized
+publishing 1.2.0 on `latest` the same day: «أأذن بنشر 1.2.0 على latest» (I authorize
+publishing 1.2.0 on latest).
 
 ## Context
 
