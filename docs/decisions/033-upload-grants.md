@@ -1,6 +1,6 @@
 # ADR 033 — Upload grants for one record field (1.1.0)
 
-Date: 2026-09-29. Status: proposed; awaiting the owner's review in the pull request.
+Date: 2026-09-29. Status: accepted by the owner on 2026-09-30.
 
 Issue #43. `POST /attachments` accepts a file only when the actor's role may create or
 update the whole resource and the field. Some flows are authorized by module code for one

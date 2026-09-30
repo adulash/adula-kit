@@ -13,10 +13,10 @@ Minor release: workspace and realtime changes decided in ADR 034 and later.
 * Workspace: one "My tasks" page for tasks and approvals (#35), with tabs for all open
   items, items waiting for my decision, assigned tasks and closed items. Approval and
   decision steps are decided in place; `/approvals` redirects there and keeps its JSON
-  inbox. `Assignments.mine()` takes `kind`, and `Assignment.canDecide` and
+  inbox. `Assignments.mine()` takes `kind`, and the optional `Assignment.canDecide` and
   `AssignmentPage.approvals` are new.
 * Workspace: the sidebar puts daily work first, then collapsible module groups
-  (`ResourceNavigation.moduleLabel`), and one administration entry with a failure badge;
+  (optional `ResourceNavigation.moduleLabel`), and one administration entry with a failure badge;
   links follow permissions (#34). See ADR 036. Projects with the starter's workspace
   layout, `admin-nav`, My tasks page or assignments/workflows controllers need the
   updated files; `pages/work/approvals.tsx` is removed.

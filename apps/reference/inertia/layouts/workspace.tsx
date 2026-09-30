@@ -74,7 +74,7 @@ export default function Workspace({ children }: { children: ReactNode }) {
         entry.module,
         {
           module: entry.module,
-          label: entry.moduleLabel,
+          label: entry.moduleLabel ?? entry.module,
           links: (page.props.navigation ?? []).filter((item) => item.module === entry.module),
         },
       ])

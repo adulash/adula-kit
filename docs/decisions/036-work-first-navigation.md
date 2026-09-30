@@ -1,6 +1,6 @@
 # ADR 036 — One "My tasks" page and a work-first sidebar (1.2.0)
 
-Date: 2026-09-29. Status: proposed; awaiting the owner's review in the pull request.
+Date: 2026-09-29. Status: accepted by the owner on 2026-09-30.
 
 Issues #35 and #34. An approval request appeared both in "My tasks" and in the approvals
 inbox, but could be decided only in the inbox. The sidebar listed kit links without
@@ -36,9 +36,10 @@ grouping and without checking permissions, and they crowded out the business mod
   list hides tasks on records the user can no longer read, so the two can differ in
   that rare case. Filtering the count per record on every page was not worth its cost.
 
-- `pnpm check:api` reports `Assignment`, `AssignmentPage` and `ResourceNavigation` as
-  changed: each gains a member (`canDecide`, `approvals`, `moduleLabel`). Code that builds
-  these objects itself needs the new member.
+- `Assignment.canDecide`, `AssignmentPage.approvals` and `ResourceNavigation.moduleLabel`
+  are optional members (owner's decision, 2026-09-30), so code that builds these objects
+  itself keeps compiling in a minor release. The kit always fills them; readers treat a
+  missing value as `false`, `0` or the module key.
 - Projects with the starter's `layouts/workspace.tsx`, `components/admin-nav.tsx`,
   `pages/work/my_tasks.tsx`, `assignments_controller.ts` or `workflows_controller.ts`
   need the updated files; `pages/work/approvals.tsx` is removed.
