@@ -12,7 +12,7 @@
 | Workflow | `release.yml` |
 | GitHub environment | `npm`; restricted to protected branches; `main` requires PR and CI |
 | Authentication | npm trusted publishing, GitHub-hosted runner, OIDC |
-| Current version / target | 1.0.0 accepted and authorized (ADR 028) |
+| Current version / target | 1.0.0 published (ADR 028); 1.2.0 prepared, awaiting the owner's authorization (ADR 038) |
 
 Trusted publishers were configured for **all three packages**: owner `adulash`, repository `adula-kit`, workflow `release.yml`, environment `npm`, with publishing permission. The first publication used [signed bootstrap archives](alpha-bootstrap.md) and an authenticated owner session. The workflow does not establish account setup or supply credentials.
 
@@ -33,7 +33,7 @@ pnpm check:release --artifacts=.work
 pnpm check:release --channel=latest
 ```
 
-The last command passes only when every phase in `release-readiness.json` is accepted with a reviewer, a date and evidence, as it is for 1.0.0 (ADR 028). Packaging checks validate versions, provenance metadata, licensing, skills/commands, exports, UI assets and absence of private/test files, then write `.work/SHA256SUMS`. They do not establish product stability.
+The last command passes only when every phase in `release-readiness.json` is accepted with a reviewer, a date and evidence, as it is for 1.0.0 (ADR 028). A later 1.x release on `latest` also needs its own entry in `releases` with `authorized: true`, the owner's name, a date and evidence for that exact version (ADR 038). Packaging checks validate versions, provenance metadata, licensing, skills/commands, exports, UI assets and absence of private/test files, then write `.work/SHA256SUMS`. They do not establish product stability.
 
 When acceptance justifies a candidate, update all three package versions, workspace/reference versions, agent/UI lock versions, changelog and `release-readiness.json`; rebuild and repeat both consumer tests. The creator pins matching kit/UI versions in its bundled template. Keep migrations additive. Previews use an explicit prerelease such as `1.0.0-rc.1` on `next`; stable uses `v1.0.0` on `latest`. These are future examples, not existing releases.
 

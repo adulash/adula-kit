@@ -61,8 +61,18 @@ export function validateReadiness(readiness, version, channel) {
     for (const path of preview.evidence) assert(/^docs\/evidence\/[a-zA-Z0-9_./-]+$/.test(path) && !path.includes('..'), `Invalid evidence path: ${path}`)
     return preview.evidence
   }
-  if (channel === 'latest') assert.equal(version, readiness.target, 'The stable track requires completed 1.0.0')
-  else assert.match(version, /^\d+\.\d+\.\d+-(?:next|alpha|beta|rc)\.\d+$/, 'next requires an explicit prerelease version')
+  // A stable release after 1.0.0 is a 1.x minor or patch release (ADR 038, owner-approved):
+  // the accepted 1.0 phases still apply, and the owner authorizes that exact version.
+  const later = channel === 'latest' && version !== readiness.target
+  if (later) {
+    assert.match(version, /^1\.\d+\.\d+$/, 'The stable track after 1.0.0 accepts 1.x releases only')
+    const release = (readiness.releases ?? []).find((entry) => entry.version === version)
+    assert(release, 'A stable release after 1.0.0 needs a record in releases')
+    assert.equal(release.authorized, true, 'A stable release after 1.0.0 requires explicit owner authorization')
+    assert(release.reviewedBy?.trim() && /^\d{4}-\d{2}-\d{2}$/.test(release.reviewedAt ?? ''), 'The release needs a dated owner decision')
+    assert(Array.isArray(release.evidence) && release.evidence.length, 'The release needs evidence')
+    for (const path of release.evidence) assert(/^docs\/evidence\/[a-zA-Z0-9_./-]+$/.test(path) && !path.includes('..'), `Invalid evidence path: ${path}`)
+  } else if (channel !== 'latest') assert.match(version, /^\d+\.\d+\.\d+-(?:next|alpha|beta|rc)\.\d+$/, 'next requires an explicit prerelease version')
   const required = channel === 'latest' ? readiness.phases : readiness.phases.filter((phase) => phase.id <= 1)
   for (const phase of required) {
     assert.equal(phase.status, 'accepted', `Phase ${phase.id} acceptance is incomplete`)
@@ -70,7 +80,8 @@ export function validateReadiness(readiness, version, channel) {
     assert(Array.isArray(phase.evidence) && phase.evidence.length, `Phase ${phase.id} needs evidence`)
     for (const path of phase.evidence) assert(/^docs\/evidence\/[a-zA-Z0-9_./-]+$/.test(path) && !path.includes('..'), `Invalid evidence path: ${path}`)
   }
-  return required.flatMap((phase) => phase.evidence)
+  const evidence = required.flatMap((phase) => phase.evidence)
+  return later ? [...evidence, ...readiness.releases.find((entry) => entry.version === version).evidence] : evidence
 }
 
 export async function checkRelease({ root = fileURLToPath(new URL('../', import.meta.url)), artifacts, channel } = {}) {

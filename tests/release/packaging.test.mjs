@@ -21,13 +21,38 @@ test('refuses private files and archives missing executable exports', () => {
 })
 
 test('the accepted 1.0.0 passes the stable guard and cannot be relabeled as a prerelease', () => {
-  assert.equal(kit.version, '1.0.0')
-  assert.ok(validateReadiness(readiness, kit.version, 'latest').length >= 8)
-  assert.throws(() => validateReadiness(readiness, kit.version, 'next'), /prerelease version/)
-  assert.throws(() => validateReadiness(readiness, kit.version, 'alpha'), /alpha version/)
-  const pending = structuredClone(readiness)
+  const stable = { ...structuredClone(readiness), version: '1.0.0' }
+  assert.ok(validateReadiness(stable, '1.0.0', 'latest').length >= 8)
+  assert.throws(() => validateReadiness(stable, '1.0.0', 'next'), /prerelease version/)
+  assert.throws(() => validateReadiness(stable, '1.0.0', 'alpha'), /alpha version/)
+  const pending = structuredClone(stable)
   pending.phases[7].status = 'pending'
-  assert.throws(() => validateReadiness(pending, kit.version, 'latest'), /incomplete/)
+  assert.throws(() => validateReadiness(pending, '1.0.0', 'latest'), /incomplete/)
+})
+
+test('the recorded package version has a release record', () => {
+  assert.equal(readiness.version, kit.version)
+  if (kit.version !== readiness.target)
+    assert.ok(readiness.releases.some((entry) => entry.version === kit.version))
+})
+
+test('a 1.x release after 1.0.0 needs the accepted phases and the owner authorizing that exact version', () => {
+  const release = (version, change = {}) => ({
+    ...accepted(),
+    version,
+    releases: [{ version, authorized: true, reviewedBy: 'test owner', reviewedAt: '2026-09-30', evidence: ['docs/evidence/release.json'], ...change }],
+  })
+  assert.equal(validateReadiness(release('1.2.0'), '1.2.0', 'latest').length, 9)
+  assert.throws(() => validateReadiness(release('1.2.0', { authorized: false }), '1.2.0', 'latest'), /owner authorization/)
+  assert.throws(() => validateReadiness(release('1.2.0', { version: '1.3.0' }), '1.2.0', 'latest'), /record in releases/)
+  assert.throws(() => validateReadiness(release('1.2.0', { reviewedAt: '' }), '1.2.0', 'latest'), /dated owner decision/)
+  assert.throws(() => validateReadiness(release('1.2.0', { evidence: [] }), '1.2.0', 'latest'), /needs evidence/)
+  assert.throws(() => validateReadiness(release('1.2.0', { evidence: ['docs/evidence/../x'] }), '1.2.0', 'latest'), /Invalid evidence path/)
+  assert.throws(() => validateReadiness(release('2.0.0'), '2.0.0', 'latest'), /1\.x releases only/)
+  assert.throws(() => validateReadiness(release('1.2.0-rc.1'), '1.2.0-rc.1', 'latest'), /1\.x releases only/)
+  const phase = release('1.2.0')
+  phase.phases[3].status = 'pending'
+  assert.throws(() => validateReadiness(phase, '1.2.0', 'latest'), /incomplete/)
 })
 
 test('alpha authorizes only an explicit owner-selected preview and never accepts later channels', () => {
