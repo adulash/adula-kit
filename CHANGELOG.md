@@ -143,6 +143,12 @@ Minor release: additive APIs and additive kit migrations
   key, and a keyless role with the same name adopts the key. Existing rows and roles
   are never changed, so administrator edits survive. Rules are validated like the roles
   screen, and the registry refuses invalid or duplicate keys (#26).
+* Resources: `ResourceService.aggregate()` counts and totals records grouped by up to
+  three fields under the same authorization as `list()`: role rules and organization
+  scope filter the rows, and grouping, totals, filters and conditions are refused on
+  fields the actor may not query. It is served at `/resources/<name>/aggregate` and
+  `/api/v1/resources/<name>/aggregate` and described in OpenAPI. `canQueryField` is
+  exported for module services (#27).
 
 ## 1.0.1 — unreleased
 

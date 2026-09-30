@@ -52,6 +52,19 @@ test.group('Personal API tokens and the resource API', (group) => {
       .header('Authorization', `Bearer ${secret}`)
     shown.assertStatus(200)
     assert.equal(shown.body().data.notes, 'عبر الواجهة البرمجية')
+    // Dashboards count through the same authorization as the list (#27).
+    const counted = await client
+      .get('/api/v1/resources/orders/aggregate')
+      .qs({ groupBy: 'docStatus', where: JSON.stringify({ notes: 'عبر الواجهة البرمجية' }) })
+      .header('Authorization', `Bearer ${secret}`)
+    counted.assertStatus(200)
+    assert.deepEqual(counted.body().data.rows, [{ group: { docStatus: 0 }, count: 1 }])
+    const refused = await client
+      .get('/api/v1/resources/orders/aggregate')
+      .qs({ groupBy: 'internalNote' })
+      .header('Authorization', `Bearer ${secret}`)
+    refused.assertStatus(403)
+    assert.equal(refused.body().error.code, 'E_FIELD_FORBIDDEN')
     const forbidden = await client
       .get('/api/v1/resources/customers')
       .header('Authorization', `Bearer ${secret}`)
@@ -63,6 +76,7 @@ test.group('Personal API tokens and the resource API', (group) => {
     document.assertStatus(200)
     assert.equal(document.body().openapi, '3.1.0')
     assert.property(document.body().paths, '/api/v1/resources/orders')
+    assert.property(document.body().paths, '/api/v1/resources/orders/aggregate')
     assert.notProperty(document.body().paths, '/api/v1/resources/customers')
   })
 

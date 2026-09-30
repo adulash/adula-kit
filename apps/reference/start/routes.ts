@@ -110,6 +110,7 @@ router
     router.get('/resources/:resource', [ResourcesController, 'index'])
     router.get('/resources/:resource/create', [ResourcesController, 'create'])
     router.get('/resources/:resource/options/:field', [ResourcesController, 'options'])
+    router.get('/resources/:resource/aggregate', [ResourcesController, 'aggregate'])
     router.post('/resources/:resource/imports', [ImportsController, 'store'])
     router.get('/imports', [ImportsController, 'index'])
     router.get('/imports/:id', [ImportsController, 'show'])
@@ -158,6 +159,7 @@ router
   .group(() => {
     router.get('openapi.json', [OpenApiController])
     router.get('resources/:resource', [ResourcesController, 'index'])
+    router.get('resources/:resource/aggregate', [ResourcesController, 'aggregate'])
     router.get('resources/:resource/:id', [ResourcesController, 'show'])
     router.post('resources/:resource', [ResourcesController, 'store'])
     router.patch('resources/:resource/:id', [ResourcesController, 'update'])
