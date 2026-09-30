@@ -37,6 +37,7 @@ export {
   createManagedAssignmentsSchema,
   createRoleKeysSchema,
   createNotificationTargetsSchema,
+  createUploadGrantsSchema,
 } from './src/database/schema.js'
 export { defineWorkflow, nextStep } from './src/workflows/define_workflow.js'
 export type {
@@ -129,6 +130,17 @@ export type {
   UploadInput,
   ClaimInput,
 } from './src/attachments/attachment_service.js'
+export {
+  grantUpload,
+  redeemUploadGrant,
+  pruneUploadGrants,
+  UPLOAD_GRANT_MAX_TTL_MS,
+} from './src/attachments/upload_grants.js'
+export type {
+  UploadGrantInput,
+  UploadGrant,
+  RedeemedUploadGrant,
+} from './src/attachments/upload_grants.js'
 export { migrateStorage } from './src/attachments/storage_migrate.js'
 export type {
   StorageDisk,

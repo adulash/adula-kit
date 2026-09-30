@@ -7,7 +7,8 @@ import db from '@adonisjs/lucid/services/db'
 import drive from '@adonisjs/drive/services/main'
 import type { ApiClient } from '@japa/api-client'
 import User from '#models/user'
-import { PENDING_UPLOAD_LIMIT, UNBOUND_UPLOAD_TTL_MS } from '@adula/kit'
+import { PENDING_UPLOAD_LIMIT, UNBOUND_UPLOAD_TTL_MS, grantUpload } from '@adula/kit'
+import { kit } from '#services/kit'
 
 type UploadedFile = { id: number; name: string; size: number; mimeType: string; url: string }
 
@@ -285,6 +286,81 @@ test.group('Attachment upload, download and storage migration', (group) => {
       .json({ orgUnitId, notes: 'إعادة استخدام', contract: replacement.body().data.id })
     reuse.assertStatus(422)
     assert.equal(reuse.body().error.code, 'E_ATTACHMENT')
+  })
+
+  test('module code grants one user an upload for one record field without a role rule', async ({
+    client,
+    assert,
+  }) => {
+    // The denied user holds no role; module code authorized them for this order only.
+    const order = await client
+      .post('/resources/orders')
+      .loginAs(writer)
+      .withCsrfToken()
+      .header('Accept', 'application/json')
+      .json({ orgUnitId, notes: `طلب لإذن الرفع ${randomUUID()}` })
+    order.assertStatus(201)
+    const orderId = order.body().data.id as number
+    const runtime = kit()
+    const grant = await grantUpload(knex(), runtime.registry, {
+      resource: 'orders',
+      recordId: orderId,
+      field: 'contract',
+      userId: denied.id,
+      actorId: writer.id,
+    })
+    const withGrant = (user: User, token: string) => upload(user, 'دليل.txt', { grant: token })
+
+    const others = await withGrant(reader, grant.token)(client)
+    others.assertStatus(403)
+    assert.equal(others.body().error.code, 'E_UPLOAD_GRANT')
+    const forged = await withGrant(denied, 'A'.repeat(43))(client)
+    forged.assertStatus(403)
+    // The grant names the field; the request cannot redirect it.
+    const created = await upload(denied, 'دليل.txt', {
+      grant: grant.token,
+      field: 'notes',
+    })(client)
+    created.assertStatus(201)
+    const file: UploadedFile = created.body().data
+    const row = await knex()('attachments').where('id', file.id).first()
+    assert.equal(row.field, 'contract')
+    assert.equal(row.org_unit_id, orgUnitId)
+    assert.isNull(row.record_id)
+    assert.deepEqual(row.data.uploadGrant.recordId, orderId)
+    const audit = await knex()('activities')
+      .where({ resource: 'orders', record_id: orderId })
+      .whereIn('action', ['upload_granted', 'upload_via_grant'])
+      .orderBy('id')
+      .select('action', 'actor_id')
+    assert.deepEqual(
+      audit.map((entry) => [entry.action, Number(entry.actor_id)]),
+      [
+        ['upload_granted', writer.id],
+        ['upload_via_grant', denied.id],
+      ]
+    )
+
+    // The user still cannot save the record; module code binds the upload for them.
+    const direct = await client
+      .put(`/resources/orders/${orderId}`)
+      .loginAs(denied)
+      .withCsrfToken()
+      .header('Accept', 'application/json')
+      .json({ contract: file.id })
+    assert.oneOf(direct.status(), [403, 404])
+    await runtime.resources.systemSave('orders', { contract: file.id }, orderId, {
+      actorId: denied.id,
+      reason: 'evidence uploaded with a grant',
+    })
+    const bound = await knex()('attachments').where('id', file.id).first()
+    assert.equal(bound.record_id, orderId)
+    const download = await client.get(file.url).loginAs(writer)
+    download.assertStatus(200)
+
+    await knex()('upload_grants').update({ expires_at: knex().raw("now() - interval '1 second'") })
+    const expired = await withGrant(denied, grant.token)(client)
+    expired.assertStatus(403)
   })
 
   test('adula:storage:migrate moves live files to another disk and keeps downloads working', async ({

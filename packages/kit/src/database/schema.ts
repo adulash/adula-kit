@@ -502,3 +502,23 @@ export async function createNotificationTargetsSchema(db: Knex) {
     t.integer('record_id')
   })
 }
+
+/**
+ * Short-lived upload grants (1.1): module code lets one user upload to one attachment field
+ * of one record without a role rule. Only the SHA-256 hash of the token is stored.
+ */
+export async function createUploadGrantsSchema(db: Knex) {
+  await db.schema.createTable('upload_grants', (t) => {
+    t.increments('id')
+    t.string('token_hash', 64).notNullable().unique()
+    t.integer('user_id').notNullable().references('users.id').onDelete('CASCADE')
+    t.string('resource', 100).notNullable()
+    t.integer('record_id').notNullable()
+    t.string('field', 100).notNullable()
+    t.integer('org_unit_id')
+    t.timestamp('expires_at', { useTz: true }).notNullable()
+    t.integer('created_by').notNullable()
+    t.timestamp('created_at', { useTz: true }).notNullable().defaultTo(db.fn.now())
+    t.index(['expires_at'])
+  })
+}
