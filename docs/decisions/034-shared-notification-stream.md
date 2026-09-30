@@ -18,7 +18,9 @@ stream per visible tab.
    or closes. The lock is then released and a waiting tab takes the stream over. A tab
    that becomes visible again rejoins and reloads the unread count to catch up.
 3. Browsers without Web Locks or `BroadcastChannel` keep the 1.0.1 behavior: one stream
-   per visible tab.
+   per visible tab. Web Locks exist only in a secure context, so an application served
+   over plain HTTP on a network address (not `localhost`) also falls back, as do Safari
+   versions before 15.4. The bundled Caddy proxy serves HTTPS and HTTP/2.
 
 The change is in the starter's `notification-bell.tsx`; no kit API or server route
 changes. A `SharedWorker` was not chosen because it is unavailable in some mobile
@@ -27,5 +29,7 @@ browsers and would need a separate bundle.
 ## Consequences
 
 - Projects that copied `inertia/components/notification-bell.tsx` need the updated file.
-- The reference browser test opens several tabs and checks that one stream serves them
-  and that another tab takes over when the leader closes.
+- Every tab still shows its own toast for a new notification, as in 1.0.1; only the
+  connection is shared.
+- The reference browser test opens two tabs and checks that one stream serves both and
+  that the other tab takes over when the leader closes.
