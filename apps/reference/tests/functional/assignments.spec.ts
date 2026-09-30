@@ -82,6 +82,20 @@ test.group('Assignments and my tasks over HTTP', (group) => {
     assert.equal(listed.body().data[0].status, 'done')
     // The closing note from the dialog is kept with the task.
     assert.equal(listed.body().data[0].closeReason, 'تمت المراجعة دون ملاحظات')
+    // Tabs of the merged My tasks page (#35).
+    const closed = await client
+      .get('/my-tasks')
+      .qs({ tab: 'closed' })
+      .loginAs(clerk.user)
+      .headers(json)
+    assert.equal(closed.body().data[0].id, assignmentId)
+    const assigned = await client
+      .get('/my-tasks')
+      .qs({ tab: 'assigned' })
+      .loginAs(clerk.user)
+      .headers(json)
+    assert.lengthOf(assigned.body().data, 0)
+    assert.equal(assigned.body().open, 0)
   })
 
   test('a read-only user cannot assign and outsiders never see the record tasks', async ({

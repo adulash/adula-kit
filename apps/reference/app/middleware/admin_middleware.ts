@@ -4,6 +4,7 @@ import db from '@adonisjs/lucid/services/db'
 import { NotificationsAdmin, UserInvitations, buildAbility, isBackupStale } from '@adula/kit'
 import { IMPERSONATOR_KEY, kit } from '#services/kit'
 import { activeImpersonation } from '#services/impersonation'
+import { setupPending } from '#services/initial_setup'
 
 export { IMPERSONATOR_KEY }
 
@@ -13,18 +14,42 @@ export async function isAdministrator(userId: number) {
   return buildAbility(actor.rules, runtime.registry.all()).can('manage', 'all')
 }
 
-/** Shell props for every Inertia page: admin navigation, backup bar, bell and impersonation. */
+async function countRows(table: string, where: Record<string, string | number>) {
+  const [row] = await db.connection().getWriteClient()(table).where(where).count('* as count')
+  return Number(row?.count ?? 0)
+}
+
+/** Whether the actor can create any resource, which is what importing needs. */
+async function canImport(userId: number) {
+  const runtime = kit()
+  const actor = await runtime.actors.load(userId)
+  const ability = buildAbility(actor.rules, runtime.registry.all())
+  return runtime.registry
+    .all()
+    .some((resource) => resource.actions.includes('create') && ability.can('create', resource.name))
+}
+
+/** Shell props for every Inertia page: navigation signals, backup bar, bell and impersonation. */
 export async function sharedAdminProps(ctx: HttpContext) {
   const { auth, session } = ctx as Partial<HttpContext>
   const userId = auth?.user?.id
   const knex = db.connection().getWriteClient()
   const isAdmin = userId ? await isAdministrator(userId) : false
+  const backupStale = isAdmin && (await isBackupStale(knex))
+  const failedRuns = isAdmin ? await countRows('workflow_runs', { status: 'failed' }) : 0
   return {
     isAdmin: ctx.inertia.always(isAdmin),
+    /** Failed workflows and a stale backup: a badge on the single administration entry. */
+    adminAlerts: ctx.inertia.always(failedRuns + (backupStale ? 1 : 0)),
+    setupPending: ctx.inertia.always(isAdmin && (await setupPending())),
+    canImport: ctx.inertia.always(userId ? await canImport(userId) : false),
+    openTasks: ctx.inertia.always(
+      userId ? await countRows('assignments', { assignee_id: userId, status: 'open' }) : 0
+    ),
     canInviteUsers: ctx.inertia.always(
       userId ? await new UserInvitations(knex).canInvite(userId) : false
     ),
-    backupWarning: ctx.inertia.always(isAdmin && (await isBackupStale(knex))),
+    backupWarning: ctx.inertia.always(backupStale),
     unreadNotifications: ctx.inertia.always(
       userId ? await new NotificationsAdmin(knex).unreadCount(userId) : 0
     ),

@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
 import axios from 'axios'
 import { CalendarClock, CheckCircle2, ListChecks, XCircle } from 'lucide-react'
-import type { Assignment, AssignmentPage } from '@adula/kit'
+import type { Assignment, AssignmentPage, WorkflowRun } from '@adula/kit'
 import Workspace from '~/layouts/workspace'
 import { useDateTimeFormatter } from '~/components/admin-nav'
 import { Badge } from '~/components/ui/badge'
@@ -21,8 +21,18 @@ import { Textarea } from '~/components/ui/textarea'
 import { Tabs, TabsList, TabsTrigger } from '~/components/ui/tabs'
 import { formatDate } from '~/components/ui/resource-value'
 import { useUiPreferences } from '~/components/ui/ui-preferences'
+import { WorkflowDecision } from '~/components/ui/record-workflows'
 
-type Props = { assignments: AssignmentPage; status: 'open' | 'done' | 'all' }
+type Tab = 'all' | 'approvals' | 'assigned' | 'closed'
+/** Approval runs waiting for this user's decision, by workflow run id. */
+type Props = { assignments: AssignmentPage; tab: Tab; decisions: Record<string, WorkflowRun> }
+
+const empty: Record<Tab, string> = {
+  all: 'لا مهام ولا موافقات مفتوحة.',
+  approvals: 'لا موافقات بانتظار قرارك.',
+  assigned: 'لا مهام مسندة إليك مفتوحة.',
+  closed: 'لا مهام مغلقة بعد.',
+}
 
 const statusLabel: Record<Assignment['status'], string> = {
   open: 'مفتوحة',
@@ -30,10 +40,13 @@ const statusLabel: Record<Assignment['status'], string> = {
   cancelled: 'ملغاة',
 }
 
-export default function MyTasks({ assignments, status }: Props) {
+/** Everything waiting for the user: assigned tasks and approval decisions, acted on in place (#35). */
+export default function MyTasks({ assignments, tab, decisions }: Props) {
   const formatDateTime = useDateTimeFormatter()
   const { calendar } = useUiPreferences()
   const [rows, setRows] = useState(assignments.data)
+  // Runs for the decision dialog, merged as "load more" pages arrive.
+  const [runs, setRuns] = useState(decisions)
   const [cursor, setCursor] = useState(assignments.nextCursor)
   const [busy, setBusy] = useState<number | null>(null)
   const [error, setError] = useState('')
@@ -47,17 +60,23 @@ export default function MyTasks({ assignments, status }: Props) {
   useEffect(() => {
     setRows(assignments.data)
     setCursor(assignments.nextCursor)
-  }, [assignments])
+    setRuns(decisions)
+  }, [assignments, decisions])
   const today = new Date().toISOString().slice(0, 10)
   const more = async () => {
     if (!cursor) return
-    const response = await axios.get<AssignmentPage>('/my-tasks', {
-      params: { cursor, status },
+    const response = await axios.get<
+      AssignmentPage & { decisions: Record<string, WorkflowRun> }
+    >('/my-tasks', {
+      params: { cursor, tab },
       headers: { Accept: 'application/json' },
     })
     setRows((current) => [...current, ...response.data.data])
+    setRuns((current) => ({ ...current, ...response.data.decisions }))
     setCursor(response.data.nextCursor)
   }
+  const reload = () => router.reload({ only: ['assignments', 'decisions', 'openTasks'] })
+  const tasks = assignments.open - assignments.approvals
   const act = (item: Assignment, action: 'complete' | 'cancel') => {
     setClosing({ item, action })
     setNote('')
@@ -80,7 +99,7 @@ export default function MyTasks({ assignments, status }: Props) {
         { headers: { Accept: 'application/json' }, withXSRFToken: true }
       )
       setClosing(null)
-      router.reload({ only: ['assignments'] })
+      reload()
     } catch (caught) {
       setNoteError(
         axios.isAxiosError(caught) && caught.response?.data?.error?.message
@@ -98,14 +117,21 @@ export default function MyTasks({ assignments, status }: Props) {
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">مهامي</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            {assignments.open ? `${assignments.open} مهمة مفتوحة` : 'لا مهام مفتوحة'}
+            {assignments.open
+              ? `${assignments.open} مفتوحة، منها ${assignments.approvals} بانتظار قرارك`
+              : 'لا مهام مفتوحة'}
           </p>
         </div>
-        <Tabs value={status} onValueChange={(value) => router.get('/my-tasks', { status: value })}>
+        <Tabs value={tab} onValueChange={(value) => router.get('/my-tasks', { tab: value })}>
           <TabsList>
-            <TabsTrigger value="open">المفتوحة</TabsTrigger>
-            <TabsTrigger value="done">المغلقة</TabsTrigger>
-            <TabsTrigger value="all">الكل</TabsTrigger>
+            <TabsTrigger value="all">
+              الكل{assignments.open ? ` (${assignments.open})` : ''}
+            </TabsTrigger>
+            <TabsTrigger value="approvals">
+              بانتظار قراري{assignments.approvals ? ` (${assignments.approvals})` : ''}
+            </TabsTrigger>
+            <TabsTrigger value="assigned">مهام مسندة{tasks ? ` (${tasks})` : ''}</TabsTrigger>
+            <TabsTrigger value="closed">المغلقة</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -146,7 +172,9 @@ export default function MyTasks({ assignments, status }: Props) {
                 <p className="text-sm text-muted-foreground">سبب الإغلاق: {item.closeReason}</p>
               )}
               <p className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                <span>أسندها: {item.assignedByName ?? 'النظام'}</span>
+                <span>
+                  {item.kind === 'approval' ? 'طلبها' : 'أسندها'}: {item.assignedByName ?? 'النظام'}
+                </span>
                 <span>{formatDateTime(item.createdAt)}</span>
                 {item.dueOn && (
                   <span
@@ -185,10 +213,8 @@ export default function MyTasks({ assignments, status }: Props) {
                   <Link href={`/resources/${item.resource}/${item.recordId}`}>فتح السجل</Link>
                 </Button>
               )}
-              {item.workflowRunId && item.status === 'open' && (
-                <Button size="sm" variant="outline" asChild>
-                  <Link href="/approvals">صندوق الموافقات</Link>
-                </Button>
+              {item.canDecide && item.workflowRunId && runs[item.workflowRunId] && (
+                <WorkflowDecision run={runs[item.workflowRunId]} onDecided={reload} />
               )}
             </div>
           </li>
@@ -196,7 +222,7 @@ export default function MyTasks({ assignments, status }: Props) {
         {rows.length === 0 && (
           <li className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border p-12 text-muted-foreground">
             <ListChecks size={26} />
-            لا مهام في هذا العرض.
+            {empty[tab]}
           </li>
         )}
       </ul>

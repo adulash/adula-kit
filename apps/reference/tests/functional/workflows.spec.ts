@@ -77,14 +77,40 @@ test.group('Two-level order approval workflow over HTTP', (group) => {
     assert,
   }) => {
     const id = await submit(client, '2500000')
-    const inbox = await client
-      .get('/approvals')
+    // Approvals are decided from My tasks; the old inbox page redirects there (#35).
+    const legacy = await client.get('/approvals').loginAs(manager).redirects(0)
+    legacy.assertStatus(302)
+    assert.equal(legacy.header('location'), '/my-tasks?tab=approvals')
+    const tasks = await client
+      .get('/my-tasks')
+      .qs({ tab: 'approvals' })
       .loginAs(manager)
       .header('Accept', 'text/html')
       .withInertia()
+    tasks.assertStatus(200)
+    assert.equal(tasks.body().component, 'work/my_tasks')
+    assert.equal(tasks.body().props.tab, 'approvals')
+    assert.equal(tasks.body().props.assignments.approvals, 1)
+    const [approval] = tasks.body().props.assignments.data
+    assert.isTrue(approval.canDecide)
+    assert.equal(approval.recordId, id)
+    assert.equal(approval.title, 'موافقة مدير القسم')
+    // The decision form comes with the page, and with "load more" JSON pages (#35).
+    assert.equal(tasks.body().props.decisions[approval.workflowRunId].id, approval.workflowRunId)
+    const jsonPage = await client
+      .get('/my-tasks')
+      .qs({ tab: 'approvals' })
+      .loginAs(manager)
+      .header('Accept', 'application/json')
+    jsonPage.assertStatus(200)
+    assert.property(jsonPage.body().decisions, approval.workflowRunId)
+    const inbox = await client
+      .get('/approvals')
+      .loginAs(manager)
+      .header('Accept', 'application/json')
     inbox.assertStatus(200)
-    assert.equal(inbox.body().component, 'work/approvals')
-    const [run] = inbox.body().props.runs
+    const [run] = inbox.body().data
+    assert.equal(run.id, approval.workflowRunId)
     assert.equal(run.recordId, id)
     assert.equal(run.myApproval.title, 'موافقة مدير القسم')
     // The director has nothing to decide yet.
