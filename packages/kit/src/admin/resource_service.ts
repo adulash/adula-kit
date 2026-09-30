@@ -1,7 +1,13 @@
 import { subject } from '@casl/ability'
 import type { Knex } from 'knex'
 import type { ResourceRegistry } from '../resource/registry.js'
-import type { Action, RecordData, Resource, SerializedRecord } from '../resource/types.js'
+import type {
+  Action,
+  JsonValue,
+  RecordData,
+  Resource,
+  SerializedRecord,
+} from '../resource/types.js'
 import { columnName } from '../resource/define_resource.js'
 import {
   buildAbility,
@@ -11,7 +17,15 @@ import {
   type KitAbility,
 } from '../auth/ability.js'
 import { accessibleBy, conditionSql } from '../auth/sql.js'
-import { fromRow, selectedFields, serialize, systemInput, writableInput } from './contracts.js'
+import {
+  fromRow,
+  jsonValue,
+  selectedFields,
+  serialize,
+  systemInput,
+  writableInput,
+} from './contracts.js'
+import { resolveActorConditions, type Conditions } from '../auth/conditions.js'
 import { KitError } from './errors.js'
 import { sequence } from '../services/settings.js'
 import { recordMutation, type FieldChange } from '../events/record_mutation.js'
@@ -34,6 +48,26 @@ import type {
 const estimates = new Map<string, { rows: number; at: number }>()
 const ESTIMATE_TTL_MS = 30_000
 const ESTIMATE_CACHE_LIMIT = 500
+
+export type AggregateOptions = {
+  /** Up to three queryable fields (docStatus and orgUnitId are also accepted). */
+  groupBy?: string[]
+  /** Count rows per group (default true). */
+  count?: boolean
+  /** Integer or money fields to total per group; money totals are decimal strings. */
+  sum?: string[]
+  /** Equality filters, as in list(). */
+  filters?: Record<string, unknown>
+  /** Role-rule style conditions ($eq, $ne, $in, $lt, $gt, $like, "$actor.id"). */
+  where?: Conditions
+  search?: string
+}
+export type AggregateRow = {
+  group: Record<string, JsonValue>
+  count?: number
+  sum?: Record<string, string | null>
+}
+const AGGREGATE_GROUP_LIMIT = 1000
 
 export type ListOptions = {
   limit?: number
@@ -458,6 +492,126 @@ export class ResourceService {
   }
   private canQueryField(resource: Resource, actor: Actor, ability: KitAbility, key: string) {
     return canQueryField(resource, actor, ability, key)
+  }
+
+  /**
+   * Counts and totals over the records the actor may view, grouped by queryable fields,
+   * for dashboards. Authorization is list()'s: the same rules, organization scope and
+   * soft-delete filter apply, and every grouped, totalled or filtered field must be one
+   * the actor may query (E_FIELD_FORBIDDEN otherwise), so no hidden value leaks.
+   */
+  async aggregate(
+    name: string,
+    actor: Actor,
+    options: AggregateOptions = {}
+  ): Promise<{ rows: AggregateRow[]; truncated: boolean }> {
+    const resource = this.registry.get(name)
+    const ability = this.authorizeAction(resource, actor, 'view')
+    const standard = new Set([
+      ...(resource.submittable ? ['docStatus'] : []),
+      ...(resource.scoped ? ['orgUnitId'] : []),
+    ])
+    const column = (key: string) => `r.${resource.fields[key]?.column ?? columnName(key)}`
+    const queryable = (key: unknown, kinds?: string[]) => {
+      if (typeof key !== 'string') return false
+      if (standard.has(key)) return !kinds
+      // Own keys only: names such as "constructor" are not fields.
+      if (!Object.hasOwn(resource.fields, key)) return false
+      const field = resource.fields[key]
+      return (
+        Boolean(field) &&
+        !['hasMany', 'json', 'attachment'].includes(field.type) &&
+        (!kinds || kinds.includes(field.type)) &&
+        this.canQueryField(resource, actor, ability, key)
+      )
+    }
+    const groupBy = options.groupBy ?? []
+    const sums = options.sum ?? []
+    if (!Array.isArray(groupBy) || groupBy.length > 3 || !Array.isArray(sums) || sums.length > 5)
+      throw new KitError(422, 'E_AGGREGATE', 'Group by up to three fields and total up to five')
+    for (const key of groupBy)
+      if (!queryable(key))
+        throw new KitError(403, 'E_FIELD_FORBIDDEN', `Field cannot be grouped: ${String(key)}`)
+    for (const key of sums)
+      if (!queryable(key, ['integer', 'money']))
+        throw new KitError(403, 'E_FIELD_FORBIDDEN', `Field cannot be totalled: ${String(key)}`)
+    const query = accessibleBy(
+      this.db(`${name} as r`).whereNull('r.deleted_at'),
+      ability,
+      actor,
+      'view',
+      resource
+    )
+    for (const [key, value] of Object.entries(options.filters ?? {})) {
+      if (!resource.fields[key]?.filterable || !queryable(key))
+        throw new KitError(422, 'E_FILTER', 'Unsupported filter')
+      if (value !== null && !['string', 'number', 'boolean'].includes(typeof value))
+        throw new KitError(422, 'E_FILTER', 'Invalid filter value')
+      query.where(column(key), value as string)
+    }
+    if (options.where !== undefined && options.where !== null) {
+      if (typeof options.where !== 'object' || Array.isArray(options.where))
+        throw new KitError(422, 'E_FILTER', 'Conditions must be an object')
+      for (const key of Object.keys(options.where))
+        if (!queryable(key))
+          throw new KitError(403, 'E_FIELD_FORBIDDEN', `Field cannot be filtered: ${key}`)
+      let where
+      try {
+        where = conditionSql(resolveActorConditions(options.where, actor.id), resource)
+      } catch (error) {
+        throw new KitError(422, 'E_FILTER', (error as Error).message)
+      }
+      query.whereRaw(where.text, where.bindings)
+    }
+    if (options.search) {
+      const searchable = Object.entries(resource.fields).filter(([, f]) => f.searchable)
+      if (!searchable.length || searchable.some(([key]) => !queryable(key)))
+        throw new KitError(403, 'E_SEARCH', 'Search is unavailable')
+      query.whereRaw("r.search_vector @@ plainto_tsquery('simple', ?)", [options.search])
+    }
+    const selects: (string | Knex.Raw)[] = groupBy.map(
+      (key, index) => `${key === 'docStatus' ? 'r.doc_status' : column(key)} as g${index}`
+    )
+    if (options.count !== false) selects.push(this.db.raw('count(*)::int as count'))
+    sums.forEach((key, index) =>
+      selects.push(this.db.raw(`sum(??)::text as s${index}`, [column(key)]))
+    )
+    query.select(selects)
+    groupBy.forEach((_, index) => query.groupByRaw(`${index + 1}`))
+    groupBy.forEach((_, index) => query.orderByRaw(`${index + 1} ASC NULLS LAST`))
+    const rows = await query.limit(AGGREGATE_GROUP_LIMIT + 1)
+    return {
+      truncated: rows.length > AGGREGATE_GROUP_LIMIT,
+      rows: rows.slice(0, AGGREGATE_GROUP_LIMIT).map((row: RecordData) => {
+        const group = fromRow(
+          Object.fromEntries(
+            groupBy.map((key, index) => [
+              key === 'docStatus'
+                ? 'doc_status'
+                : key === 'orgUnitId'
+                  ? 'org_unit_id'
+                  : (resource.fields[key].column ?? columnName(key)),
+              row[`g${index}`],
+            ])
+          ),
+          resource
+        )
+        return {
+          group: Object.fromEntries(groupBy.map((key) => [key, jsonValue(group[key])])),
+          ...(options.count !== false ? { count: Number(row.count) } : {}),
+          ...(sums.length
+            ? {
+                sum: Object.fromEntries(
+                  sums.map((key, index) => [
+                    key,
+                    row[`s${index}`] === null ? null : String(row[`s${index}`]),
+                  ])
+                ),
+              }
+            : {}),
+        }
+      }),
+    }
   }
   private async preload(resource: Resource, records: RecordData[], actor: Actor) {
     const related: Record<string, SerializedRecord[]> = {}
