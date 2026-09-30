@@ -70,7 +70,7 @@
     },
     "Assignment": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ id: number; resource: string; resourceLabel: string; recordId: number; recordTitle: string | null; assigneeId: number; assigneeName: string | null; assignedBy: number | null; assignedByName: string | null; kind: string; title: string; note: string | null; dueOn: string | null; status: AssignmentStatus; outcome: string | null; createdAt: string; completedAt: string | null; workflowRunId: string | null; managed: boolean; closeNote: CloseNotePolicy; closeReason: string | null; canComplete: boolean; canCancel: boolean; canDecide: boolean; }"
+      "type": "{ id: number; resource: string; resourceLabel: string; recordId: number; recordTitle: string | null; assigneeId: number; assigneeName: string | null; assignedBy: number | null; assignedByName: string | null; kind: string; title: string; note: string | null; dueOn: string | null; status: AssignmentStatus; outcome: string | null; createdAt: string; completedAt: string | null; workflowRunId: string | null; managed: boolean; closeNote: CloseNotePolicy; closeReason: string | null; canComplete: boolean; canCancel: boolean; canDecide?: boolean | undefined; }"
     },
     "AssignmentOptions": {
       "kind": "TypeAliasDeclaration",
@@ -78,7 +78,7 @@
     },
     "AssignmentPage": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ data: Assignment[]; nextCursor: string | null; open: number; approvals: number; }"
+      "type": "{ data: Assignment[]; nextCursor: string | null; open: number; approvals?: number | undefined; }"
     },
     "Assignments": {
       "kind": "ClassDeclaration",
@@ -714,7 +714,7 @@
     },
     "ResourceNavigation": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ name: string; label: string; href: string; module: string; moduleLabel: string; }[]"
+      "type": "{ name: string; label: string; href: string; module: string; moduleLabel?: string | undefined; }[]"
     },
     "ResourceRegistry": {
       "kind": "ClassDeclaration",

@@ -22,6 +22,6 @@ export type ResourceNavigation = {
   label: string
   href: string
   module: string
-  /** Arabic module label, for grouping the navigation by module. */
-  moduleLabel: string
+  /** Arabic module label, for grouping the navigation by module (1.2; optional for compatibility). */
+  moduleLabel?: string
 }[]

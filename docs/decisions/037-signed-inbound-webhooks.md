@@ -1,6 +1,6 @@
 # ADR 037 — Signed inbound webhooks (1.2.0)
 
-Date: 2026-09-29. Status: proposed; awaiting the owner's review in the pull request.
+Date: 2026-09-29. Status: accepted by the owner on 2026-09-30.
 
 Issue #30. Applications need to react to external systems (for example a Git host
 linking pull requests to tasks). The kit had outgoing webhooks only, so each consumer

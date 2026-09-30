@@ -35,16 +35,16 @@ export type Assignment = {
   closeReason: string | null
   canComplete: boolean
   canCancel: boolean
-  /** An open approval step waiting for this user's decision (WorkflowEngine.decide). */
-  canDecide: boolean
+  /** An open approval step waiting for this user's decision (WorkflowEngine.decide). 1.2; optional for compatibility. */
+  canDecide?: boolean
 }
 export type AssignmentPage = {
   data: Assignment[]
   nextCursor: string | null
   /** Open items of every kind. */
   open: number
-  /** Open approval steps among them. */
-  approvals: number
+  /** Open approval steps among them. 1.2; optional for compatibility. */
+  approvals?: number
 }
 /**
  * Whether closing a task by hand needs a note. Each application chooses: `optional`

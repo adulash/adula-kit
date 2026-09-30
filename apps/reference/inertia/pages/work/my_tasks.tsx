@@ -76,7 +76,8 @@ export default function MyTasks({ assignments, tab, decisions }: Props) {
     setCursor(response.data.nextCursor)
   }
   const reload = () => router.reload({ only: ['assignments', 'decisions', 'openTasks'] })
-  const tasks = assignments.open - assignments.approvals
+  const approvals = assignments.approvals ?? 0
+  const tasks = assignments.open - approvals
   const act = (item: Assignment, action: 'complete' | 'cancel') => {
     setClosing({ item, action })
     setNote('')
@@ -118,7 +119,7 @@ export default function MyTasks({ assignments, tab, decisions }: Props) {
           <h1 className="text-3xl font-semibold tracking-tight">مهامي</h1>
           <p className="mt-3 text-sm text-muted-foreground">
             {assignments.open
-              ? `${assignments.open} مفتوحة، منها ${assignments.approvals} بانتظار قرارك`
+              ? `${assignments.open} مفتوحة، منها ${approvals} بانتظار قرارك`
               : 'لا مهام مفتوحة'}
           </p>
         </div>
@@ -128,7 +129,7 @@ export default function MyTasks({ assignments, tab, decisions }: Props) {
               الكل{assignments.open ? ` (${assignments.open})` : ''}
             </TabsTrigger>
             <TabsTrigger value="approvals">
-              بانتظار قراري{assignments.approvals ? ` (${assignments.approvals})` : ''}
+              بانتظار قراري{approvals ? ` (${approvals})` : ''}
             </TabsTrigger>
             <TabsTrigger value="assigned">مهام مسندة{tasks ? ` (${tasks})` : ''}</TabsTrigger>
             <TabsTrigger value="closed">المغلقة</TabsTrigger>
