@@ -427,6 +427,67 @@ test.group('Generic resource browser acceptance', (group) => {
     assert.include(csv, '"مغلق"')
   })
 
+  test('records open over the mounted list; editing switches the same dialog to the details', async ({
+    browserContext,
+    visit,
+    assert,
+  }) => {
+    const { runtime, loaded } = await service(admin)
+    const stamp = randomUUID().slice(0, 8)
+    for (const quantity of [1, 2, 3])
+      await runtime.resources.save('ui_samples', loaded, {
+        orgUnitId: admin.orgUnitId,
+        title: `عينة النافذة ${quantity} ${stamp}`,
+        quantity,
+      })
+    await browserContext.loginAs(admin.user)
+    const page = await visit(`/resources/ui_samples?search=${stamp}&sort=quantity&direction=asc`)
+    await page.assertElementsCount('tbody tr[aria-rowindex]', 3)
+    const listUrl = page.url()
+    const recordRequests: string[] = []
+    page.on('request', (request) => {
+      // The record itself; its collaboration and assignment panels load separately.
+      if (/^\/resources\/ui_samples\/\d+(\/view)?$/.test(new URL(request.url()).pathname))
+        recordRequests.push(new URL(request.url()).pathname)
+    })
+    const view = page.getByRole('link', { name: /عرض السجل/ }).first()
+    const record = (await view.getAttribute('href'))!
+    await view.click()
+    const dialog = page.getByRole('dialog', { name: 'تفاصيل · عينات الواجهة' })
+    await dialog.waitFor()
+    await page.waitForURL((url) => url.pathname === record)
+    // The list stays mounted under the dialog, and one request reads the record (#31).
+    await page.assertElementsCount('tbody tr[aria-rowindex]', 3)
+    assert.deepEqual(recordRequests, [`${record}/view`])
+    await dialog.getByRole('button', { name: 'تعديل السجل', exact: true }).click()
+    const form = page.getByRole('dialog', { name: 'تعديل عينة' })
+    await form.waitFor()
+    await page.waitForURL((url) => url.pathname === `${record}/edit`)
+    await form.getByLabel('العنوان', { exact: true }).fill(`عينة معدلة ${stamp}`)
+    await form.getByRole('button', { name: 'حفظ السجل', exact: true }).click()
+    // Saving shows the details in the same dialog instead of closing and reopening it.
+    await dialog.getByText(`عينة معدلة ${stamp}`, { exact: true }).waitFor()
+    await page.waitForURL((url) => url.pathname === record)
+    await page.assertElementsCount('tbody tr[aria-rowindex]', 3)
+    await page.keyboard.press('Escape')
+    await page.waitForURL(listUrl)
+    await dialog.waitFor({ state: 'hidden' })
+    // The list returns with its query and shows the saved change.
+    await page.locator('tbody').getByText(`عينة معدلة ${stamp}`, { exact: true }).waitFor()
+    await page.assertElementsCount('tbody tr[aria-rowindex]', 3)
+    // Closing replaced the record's history entry: Back stays on the list (#31).
+    await page.goBack()
+    await page.waitForURL(listUrl)
+    await page.waitForTimeout(300)
+    assert.equal(await page.getByRole('dialog').count(), 0)
+    // A direct link still opens the standalone record; its deferred sections share one request.
+    recordRequests.length = 0
+    await page.goto(record)
+    await page.getByRole('dialog', { name: 'تفاصيل · عينات الواجهة' }).waitFor()
+    await page.getByRole('region', { name: 'سجل النشاط' }).waitFor()
+    assert.deepEqual(recordRequests, [record, record])
+  })
+
   test('250 tasks load through the scroll prop and render virtualized rows; mobile keeps no page overflow', async ({
     browserContext,
     visit,

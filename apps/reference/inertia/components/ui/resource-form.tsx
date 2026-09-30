@@ -29,9 +29,18 @@ function initialValue(field: Field, value: unknown) {
 export function ResourceForm({
   editor,
   permissions = {},
+  onSaved,
+  onCancel,
+  onAction,
 }: {
   editor: ResourceEditor
   permissions?: RecordPermissions
+  /** Called with the saved record id instead of visiting its page (record dialogs). */
+  onSaved?: (id: number) => void
+  /** Replaces the cancel link (record dialogs return to the details). */
+  onCancel?: () => void
+  /** Called after a record action (submit, delete...) instead of visiting a page. */
+  onAction?: (action: string) => void
 }) {
   const base = `/resources/${editor.name}`
   const scalar = editor.fields.filter((field) => field.type !== 'hasMany')
@@ -190,7 +199,9 @@ export function ResourceForm({
             : 'تمت إضافة السجل'
           : 'تم حفظ التعديلات'
       )
-      router.visit(`${base}/${response.data.data.id}`)
+      if (onSaved) onSaved(response.data.data.id)
+      // The details replace the form in the same dialog instead of closing and reopening.
+      else router.visit(`${base}/${response.data.data.id}`, { preserveState: true })
     } catch (error) {
       const unknown =
         axios.isAxiosError(error) && Array.isArray(error.response?.data?.errors)
@@ -317,15 +328,23 @@ export function ResourceForm({
               version={editor.record.version ?? undefined}
               permissions={permissions}
               onDone={(action) =>
-                router.visit(action === 'delete' ? base : `${base}/${editor.record?.id}`)
+                onAction
+                  ? onAction(action)
+                  : router.visit(action === 'delete' ? base : `${base}/${editor.record?.id}`)
               }
             />
           )}
         </div>
         <div className="flex gap-3">
-          <Button type="button" variant="outline" asChild>
-            <Link href={editor.record ? `${base}/${editor.record.id}` : base}>إلغاء</Link>
-          </Button>
+          {onCancel ? (
+            <Button type="button" variant="outline" onClick={onCancel}>
+              إلغاء
+            </Button>
+          ) : (
+            <Button type="button" variant="outline" asChild>
+              <Link href={editor.record ? `${base}/${editor.record.id}` : base}>إلغاء</Link>
+            </Button>
+          )}
           <Button type="submit" disabled={busy}>
             <Save size={16} />
             {busy ? 'جارٍ الحفظ...' : 'حفظ السجل'}

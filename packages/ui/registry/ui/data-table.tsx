@@ -1,4 +1,12 @@
-import { useEffect, useId, useRef, useState, type ComponentRef, type ReactNode } from 'react'
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ComponentRef,
+  type MouseEvent,
+  type ReactNode,
+} from 'react'
 import { InfiniteScroll, router, usePage } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
 import { tableFeatures, useTable } from '@tanstack/react-table'
@@ -33,7 +41,7 @@ import { useUiPreferences } from '~/components/ui/ui-preferences'
 import { Can } from '~/components/ui/can'
 import { Input } from '~/components/ui/input'
 import { ResourceActions } from '~/components/ui/resource-actions'
-import { rememberListView } from '~/components/ui/resource-surface'
+import { openRecord, rememberListView } from '~/components/ui/resource-surface'
 import { FieldControl, ResourceSelect } from '~/components/ui/resource-field'
 import {
   Command,
@@ -163,6 +171,14 @@ export function DataTable({
     URL.revokeObjectURL(href)
   }
   const refresh = () => router.visit(url, { preserveScroll: true })
+  // Records open in a dialog over this list, which stays mounted (#31); modified clicks
+  // (new tab, new window) keep the link's own behavior.
+  const overlay = (event: MouseEvent, id: string, mode: 'show' | 'edit') => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+      return
+    event.preventDefault()
+    void openRecord(resource.name, id, mode)
+  }
   const currentQuery = (): SavedViewQuery => {
     const view: SavedViewQuery = {}
     const text = query.get('search')
@@ -432,6 +448,7 @@ export function DataTable({
                           <Link
                             href={`/resources/${resource.name}/${id}`}
                             aria-label={`عرض السجل ${id}`}
+                            onClick={(event) => overlay(event, id, 'show')}
                           >
                             عرض
                           </Link>
@@ -441,6 +458,7 @@ export function DataTable({
                             <Link
                               href={`/resources/${resource.name}/${id}/edit`}
                               aria-label={`تعديل السجل ${id}`}
+                              onClick={(event) => overlay(event, id, 'edit')}
                             >
                               تعديل
                             </Link>
