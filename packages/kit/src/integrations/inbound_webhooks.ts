@@ -12,6 +12,8 @@ export type InboundSource = {
   signaturePrefix: string
   eventHeader: string
   deliveryHeader: string
+  /** Refuse a body already received from this source, whatever its delivery id or event. */
+  dedupeBody: boolean
   active: boolean
   createdAt: string
   lastReceivedAt: string | null
@@ -26,6 +28,7 @@ export type InboundSourceInput = {
   signaturePrefix?: unknown
   eventHeader?: unknown
   deliveryHeader?: unknown
+  dedupeBody?: unknown
   active?: unknown
 }
 export type InboundDelivery = {
@@ -40,6 +43,8 @@ export type InboundReceipt = { delivery: string; event: string; duplicate: boole
 
 /** Inbound payloads above this size are refused before verification. */
 export const INBOUND_BODY_LIMIT = 1024 * 1024
+/** Stored deliveries older than this are removed by pruneDeliveries(). */
+export const INBOUND_RETENTION_DAYS = 90
 const HEADER = /^[a-z0-9][a-z0-9-]{0,99}$/
 const KEY = /^[a-z][a-z0-9_]{0,59}$/
 
@@ -84,14 +89,45 @@ export class InboundWebhooks {
     return { source: this.present(row), secret }
   }
 
-  /** Updates the name, headers or state; the key and secret stay. */
+  /**
+   * Updates the fields given (name, algorithm, headers, body deduplication, state); fields
+   * left out keep their stored values. The key and secret stay.
+   */
   async update(id: number, input: InboundSourceInput) {
-    const values: Record<string, unknown> = this.validate(input, false)
+    const row = await this.db('inbound_sources').where('id', id).first()
+    if (!row) throw new KitError(404, 'E_INBOUND_NOT_FOUND', 'المصدر غير موجود')
+    const given = (value: unknown) => value !== undefined && value !== null
+    const algorithm = given(input.algorithm) ? input.algorithm : row.algorithm
+    // A new algorithm without a new prefix keeps a default prefix in step with it.
+    const prefix = given(input.signaturePrefix)
+      ? input.signaturePrefix
+      : given(input.algorithm) && row.signature_prefix === `${row.algorithm}=`
+        ? `${String(algorithm)}=`
+        : row.signature_prefix
+    const values: Record<string, unknown> = this.validate(
+      {
+        name: given(input.name) ? input.name : row.name,
+        algorithm,
+        signaturePrefix: prefix,
+        signatureHeader: given(input.signatureHeader)
+          ? input.signatureHeader
+          : row.signature_header,
+        eventHeader: given(input.eventHeader) ? input.eventHeader : row.event_header,
+        deliveryHeader: given(input.deliveryHeader) ? input.deliveryHeader : row.delivery_header,
+        dedupeBody: given(input.dedupeBody) ? input.dedupeBody : row.dedupe_body,
+      },
+      false
+    )
     delete values.key
-    const updated = await this.db('inbound_sources')
+    if (given(input.active) && typeof input.active !== 'boolean')
+      throw new KitError(422, 'E_INBOUND_ACTIVE', 'حالة الاستقبال يجب أن تكون صحيحاً أو خطأ')
+    await this.db('inbound_sources')
       .where('id', id)
-      .update({ ...values, active: input.active !== false, updated_at: this.db.fn.now() })
-    if (!updated) throw new KitError(404, 'E_INBOUND_NOT_FOUND', 'المصدر غير موجود')
+      .update({
+        ...values,
+        active: typeof input.active === 'boolean' ? input.active : row.active,
+        updated_at: this.db.fn.now(),
+      })
   }
 
   /** Issues a new secret; the old one stops verifying at once. */
@@ -129,6 +165,14 @@ export class InboundWebhooks {
       const value = request.headers[name.toLowerCase()]
       return Array.isArray(value) ? value[0] : value
     }
+    // GitHub offers form-encoded deliveries by default; only the JSON body is supported.
+    const contentType = (header('content-type') ?? '').toLowerCase()
+    if (contentType && !contentType.startsWith('application/json'))
+      throw new KitError(
+        415,
+        'E_INBOUND_CONTENT_TYPE',
+        'Set the webhook content type to application/json'
+      )
     const secret = this.secrets.open(String(source.secret))
     const signature = header(source.signature_header) ?? ''
     const expected = `${source.signature_prefix}${createHmac(
@@ -160,11 +204,15 @@ export class InboundWebhooks {
           id: randomUUID(),
           source_id: source.id,
           delivery_id: deliveryId,
+          // Senders sign the body only: a captured body replayed with another delivery id or
+          // event header is refused while the source deduplicates bodies (the default).
+          body_key: source.dedupe_body ? createHash('sha256').update(body).digest('hex') : null,
           event: eventName,
           payload: JSON.stringify(payload),
           event_id: eventId,
         })
-        .onConflict(['source_id', 'delivery_id'])
+        // Either the delivery id or the body key already seen for this source.
+        .onConflict()
         .ignore()
         .returning('id')
       if (!stored) return { delivery: deliveryId, event, duplicate: true }
@@ -226,6 +274,15 @@ export class InboundWebhooks {
     })
   }
 
+  /** Removes stored deliveries older than the retention period (90 days by default). */
+  async pruneDeliveries(days = INBOUND_RETENTION_DAYS) {
+    if (!Number.isSafeInteger(days) || days < 1)
+      throw new KitError(422, 'E_INBOUND_RETENTION', 'Retention must be at least one day')
+    return this.db('inbound_deliveries')
+      .where('received_at', '<', this.db.raw(`now() - (? * interval '1 day')`, [days]))
+      .delete()
+  }
+
   private envelope(source: string, delivery: string, event: string, body: unknown) {
     return { source, delivery, event, body }
   }
@@ -251,6 +308,9 @@ export class InboundWebhooks {
         throw new KitError(422, 'E_INBOUND_HEADER', `اسم ترويسة غير صالح: ${String(value)}`)
       return header
     }
+    const dedupeBody = input.dedupeBody === undefined ? true : input.dedupeBody
+    if (typeof dedupeBody !== 'boolean')
+      throw new KitError(422, 'E_INBOUND_DEDUPE', 'منع تكرار المحتوى يجب أن يكون صحيحاً أو خطأ')
     const prefix =
       input.signaturePrefix === undefined ? `${algorithm}=` : text(input.signaturePrefix)
     if (prefix.length > 20 || /[^\x21-\x7e]/.test(prefix))
@@ -266,6 +326,7 @@ export class InboundWebhooks {
       signature_prefix: prefix,
       event_header: headerValue(input.eventHeader, 'x-github-event'),
       delivery_header: headerValue(input.deliveryHeader, 'x-github-delivery'),
+      dedupe_body: dedupeBody,
     }
   }
 
@@ -279,6 +340,7 @@ export class InboundWebhooks {
       signaturePrefix: String(row.signature_prefix),
       eventHeader: String(row.event_header),
       deliveryHeader: String(row.delivery_header),
+      dedupeBody: Boolean(row.dedupe_body),
       active: Boolean(row.active),
       createdAt: new Date(row.created_at).toISOString(),
       lastReceivedAt: row.last_received_at ? new Date(row.last_received_at).toISOString() : null,

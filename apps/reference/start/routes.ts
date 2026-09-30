@@ -17,6 +17,7 @@ import redis from '@adonisjs/redis/services/main'
 import {
   apiThrottle,
   inboundThrottle,
+  inboundAddressThrottle,
   loginAddressThrottle,
   loginThrottle,
   oauthThrottle,
@@ -76,7 +77,9 @@ transmit.registerRoutes((route) => {
 router.mcp().use([middleware.auth(), apiThrottle, middleware.mcp()])
 
 // Signed inbound webhooks: no session or CSRF; the source secret authenticates (#30).
-router.post('/webhooks/in/:source', [InboundWebhooksController, 'receive']).use(inboundThrottle)
+router
+  .post('/webhooks/in/:source', [InboundWebhooksController, 'receive'])
+  .use([inboundAddressThrottle, inboundThrottle])
 
 router.get('/health', async ({ response }) => {
   try {

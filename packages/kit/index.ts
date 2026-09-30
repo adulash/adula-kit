@@ -69,6 +69,7 @@ export {
   InboundWebhooks,
   inboundEventName,
   INBOUND_BODY_LIMIT,
+  INBOUND_RETENTION_DAYS,
 } from './src/integrations/inbound_webhooks.js'
 export type {
   InboundSource,

@@ -57,6 +57,7 @@ export default class WebhooksController {
       'signaturePrefix',
       'eventHeader',
       'deliveryHeader',
+      'dedupeBody',
     ])
   }
 

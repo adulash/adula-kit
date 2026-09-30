@@ -29,6 +29,7 @@ type Draft = {
   signaturePrefix: string
   eventHeader: string
   deliveryHeader: string
+  dedupeBody: boolean
   active: boolean
 }
 const blank: Draft = {
@@ -39,6 +40,7 @@ const blank: Draft = {
   signaturePrefix: 'sha256=',
   eventHeader: 'x-github-event',
   deliveryHeader: 'x-github-delivery',
+  dedupeBody: true,
   active: true,
 }
 
@@ -249,6 +251,20 @@ export function InboundWebhooks({ sources }: { sources: InboundSource[] }) {
                 />
               </div>
             ))}
+            <div className="flex items-start gap-3 sm:col-span-2">
+              <Switch
+                id="inbound-dedupe"
+                checked={draft.dedupeBody}
+                onCheckedChange={(dedupeBody) => set({ dedupeBody })}
+              />
+              <div className="space-y-1">
+                <Label htmlFor="inbound-dedupe">رفض المحتوى المكرر</Label>
+                <p className="text-xs text-muted-foreground">
+                  يرفض أي محتوى سبق استلامه من هذا المصدر ولو بمعرّف استلام آخر، لأن المرسل يوقّع
+                  المحتوى وحده. أوقفه فقط إن كان المرسل يعيد المحتوى نفسه لأحداث مختلفة.
+                </p>
+              </div>
+            </div>
             {editing !== 'new' && (
               <div className="flex items-center gap-3">
                 <Switch
@@ -284,7 +300,9 @@ export function InboundWebhooks({ sources }: { sources: InboundSource[] }) {
           <DialogHeader>
             <DialogTitle>مفتاح التوقيع للمرسل</DialogTitle>
             <DialogDescription>
-              انسخ المفتاح الآن وضعه عند المرسل مع العنوان أدناه؛ لن يظهر مرة أخرى.
+              انسخ المفتاح الآن وضعه عند المرسل مع العنوان أدناه؛ لن يظهر مرة أخرى. اختر نوع
+              المحتوى <bdi dir="ltr">application/json</bdi> عند المرسل، فالصيغة الافتراضية في
+              GitHub لا تُقبل.
             </DialogDescription>
           </DialogHeader>
           {secret && (
