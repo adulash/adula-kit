@@ -11,7 +11,7 @@ export async function generateResource(root: string, name: string, module: strin
   const base = resolve(root, 'app/modules', module)
   const title = name.replace(/_/g, ' ')
   const relative = `app/modules/${module}`
-  const resourceSource = `import { defineResource } from '@adula/kit'\nimport Model from '#modules/${module}/models/${name}'\nimport { validator } from '#modules/${module}/validators/${name}'\n\nexport default defineResource({\n  name: '${name}', label: { ar: '${title}', en: '${title}' }, model: Model, scoped: true,\n  fields: { title: { type: 'string', label: { ar: 'العنوان', en: 'Title' }, required: true, searchable: true } },\n  list: ['title'], form: ['title'], show: ['title'],\n  actions: ['view', 'create', 'update', 'delete'], validator,\n})\n`
+  const resourceSource = `import { defineResource } from '@adula/kit'\nimport Model from '#modules/${module}/models/${name}'\nimport { validator } from '#modules/${module}/validators/${name}'\n\nexport default defineResource({\n  name: '${name}', label: { ar: '${title}', en: '${title}' },\n  recordLabel: { ar: '${title}', en: '${title}' }, model: Model, scoped: true,\n  fields: { title: { type: 'string', label: { ar: 'العنوان', en: 'Title' }, required: true, searchable: true } },\n  list: ['title'], form: ['title'], show: ['title'],\n  actions: ['view', 'create', 'update', 'delete'], validator,\n})\n`
   const migration = {
     name,
     scoped: true,

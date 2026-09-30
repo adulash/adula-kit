@@ -20,6 +20,9 @@ export function defineResource<const F extends Record<string, Field>>(
   identifier(input.name)
   if (typeof input.scoped !== 'boolean') throw new Error(`${input.name}: scoped must be explicit`)
   if (!input.label.ar || !input.label.en) throw new Error('Bilingual labels are required')
+  for (const optional of [input.recordLabel, input.createLabel])
+    if (optional && (!optional.ar || !optional.en))
+      throw new Error(`${input.name}: recordLabel and createLabel need Arabic and English`)
   for (const [key, field] of Object.entries(input.fields)) {
     columnName(key)
     identifier(field.column ?? columnName(key))
