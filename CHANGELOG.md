@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0 — unreleased
+
+Minor release: workspace and realtime changes decided in ADR 034 and later.
+
+* Realtime: the tabs of one browser share one notification stream (#36). Visible tabs
+  elect a leader with a Web Lock; the leader holds the stream and relays each signal to
+  the other tabs over a `BroadcastChannel`, and a waiting tab takes over when the
+  leader closes or stays hidden. Browsers without these APIs keep one stream per
+  visible tab. See ADR 034. Projects with a copied `notification-bell.tsx` need the
+  updated component.
+
 ## 1.1.0 — unreleased
 
 Minor release: additive APIs and additive kit migrations
