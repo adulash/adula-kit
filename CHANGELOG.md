@@ -131,6 +131,11 @@ Minor release: additive APIs and additive kit migrations
   Issuing and using a grant are recorded in the record's activity log. `UploadInput`
   gains the optional `grant`. See ADR 033 (#43). Projects with a copied
   `attachments_controller.ts` need the updated controller to use grants.
+* Generators: `node ace adula:resource:snapshot <name>` rewrites the definition
+  embedded in a resource's generated create-migration from the registered resource
+  while that migration is still pending. A migration that already ran is refused with
+  the advice to add an expand migration. `adula:resource` and the `resources.snapshots`
+  doctor check point to it (#20).
 
 ## 1.0.1 — unreleased
 
