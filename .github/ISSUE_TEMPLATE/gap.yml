@@ -1,25 +1,65 @@
 name: Kit gap
-description: Report a missing capability with a concrete consumer
-title: "GAP: "
+description: A capability the kit lacks. Describe the kit, not your project.
+labels: ["enhancement"]
 body:
-  - type: textarea
-    id: consumer
+  - type: markdown
     attributes:
-      label: Consumer and use case
-      description: Which application needs this? Include kit/UI versions without credentials or private records.
+      value: |
+        Report only what the kit itself should offer. Reproduce it on a new application
+        from `npm create @adula/app`, not on your project, and leave out project names,
+        records and credentials. `node ace adula:gaps report` opens this form prefilled
+        from your KIT_GAPS.md. A gap outside the kit's scope is closed as not planned.
+  - type: input
+    id: package
+    attributes:
+      label: Package
+      description: Package and version, for example `@adula/kit 1.0.0`.
     validations:
       required: true
   - type: textarea
-    id: behavior
+    id: needed
     attributes:
-      label: Expected and actual behavior
-      description: Include reproducible steps and the existing extension point you tried.
+      label: Needed by
+      description: The kit capability that is missing, stated without project details.
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: Tried
+      description: The kit extension points you tried.
+    validations:
+      required: true
+  - type: textarea
+    id: blocked
+    attributes:
+      label: Blocked because
+      description: Why none of them works.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed kit change
+      description: The API, option or fix the kit should offer.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Steps on a new application from create-app.
     validations:
       required: true
   - type: textarea
     id: acceptance
     attributes:
-      label: Acceptance evidence
-      description: What consumer and test would prove that this gap is closed?
+      label: Acceptance
+      description: The test that would prove the gap is closed.
     validations:
       required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround
+      description: What the project does meanwhile, or none.

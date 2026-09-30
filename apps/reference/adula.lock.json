@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "managedRules": "31de59c27e9ab9b0c6030a5170e3fe2b398ec3ead1496a98abef6111f7d55a6e",
+  "managedRules": "70410d2228a4f1d504d6160a30cce22b683b44f40b55882aa5d74f52e412742d",
   "skills": {
     ".agents/skills/adula-idea-review/SKILL.md": "9d462ffe5111424a8a7bd498df0be7503ed5f1884a0b97d6bbd4119b5d1039b8",
     ".agents/skills/adula-frontend-design/SKILL.md": "31fd57c7ce73f89c5f3a3f82cbffc75beb0c48f51255dc1345dad3cb297e5501",
