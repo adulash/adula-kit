@@ -13,6 +13,7 @@ import {
   buildAbility,
   findAttachment,
   pendingUploadCount,
+  redeemUploadGrant,
   registerUpload,
 } from '@adula/kit'
 import type { Actor, AttachmentRecord } from '@adula/kit'
@@ -33,29 +34,45 @@ export default class AttachmentsController {
   async store({ auth, request, response }: HttpContext) {
     const runtime = kit()
     const actor = await runtime.actors.load(auth.getUserOrFail().id)
-    const resourceName = request.input('resource')
-    const fieldName = request.input('field')
+    const knex = db.connection().getWriteClient()
+    // A grant issued by module code for one record replaces the resource-wide role rule.
+    const grantToken = request.input('grant')
+    const grant =
+      grantToken === undefined || grantToken === null || grantToken === ''
+        ? null
+        : await redeemUploadGrant(knex, runtime.registry, grantToken, actor.id)
+    if (grantToken && !grant)
+      throw new KitError(403, 'E_UPLOAD_GRANT', 'انتهت صلاحية إذن الرفع أو لا يخصك')
+    const resourceName = grant ? grant.resource : request.input('resource')
+    const fieldName = grant ? grant.field : request.input('field')
     if (
       typeof resourceName !== 'string' ||
       !runtime.registry.all().some((entry) => entry.name === resourceName)
     )
       throw new KitError(404, 'E_NOT_FOUND', 'الكيان غير موجود')
     const resource = runtime.registry.get(resourceName)
-    const field = typeof fieldName === 'string' ? resource.fields[fieldName] : undefined
-    if (!field || field.type !== 'attachment' || !resource.form.includes(fieldName))
+    const field =
+      typeof fieldName === 'string' && Object.hasOwn(resource.fields, fieldName)
+        ? resource.fields[fieldName]
+        : undefined
+    if (!field || field.type !== 'attachment' || (!grant && !resource.form.includes(fieldName)))
       throw new KitError(422, 'E_FIELD_INVALID', 'الحقل ليس حقل مرفقات')
-    const ability = buildAbility(actor.rules, runtime.registry.all())
-    const level = Math.max(field.permissionLevel ?? 0, resource.hidden?.includes(fieldName) ? 1 : 0)
-    const allowed =
-      actor.permissionLevel >= level &&
-      (['create', 'update'] as const).some(
-        (action) =>
-          resource.actions.includes(action) &&
-          ability.can(action, resource.name) &&
-          ability.can(action, resource.name, fieldName)
+    if (!grant) {
+      const ability = buildAbility(actor.rules, runtime.registry.all())
+      const level = Math.max(
+        field.permissionLevel ?? 0,
+        resource.hidden?.includes(fieldName) ? 1 : 0
       )
-    if (!allowed) throw new KitError(403, 'E_FORBIDDEN', 'ليس لديك صلاحية لرفع مرفق لهذا الحقل')
-    const knex = db.connection().getWriteClient()
+      const allowed =
+        actor.permissionLevel >= level &&
+        (['create', 'update'] as const).some(
+          (action) =>
+            resource.actions.includes(action) &&
+            ability.can(action, resource.name) &&
+            ability.can(action, resource.name, fieldName)
+        )
+      if (!allowed) throw new KitError(403, 'E_FORBIDDEN', 'ليس لديك صلاحية لرفع مرفق لهذا الحقل')
+    }
     // Unbound uploads are pruned after a day; cap them so one user cannot fill the disk.
     if ((await pendingUploadCount(knex, actor.id)) >= PENDING_UPLOAD_LIMIT)
       throw new KitError(
@@ -94,6 +111,7 @@ export default class AttachmentsController {
         uploadedBy: actor.id,
         resource: resource.name,
         field: fieldName,
+        grant,
       })
       return response.created({
         data: {

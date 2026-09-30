@@ -2,8 +2,10 @@
 
 ## 1.1.0 — unreleased
 
-Minor release: additive APIs and one additive kit migration
-(`1770000000011_kit_managed_assignments`). See ADR 029, 030 and 032.
+Minor release: additive APIs and additive kit migrations
+(`1770000000011_kit_managed_assignments`, `1770000000012_kit_role_keys`,
+`1770000000013_kit_notification_targets`, `1770000000014_kit_upload_grants`). See ADR 029,
+030, 032 and 033.
 
 * Resources: `ResourceService.systemSave()` writes a record for module code through the
   validator, hooks, lookup/relation/attachment checks, versioning and the audit trail,
@@ -80,6 +82,15 @@ Minor release: additive APIs and one additive kit migration
   description), so code that builds these objects itself needs them; `pnpm check:api`
   therefore also reports `Resource` and `createResourceController`. Projects with
   copied `resource-page` or `resource-form` need the updated components.
+* Attachments: `grantUpload()` lets module code allow one user to upload to one
+  attachment field of one record without a role rule, for ten minutes by default and
+  one hour at most (additive migration `1770000000014_kit_upload_grants`; only the token
+  hash is stored). The starter upload endpoint accepts the token as `grant` and takes
+  the grant's resource, field and unit; type, size and the pending-upload limit still
+  apply. The upload binds to the granted record only, through the module's own write.
+  Issuing and using a grant are recorded in the record's activity log. `UploadInput`
+  gains the optional `grant`. See ADR 033 (#43). Projects with a copied
+  `attachments_controller.ts` need the updated controller to use grants.
 
 ## 1.0.1 — unreleased
 
