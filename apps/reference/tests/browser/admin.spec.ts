@@ -336,6 +336,10 @@ test.group('Administration screens in the browser', (group) => {
     const page = await visit('/')
     await page.locator('[data-workspace-shell]').waitFor()
     await page.evaluate('window.__testShell = document.querySelector("[data-workspace-shell]")')
+    await page
+      .locator('aside')
+      .getByRole('link', { name: /^الإدارة/ })
+      .click()
     await page.getByRole('link', { name: 'الأدوار والصلاحيات', exact: true }).click()
     await page.getByRole('heading', { name: 'الأدوار والصلاحيات', exact: true }).waitFor()
     assert.isTrue(
@@ -350,6 +354,63 @@ test.group('Administration screens in the browser', (group) => {
       ),
       'none'
     )
+  })
+
+  test('the sidebar puts daily work first and keeps administration in one categorized entry', async ({
+    browserContext,
+    visit,
+    assert,
+  }) => {
+    const [failed] = await knex()('workflow_runs')
+      .insert({
+        id: randomUUID(),
+        resource: 'orders',
+        record_id: 1,
+        definition: 'sidebar_probe',
+        definition_version: 1,
+        snapshot: JSON.stringify({ value: 'start' }),
+        status: 'failed',
+      })
+      .returning('id')
+    try {
+      await browserContext.loginAs(admin)
+      const page = await visit('/')
+      const main = page.getByRole('navigation', { name: 'التنقل الرئيسي' })
+      await main.getByRole('link', { name: 'مهامي' }).waitFor()
+      // Approvals merged into My tasks; the overview has no duplicate home link.
+      assert.equal(await page.getByRole('link', { name: 'صندوق الموافقات' }).count(), 0)
+      assert.equal(await page.getByRole('link', { name: 'الصفحة الرئيسية' }).count(), 0)
+      // Administration is one entry outside the admin area, with a badge for failures.
+      assert.equal(await page.getByRole('link', { name: 'الأدوار والصلاحيات' }).count(), 0)
+      const entry = page.locator('aside').getByRole('link', { name: /^الإدارة/ })
+      await page.assertVisible(entry.getByLabel(/تنبيه إداري/))
+      await entry.click()
+      const areas = page.getByRole('navigation', { name: 'التنقل الإداري' })
+      for (const category of ['الأشخاص والصلاحيات', 'الإعدادات', 'المراقبة والتشغيل'])
+        await areas.getByRole('group', { name: category }).waitFor()
+      await areas
+        .getByRole('group', { name: 'المراقبة والتشغيل' })
+        .getByRole('link', {
+          name: 'تدفقات فاشلة',
+        })
+        .waitFor()
+
+      // A member without create rights sees neither imports nor administration.
+      await browserContext.clearCookies()
+      await browserContext.loginAs(member)
+      const plain = await visit('/')
+      await plain.getByRole('navigation', { name: 'التنقل الرئيسي' }).waitFor()
+      assert.equal(await plain.getByRole('link', { name: 'الاستيراد' }).count(), 0)
+      assert.equal(
+        await plain
+          .locator('aside')
+          .getByRole('link', { name: /^الإدارة/ })
+          .count(),
+        0
+      )
+    } finally {
+      await knex()('workflow_runs').where('id', failed.id).delete()
+    }
   })
 
   test('the bell shows the unread count and clears after mark-all-read', async ({

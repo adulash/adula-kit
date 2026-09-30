@@ -17,4 +17,11 @@ export type ResourceDescription = {
   scoped: boolean
   submittable: boolean
 }
-export type ResourceNavigation = { name: string; label: string; href: string; module: string }[]
+export type ResourceNavigation = {
+  name: string
+  label: string
+  href: string
+  module: string
+  /** Arabic module label, for grouping the navigation by module. */
+  moduleLabel: string
+}[]

@@ -546,14 +546,18 @@ export class WorkflowEngine {
   }
 
   /** Runs waiting for the actor's decision, newest first, on records they can still read. */
-  async inbox(actor: Actor) {
-    const rows = await this.db('workflow_runs as r')
+  /**
+   * Runs waiting for this user's decision, newest first (at most 100). `runIds` narrows the
+   * inbox to those runs, for pages that list their own rows (My tasks).
+   */
+  async inbox(actor: Actor, options: { runIds?: readonly string[] } = {}) {
+    if (options.runIds && !options.runIds.length) return []
+    const query = this.db('workflow_runs as r')
       .join('assignments as a', 'a.workflow_run_id', 'r.id')
       .where({ 'a.assignee_id': actor.id, 'a.status': 'open', 'r.status': 'waiting' })
       .whereRaw('a.workflow_step = r.current_step')
-      .orderBy('a.id', 'desc')
-      .limit(100)
-      .select('r.*')
+    if (options.runIds) query.whereIn('r.id', [...new Set(options.runIds)].slice(0, 100))
+    const rows = await query.orderBy('a.id', 'desc').limit(100).select('r.*')
     const runs: WorkflowRun[] = []
     for (const row of rows)
       if (await this.resources.permits(row.resource, Number(row.record_id), actor))

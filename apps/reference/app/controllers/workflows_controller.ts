@@ -19,10 +19,10 @@ export default class WorkflowsController {
     }
   }
 
+  /** JSON inbox for integrations; people decide from My tasks (#35), where pages redirect. */
   async inbox(ctx: HttpContext) {
-    const runs = await kit().workflows.inbox(await requestActor(ctx))
-    if (wantsJson(ctx)) return { data: runs }
-    return ctx.inertia.render('work/approvals', { runs })
+    if (!wantsJson(ctx)) return ctx.response.redirect('/my-tasks?tab=approvals')
+    return { data: await kit().workflows.inbox(await requestActor(ctx)) }
   }
 
   async decide(ctx: HttpContext) {
