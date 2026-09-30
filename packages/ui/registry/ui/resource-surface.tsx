@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { router } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
+import axios from 'axios'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,
@@ -46,6 +47,89 @@ function listReturn(backHref: string): ListReturn | null {
   return null
 }
 
+/**
+ * A record opened over the list it belongs to (#31): the list stays mounted, keeps its
+ * query, loaded pages and scroll, and the URL names the record so it can be shared or
+ * reloaded as a standalone page.
+ */
+export type RecordOverlay = {
+  /** The record's view or edit form, as served by GET /resources/:resource/:id/view. */
+  view: unknown
+  /** The list URL to return to. */
+  list: string
+  /** The record that opened the dialog, for focus return. */
+  record: string
+  /** Set after a save or action, so closing refreshes the list rows. */
+  changed?: boolean
+}
+type OverlayPage = Record<string, unknown> & { overlay?: RecordOverlay }
+
+/**
+ * Opens a record in a dialog over the current generic list without leaving it. Page
+ * overrides can call it for their own rows. Resources with their own record pages, and
+ * failures, fall back to a normal visit.
+ */
+export async function openRecord(
+  resource: string,
+  id: string | number,
+  mode: 'show' | 'edit' = 'show',
+  options: { replace?: boolean; changed?: boolean } = {}
+) {
+  const href = `/resources/${resource}/${id}${mode === 'edit' ? '/edit' : ''}`
+  let data: { view: unknown; childrenData?: unknown; activity?: unknown }
+  try {
+    const response = await axios.get(`/resources/${resource}/${id}/view`, {
+      params: mode === 'edit' ? { mode } : {},
+      headers: { Accept: 'application/json' },
+    })
+    data = response.data
+  } catch {
+    router.visit(href)
+    return
+  }
+  const list = window.location.pathname + window.location.search
+  const visit = options.replace ? router.replace.bind(router) : router.push.bind(router)
+  visit({
+    url: href,
+    props: (current: OverlayPage) => ({
+      ...current,
+      childrenData: data.childrenData,
+      activity: data.activity,
+      overlay: {
+        view: data.view,
+        list: options.replace ? (current.overlay?.list ?? list) : list,
+        record: options.replace ? (current.overlay?.record ?? href) : href,
+        changed: Boolean(options.changed || (options.replace && current.overlay?.changed)),
+      },
+    }),
+    preserveState: true,
+    preserveScroll: true,
+  })
+}
+
+/** Closes a record dialog opened by openRecord and returns to its list, refreshed if changed. */
+export function closeRecord(overlay: RecordOverlay) {
+  if (overlay.changed) {
+    // Replace the record's history entry, so Back does not reopen a record that changed.
+    router.visit(overlay.list, {
+      replace: true,
+      preserveScroll: true,
+      onSuccess: () => restoreFocus(overlay.record),
+    })
+    return
+  }
+  router.replace({
+    url: overlay.list,
+    props: (current: OverlayPage) => {
+      const { overlay: _closed, childrenData: _children, activity: _activity, ...rest } = current
+      return rest
+    },
+    preserveState: true,
+    preserveScroll: true,
+    onSuccess: () => restoreFocus(overlay.record),
+  })
+}
+
 /** Return focus to the control that opened the record, else to the page heading without a ring. */
 function restoreFocus(record: string | undefined) {
   const trigger = record
@@ -66,6 +150,7 @@ export function ResourceSurface({
   backHref,
   presentation = 'dialog',
   mode,
+  onClose,
   children,
 }: {
   title: string
@@ -73,6 +158,8 @@ export function ResourceSurface({
   backHref: string
   presentation?: ResourcePresentation
   mode?: 'view' | 'edit'
+  /** Replaces the default return visit, for dialogs opened over a mounted list. */
+  onClose?: () => void
   children: ReactNode
 }) {
   const [open, setOpen] = useState(true)
@@ -101,6 +188,7 @@ export function ResourceSurface({
           setOpen(false)
           closeTimer.current = setTimeout(
             () => {
+              if (onClose) return onClose()
               // Return to the list view the record was opened from: same query and scroll.
               const saved = listReturn(backHref)
               router.visit(saved?.href ?? backHref, {

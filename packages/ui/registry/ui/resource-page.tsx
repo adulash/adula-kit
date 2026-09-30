@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react'
+import { Head, usePage } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
 import { Plus } from 'lucide-react'
 import type {
@@ -17,7 +17,13 @@ import { DataTable } from '~/components/ui/data-table'
 import { ResourceForm } from '~/components/ui/resource-form'
 import { ResourceShow } from '~/components/ui/resource-show'
 import { ResourceImport } from '~/components/ui/resource-import'
-import { ResourceSurface, type ResourcePresentation } from '~/components/ui/resource-surface'
+import {
+  ResourceSurface,
+  closeRecord,
+  openRecord,
+  type RecordOverlay,
+  type ResourcePresentation,
+} from '~/components/ui/resource-surface'
 
 /** The discriminated view stays nested: Inertia's page typing flattens top-level unions. */
 export type ResourceView =
@@ -44,6 +50,58 @@ export type ResourcePageProps = {
   /** Set to page only when the user requests a non-modal form/detail override. */
   presentation?: ResourcePresentation
 }
+type RecordView = Exclude<ResourceView, { mode: 'index' }>
+
+/** Title of a record dialog: «إضافة حساب», «تعديل · الحسابات» or «تفاصيل · الحسابات». */
+function recordTitle(view: RecordView) {
+  if (view.mode === 'show') return `تفاصيل · ${view.resource.label}`
+  const verb = view.editor.mode === 'create' ? 'إضافة' : 'تعديل'
+  // A singular record noun («حساب») reads better than the plural list label (#37).
+  return view.editor.recordLabel
+    ? `${verb} ${view.editor.recordLabel}`
+    : `${verb} · ${view.editor.label}`
+}
+
+function RecordBody({
+  view,
+  childrenData,
+  activity,
+  onSaved,
+  onCancel,
+  onEdit,
+  onAction,
+}: {
+  view: RecordView
+  childrenData?: ResourceChildren
+  activity?: ResourceActivity
+  onSaved?: (id: number) => void
+  onCancel?: () => void
+  onEdit?: () => void
+  onAction?: (action: string) => void
+}) {
+  return view.mode === 'form' ? (
+    <ResourceForm
+      key={`${view.editor.name}:${view.editor.record?.id ?? 'new'}`}
+      editor={view.editor}
+      permissions={view.permissions}
+      onSaved={onSaved}
+      onCancel={onCancel}
+      onAction={onAction}
+    />
+  ) : (
+    <ResourceShow
+      key={`${view.resource.name}:${view.result.data.id}`}
+      resource={view.resource}
+      result={view.result}
+      lookups={view.lookups}
+      childResources={view.childResources}
+      childrenData={childrenData}
+      activity={activity}
+      onEdit={onEdit}
+      onAction={onAction}
+    />
+  )
+}
 
 export function ResourcePage({
   view,
@@ -52,23 +110,21 @@ export function ResourcePage({
   activity,
   presentation,
 }: ResourcePageProps) {
+  // A record opened over this list by openRecord(); a client-only prop, never sent by the server.
+  const overlay = usePage<{ overlay?: RecordOverlay }>().props.overlay
   const name = view.mode === 'form' ? view.editor.name : view.resource.name
   const label = view.mode === 'form' ? view.editor.label : view.resource.label
-  // A singular record noun («حساب») reads better than the plural list label (#37).
-  const noun = view.mode === 'form' ? view.editor.recordLabel : view.resource.recordLabel
-  const verb = view.mode === 'form' && view.editor.mode === 'create' ? 'إضافة' : 'تعديل'
-  const title =
-    view.mode === 'index'
-      ? label
-      : view.mode === 'form'
-        ? noun
-          ? `${verb} ${noun}`
-          : `${verb} · ${label}`
-        : `تفاصيل · ${label}`
+  const title = view.mode === 'index' ? label : recordTitle(view)
+  const noun = view.mode === 'index' ? view.resource.recordLabel : null
   const createText =
     view.mode === 'index'
       ? (view.resource.createLabel ?? (noun ? `إضافة ${noun}` : 'إضافة سجل'))
       : ''
+  const overlayView = view.mode === 'index' ? (overlay?.view as RecordView | undefined) : undefined
+  const overlayRecord =
+    overlayView?.mode === 'form' ? overlayView.editor.record?.id : overlayView?.result.data.id
+  const overlayId =
+    overlayRecord === undefined || overlayRecord === null ? undefined : String(overlayRecord)
   return (
     <>
       <Head title={title} />
@@ -94,18 +150,52 @@ export function ResourcePage({
         </div>
       )}
       {view.mode === 'index' ? (
-        result ? (
-          <DataTable
-            key={name}
-            resource={view.resource}
-            result={result}
-            lookups={view.lookups}
-            savedViews={view.savedViews}
-          />
-        ) : null
+        <>
+          {result ? (
+            <DataTable
+              key={name}
+              resource={view.resource}
+              result={result}
+              lookups={view.lookups}
+              savedViews={view.savedViews}
+            />
+          ) : null}
+          {overlay && overlayView && overlayId !== undefined && (
+            // Keyed by record, so saving an edit switches the same dialog to the details.
+            <ResourceSurface
+              key={`overlay:${name}:${overlayId}`}
+              mode={overlayView.mode === 'form' ? 'edit' : 'view'}
+              title={recordTitle(overlayView)}
+              description={
+                overlayView.mode === 'form'
+                  ? 'أكمل الحقول المطلوبة ثم احفظ السجل.'
+                  : 'راجع التفاصيل المتاحة لك وأكمل عملك.'
+              }
+              backHref={overlay.list}
+              onClose={() => closeRecord(overlay)}
+            >
+              <RecordBody
+                view={overlayView}
+                childrenData={childrenData}
+                activity={activity}
+                onSaved={(id) =>
+                  void openRecord(name, id, 'show', { replace: true, changed: true })
+                }
+                onCancel={() => void openRecord(name, overlayId, 'show', { replace: true })}
+                onEdit={() => void openRecord(name, overlayId, 'edit', { replace: true })}
+                onAction={(action) =>
+                  action === 'delete'
+                    ? closeRecord({ ...overlay, changed: true })
+                    : void openRecord(name, overlayId, 'show', { replace: true, changed: true })
+                }
+              />
+            </ResourceSurface>
+          )}
+        </>
       ) : (
         <ResourceSurface
-          key={`${name}:${view.mode}:${view.mode === 'form' ? (view.editor.record?.id ?? 'new') : view.result.data.id}`}
+          // Keyed by record, not mode: saving an edit shows the details in the same dialog.
+          key={`${name}:${view.mode === 'form' ? (view.editor.record?.id ?? 'new') : view.result.data.id}`}
           mode={view.mode === 'form' ? 'edit' : 'view'}
           title={title}
           description={
@@ -116,23 +206,7 @@ export function ResourcePage({
           backHref={`/resources/${name}`}
           presentation={presentation}
         >
-          {view.mode === 'form' ? (
-            <ResourceForm
-              key={`${name}:${view.editor.record?.id ?? 'new'}`}
-              editor={view.editor}
-              permissions={view.permissions}
-            />
-          ) : (
-            <ResourceShow
-              key={`${name}:${view.result.data.id}`}
-              resource={view.resource}
-              result={view.result}
-              lookups={view.lookups}
-              childResources={view.childResources}
-              childrenData={childrenData}
-              activity={activity}
-            />
-          )}
+          <RecordBody view={view} childrenData={childrenData} activity={activity} />
         </ResourceSurface>
       )}
     </>
