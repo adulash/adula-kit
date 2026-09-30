@@ -238,6 +238,14 @@ test.group('Workflow engine', (group) => {
       inbox.map((entry) => entry.id),
       [run.id]
     )
+    // A page of My tasks asks only for its own rows' runs.
+    const page = await workflows.inbox(manager, { runIds: [run.id] })
+    assert.deepEqual(
+      page.map((entry) => entry.id),
+      [run.id]
+    )
+    assert.lengthOf(await workflows.inbox(manager, { runIds: [] }), 0)
+    assert.lengthOf(await workflows.inbox(director, { runIds: [run.id] }), 0)
     // My tasks lists the same approval, decidable in place (#35).
     const decisions = await assignments().mine(manager, { kind: 'approval' })
     assert.equal(decisions.approvals, 1)

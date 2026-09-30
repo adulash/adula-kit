@@ -95,6 +95,15 @@ test.group('Two-level order approval workflow over HTTP', (group) => {
     assert.isTrue(approval.canDecide)
     assert.equal(approval.recordId, id)
     assert.equal(approval.title, 'موافقة مدير القسم')
+    // The decision form comes with the page, and with "load more" JSON pages (#35).
+    assert.equal(tasks.body().props.decisions[approval.workflowRunId].id, approval.workflowRunId)
+    const jsonPage = await client
+      .get('/my-tasks')
+      .qs({ tab: 'approvals' })
+      .loginAs(manager)
+      .header('Accept', 'application/json')
+    jsonPage.assertStatus(200)
+    assert.property(jsonPage.body().decisions, approval.workflowRunId)
     const inbox = await client
       .get('/approvals')
       .loginAs(manager)

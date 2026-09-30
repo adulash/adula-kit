@@ -1,5 +1,5 @@
 import { createHmac, randomUUID } from 'node:crypto'
-import { readFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { Readable } from 'node:stream'
 import app from '@adonisjs/core/services/app'
 import db from '@adonisjs/lucid/services/db'
@@ -76,16 +76,32 @@ export async function probeStorage() {
     await disk.delete(path)
   }
 }
+/** Identity file contents by path, reused while the file's size and mtime are unchanged. */
+const identityFiles = new Map<string, { key: string; text: string }>()
+async function identitySource(path: string) {
+  const file = app.makePath(path)
+  let key: string
+  try {
+    const info = await stat(file)
+    key = `${info.size}:${info.mtimeMs}`
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return ''
+    throw error
+  }
+  const cached = identityFiles.get(path)
+  if (cached?.key === key) return cached.text
+  const text = await readFile(file, 'utf8')
+  identityFiles.set(path, { key, text })
+  return text
+}
+
+/**
+ * The approved identity's fingerprint. The shell asks on every administrator page
+ * (setupPending), so the files are re-read only when they change.
+ */
 export async function identityFingerprint() {
   const sources = await Promise.all(
-    ['docs/design-identity.md', 'inertia/css/brand.css', 'inertia/brand.ts'].map(async (path) => {
-      try {
-        return await readFile(app.makePath(path), 'utf8')
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') return ''
-        throw error
-      }
-    })
+    ['docs/design-identity.md', 'inertia/css/brand.css', 'inertia/brand.ts'].map(identitySource)
   )
   return fingerprint([await identity(), ...sources])
 }

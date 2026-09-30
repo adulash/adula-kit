@@ -45,6 +45,8 @@ export default function MyTasks({ assignments, tab, decisions }: Props) {
   const formatDateTime = useDateTimeFormatter()
   const { calendar } = useUiPreferences()
   const [rows, setRows] = useState(assignments.data)
+  // Runs for the decision dialog, merged as "load more" pages arrive.
+  const [runs, setRuns] = useState(decisions)
   const [cursor, setCursor] = useState(assignments.nextCursor)
   const [busy, setBusy] = useState<number | null>(null)
   const [error, setError] = useState('')
@@ -58,15 +60,19 @@ export default function MyTasks({ assignments, tab, decisions }: Props) {
   useEffect(() => {
     setRows(assignments.data)
     setCursor(assignments.nextCursor)
-  }, [assignments])
+    setRuns(decisions)
+  }, [assignments, decisions])
   const today = new Date().toISOString().slice(0, 10)
   const more = async () => {
     if (!cursor) return
-    const response = await axios.get<AssignmentPage>('/my-tasks', {
+    const response = await axios.get<
+      AssignmentPage & { decisions: Record<string, WorkflowRun> }
+    >('/my-tasks', {
       params: { cursor, tab },
       headers: { Accept: 'application/json' },
     })
     setRows((current) => [...current, ...response.data.data])
+    setRuns((current) => ({ ...current, ...response.data.decisions }))
     setCursor(response.data.nextCursor)
   }
   const reload = () => router.reload({ only: ['assignments', 'decisions', 'openTasks'] })
@@ -207,8 +213,8 @@ export default function MyTasks({ assignments, tab, decisions }: Props) {
                   <Link href={`/resources/${item.resource}/${item.recordId}`}>فتح السجل</Link>
                 </Button>
               )}
-              {item.canDecide && item.workflowRunId && decisions[item.workflowRunId] && (
-                <WorkflowDecision run={decisions[item.workflowRunId]} onDecided={reload} />
+              {item.canDecide && item.workflowRunId && runs[item.workflowRunId] && (
+                <WorkflowDecision run={runs[item.workflowRunId]} onDecided={reload} />
               )}
             </div>
           </li>

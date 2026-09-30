@@ -30,12 +30,14 @@ export default class AssignmentsController {
         ...tabs[tab],
         cursor: ctx.request.input('cursor'),
       })
-      if (wantsJson(ctx)) return page
-      // Decision steps name their outcomes on the run; the inbox applies the same checks.
-      const inbox = page.data.some((item) => item.canDecide)
-        ? await kit().workflows.inbox(actor)
-        : []
-      const decisions = Object.fromEntries(inbox.map((run) => [run.id, run]))
+      // Decision steps name their outcomes on the run: load the runs of this page's rows,
+      // for the first page and for every "load more" page alike.
+      const runIds = page.data
+        .filter((item) => item.canDecide && item.workflowRunId)
+        .map((item) => item.workflowRunId!)
+      const runs = await kit().workflows.inbox(actor, { runIds })
+      const decisions = Object.fromEntries(runs.map((run) => [run.id, run]))
+      if (wantsJson(ctx)) return { ...page, decisions }
       return ctx.inertia.render('work/my_tasks', { assignments: page, tab, decisions })
     })
   }
