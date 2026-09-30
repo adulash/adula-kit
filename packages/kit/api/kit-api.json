@@ -574,7 +574,7 @@
     },
     "redeemUploadGrant": {
       "kind": "FunctionDeclaration",
-      "type": "(db: Knex<any, any[]>, token: unknown, userId: number) => Promise<RedeemedUploadGrant | null>"
+      "type": "(db: Knex<any, any[]>, registry: Pick<ResourceRegistry, \"all\" | \"get\">, token: unknown, userId: number) => Promise<RedeemedUploadGrant | null>"
     },
     "registerUpload": {
       "kind": "FunctionDeclaration",

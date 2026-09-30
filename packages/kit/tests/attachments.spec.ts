@@ -42,9 +42,25 @@ const document = defineResource({
   actions: ['view', 'create', 'update', 'delete'],
   validator: { validate: async (data) => data as RecordData },
 })
+const report = defineResource({
+  name: 'reports',
+  label: { ar: 'التقارير', en: 'Reports' },
+  model: customer.model,
+  scoped: true,
+  submittable: true,
+  fields: {
+    title: { type: 'string', required: true, label: { ar: 'العنوان', en: 'Title' } },
+    evidence: { type: 'attachment', label: { ar: 'الدليل', en: 'Evidence' } },
+  },
+  list: ['title'],
+  form: ['title', 'evidence'],
+  show: ['title', 'evidence'],
+  actions: ['view', 'create', 'update', 'delete', 'submit', 'cancel'],
+  validator: { validate: async (data) => data as RecordData },
+})
 const registry = new ResourceRegistry().register([
   { name: 'customers', label: customer.label, dependsOn: [], resources: [customer] },
-  { name: 'documents', label: document.label, dependsOn: [], resources: [document] },
+  { name: 'documents', label: document.label, dependsOn: [], resources: [document, report] },
 ])
 const clerk: Actor = {
   id: 2,
@@ -112,6 +128,7 @@ test.group('Attachment ownership and hydration', (group) => {
   group.setup(async () => {
     await setup()
     await createResourceTable(db, document)
+    await createResourceTable(db, report)
   })
 
   test('registerUpload validates disk keys and metadata before inserting', async ({ assert }) => {
@@ -335,10 +352,10 @@ test.group('Attachment ownership and hydration', (group) => {
     assert.equal(Number(issued.actor_id), admin.id)
 
     // Another user, a malformed token and an expired grant redeem to nothing.
-    assert.isNull(await redeemUploadGrant(db, grant.token, admin.id))
-    assert.isNull(await redeemUploadGrant(db, 'x'.repeat(43), inspector.id))
-    assert.isNull(await redeemUploadGrant(db, { token: grant.token }, inspector.id))
-    const redeemed = await redeemUploadGrant(db, grant.token, inspector.id)
+    assert.isNull(await redeemUploadGrant(db, registry, grant.token, admin.id))
+    assert.isNull(await redeemUploadGrant(db, registry, 'x'.repeat(43), inspector.id))
+    assert.isNull(await redeemUploadGrant(db, registry, { token: grant.token }, inspector.id))
+    const redeemed = await redeemUploadGrant(db, registry, grant.token, inspector.id)
     assert.deepEqual(redeemed, {
       id: Number(storedGrant.id),
       resource: 'documents',
@@ -396,9 +413,40 @@ test.group('Attachment ownership and hydration', (group) => {
 
     // Grants expire and are pruned.
     await db('upload_grants').update({ expires_at: db.raw("now() - interval '1 second'") })
-    assert.isNull(await redeemUploadGrant(db, grant.token, inspector.id))
+    assert.isNull(await redeemUploadGrant(db, registry, grant.token, inspector.id))
     assert.isAtLeast(Number(await pruneUploadGrants(db)), 1)
     assert.lengthOf(await db('upload_grants'), 0)
+  })
+
+  test('grants follow the record: none for locked or deleted records, none redeemed after', async ({
+    assert,
+  }) => {
+    const inspector = 2
+    const draft = await service.save('reports', admin, { title: 'مسودة', orgUnitId: 2 })
+    const submitted = await service.save('reports', admin, { title: 'معتمد', orgUnitId: 2 })
+    await db('reports').where('id', Number(submitted.id)).update({ doc_status: 1 })
+    const cancelled = await service.save('reports', admin, { title: 'ملغى', orgUnitId: 2 })
+    await db('reports').where('id', Number(cancelled.id)).update({ doc_status: 2 })
+    const deleted = await service.save('documents', admin, { title: 'محذوف', orgUnitId: 2 })
+    await db('documents').where('id', Number(deleted.id)).update({ deleted_at: db.fn.now() })
+    const grant = (resource: string, recordId: number, field: string) =>
+      grantUpload(db, registry, { resource, recordId, field, userId: inspector })
+    for (const id of [submitted.id, cancelled.id])
+      await assert.rejects(() => grant('reports', Number(id), 'evidence'), /معتمد أو ملغى/)
+    await assert.rejects(() => grant('documents', Number(deleted.id), 'file'), /السجل غير موجود/)
+
+    // A grant issued for a draft stops redeeming once the document is submitted or deleted,
+    // and redeems the record's current unit after the record moves.
+    const issued = await grant('reports', Number(draft.id), 'evidence')
+    await db('reports').where('id', Number(draft.id)).update({ org_unit_id: 4 })
+    const moved = await redeemUploadGrant(db, registry, issued.token, inspector)
+    assert.equal(moved?.orgUnitId, 4)
+    await db('reports').where('id', Number(draft.id)).update({ doc_status: 1 })
+    assert.isNull(await redeemUploadGrant(db, registry, issued.token, inspector))
+    await db('reports')
+      .where('id', Number(draft.id))
+      .update({ doc_status: 0, deleted_at: db.fn.now() })
+    assert.isNull(await redeemUploadGrant(db, registry, issued.token, inspector))
   })
 
   test('replacing and clearing release the previous upload while keeping its metadata', async ({

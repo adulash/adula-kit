@@ -40,7 +40,7 @@ export default class AttachmentsController {
     const grant =
       grantToken === undefined || grantToken === null || grantToken === ''
         ? null
-        : await redeemUploadGrant(knex, grantToken, actor.id)
+        : await redeemUploadGrant(knex, runtime.registry, grantToken, actor.id)
     if (grantToken && !grant)
       throw new KitError(403, 'E_UPLOAD_GRANT', 'انتهت صلاحية إذن الرفع أو لا يخصك')
     const resourceName = grant ? grant.resource : request.input('resource')

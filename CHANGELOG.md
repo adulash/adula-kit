@@ -2,8 +2,10 @@
 
 ## 1.1.0 — unreleased
 
-Minor release: additive APIs and one additive kit migration
-(`1770000000011_kit_managed_assignments`). See ADR 029, 030 and 032.
+Minor release: additive APIs and additive kit migrations
+(`1770000000011_kit_managed_assignments`, `1770000000012_kit_role_keys`,
+`1770000000013_kit_notification_targets`, `1770000000014_kit_upload_grants`). See ADR 029,
+030, 032 and 033.
 
 * Resources: `ResourceService.systemSave()` writes a record for module code through the
   validator, hooks, lookup/relation/attachment checks, versioning and the audit trail,

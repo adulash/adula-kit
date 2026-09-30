@@ -18,13 +18,18 @@ endpoint in the module would duplicate kit security code.
    `upload_grants` table (additive kit migration `1770000000014_kit_upload_grants`).
    A submitted or cancelled document refuses grants. Issuing one is recorded in the
    record's activity log (`upload_granted`, by `actorId`).
-2. **The grant replaces the role rule of the upload, nothing else.** The host passes the
-   token as `grant` with the upload; `redeemUploadGrant` returns the grant only while it is
-   unexpired and held by the signed-in user. The upload then takes the grant's resource,
-   field and organization unit, whatever the request names. File type and size
-   (`attachmentPolicy`), the pending-upload limit, private unbound downloads and pruning
-   apply as for any upload. The upload is recorded as `upload_via_grant`. A grant may be
-   used several times until it expires; each upload counts toward the pending limit.
+2. **The grant replaces the upload's authorization.** The host passes the token as `grant`
+   with the upload; `redeemUploadGrant` returns the grant only while it is unexpired, held
+   by the signed-in user, and its record is still live and, for documents, a draft. The
+   upload then takes the grant's resource and field, whatever the request names, and the
+   record's current organization unit. The grant replaces the role rule and also the
+   field's permission level, its hidden level and its membership in the generic form:
+   module pages often keep such a field off the generic form or hidden, and the binding
+   write (`systemSave`) does not apply field levels either. Only the attachment type of the
+   field is required. File type and size (`attachmentPolicy`), the pending-upload limit,
+   private unbound downloads and pruning apply as for any upload. The upload is recorded
+   as `upload_via_grant`. A grant may be used several times until it expires; each upload
+   counts toward the pending limit.
 3. **A granted upload binds to the granted record only.** `registerUpload` marks it with
    the grant and ignores such a mark from any other caller. `claimAttachment` refuses to
    bind it to another record or to a record being created. Binding still happens in the
@@ -39,7 +44,11 @@ endpoint in the module would duplicate kit security code.
   other changes are additions.
 - The starter `AttachmentsController` accepts `grant`; projects that copied it need the
   change to use grants. Without a `grant` the behavior is unchanged.
+- `redeemUploadGrant(db, registry, token, userId)` needs the registry to re-check the
+  record at upload time.
 - Kit tests on PostgreSQL cover issuing, redemption by another user, expiry, the field
-  and unit taken from the grant, forged marks and binding to another or a new record. The
+  and unit taken from the grant, forged marks, binding to another or a new record, grants
+  refused for submitted, cancelled and deleted records, and redemption after the record
+  is submitted, deleted or moved to another unit. The
   reference HTTP test uploads with a grant as a user without any role, and binds the file
   through `systemSave`.

@@ -35,10 +35,10 @@ const hash = (token: string) => createHash('sha256').update(token).digest('hex')
 /**
  * Lets one user upload a file for one attachment field of one existing record, when module
  * code has authorized that user itself (for example the inspector of a visit) and the role
- * rules grant no generic right. Only the token hash is stored. The grant bypasses the role
- * rule of the upload only: type, size, the pending-upload limit, ownership and binding
- * through the record write stay as for any upload, and the upload can bind to this record
- * only. Issuing it is recorded in the record's activity log. Call it from module code after
+ * rules grant no generic right. Only the token hash is stored. The grant replaces the
+ * upload's authorization (the role rule, the field's permission and hidden levels and form
+ * membership); type, size, the pending-upload limit, ownership and binding through the
+ * record write stay as for any upload, and the upload can bind to this record only. Issuing it is recorded in the record's activity log. Call it from module code after
  * the module's own authorization, never on a user's word alone.
  */
 export async function grantUpload(
@@ -99,9 +99,13 @@ export async function grantUpload(
   return { token, expiresAt: expiresAt.toISOString() }
 }
 
-/** The grant a token names, while it is unexpired and held by this user; otherwise null. */
+/**
+ * The grant a token names, while it is unexpired, held by this user, and its record is still
+ * live and, for documents, a draft; otherwise null. The unit is the record's current unit.
+ */
 export async function redeemUploadGrant(
   db: Knex,
+  registry: Pick<ResourceRegistry, 'all' | 'get'>,
   token: unknown,
   userId: number
 ): Promise<RedeemedUploadGrant | null> {
@@ -110,13 +114,23 @@ export async function redeemUploadGrant(
     .where({ token_hash: hash(token), user_id: userId })
     .where('expires_at', '>', db.fn.now())
     .first()
-  if (!row) return null
+  if (!row || !registry.all().some((entry) => entry.name === row.resource)) return null
+  const resource = registry.get(String(row.resource))
+  const record = await db(resource.name)
+    .where('id', row.record_id)
+    .whereNull('deleted_at')
+    .first([
+      'id',
+      ...(resource.scoped ? ['org_unit_id'] : []),
+      ...(resource.submittable ? ['doc_status'] : []),
+    ])
+  if (!record || (resource.submittable && Number(record.doc_status) !== 0)) return null
   return {
     id: Number(row.id),
-    resource: String(row.resource),
+    resource: resource.name,
     recordId: Number(row.record_id),
     field: String(row.field),
-    orgUnitId: row.org_unit_id === null ? null : Number(row.org_unit_id),
+    orgUnitId: resource.scoped && record.org_unit_id !== null ? Number(record.org_unit_id) : null,
   }
 }
 
