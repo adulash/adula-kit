@@ -498,7 +498,19 @@
     },
     "Module": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ name: string; reference?: boolean | undefined; label: Label; dependsOn: readonly string[]; resources: readonly Resource[]; workflows?: readonly WorkflowDefinition[] | undefined; }"
+      "type": "{ name: string; reference?: boolean | undefined; label: Label; dependsOn: readonly string[]; resources: readonly Resource[]; workflows?: readonly WorkflowDefinition[] | undefined; lookups?: Readonly<Record<string, readonly ModuleLookup[]>> | undefined; defaultRoles?: readonly ModuleRole[] | undefined; }"
+    },
+    "ModuleLookup": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key: string; label: Label; sort?: number | undefined; }"
+    },
+    "ModuleRole": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key: string; name: string; permissionLevel?: number | undefined; rules: readonly { subject: string; action: string; inverted?: boolean | undefined; conditions?: Conditions | null | undefined; fields?: string[] | null | undefined; }[]; }"
+    },
+    "ModuleSeedResult": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ lookups: number; created: string[]; adopted: string[]; kept: string[]; }"
     },
     "moveOrgUnit": {
       "kind": "FunctionDeclaration",
@@ -759,6 +771,10 @@
     "SecretBox": {
       "kind": "TypeAliasDeclaration",
       "type": "{ seal(value: string): string; open(value: string): string | null; }"
+    },
+    "seedModules": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>, registry: ResourceRegistry, actorId: number) => Promise<ModuleSeedResult>"
     },
     "selectedFields": {
       "kind": "FunctionDeclaration",
@@ -1030,7 +1046,15 @@
     },
     "Module": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ name: string; reference?: boolean | undefined; label: Label; dependsOn: readonly string[]; resources: readonly Resource[]; workflows?: readonly WorkflowDefinition[] | undefined; }"
+      "type": "{ name: string; reference?: boolean | undefined; label: Label; dependsOn: readonly string[]; resources: readonly Resource[]; workflows?: readonly WorkflowDefinition[] | undefined; lookups?: Readonly<Record<string, readonly ModuleLookup[]>> | undefined; defaultRoles?: readonly ModuleRole[] | undefined; }"
+    },
+    "ModuleLookup": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key: string; label: Label; sort?: number | undefined; }"
+    },
+    "ModuleRole": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ key: string; name: string; permissionLevel?: number | undefined; rules: readonly { subject: string; action: string; inverted?: boolean | undefined; conditions?: Conditions | null | undefined; fields?: string[] | null | undefined; }[]; }"
     },
     "RecordData": {
       "kind": "TypeAliasDeclaration",

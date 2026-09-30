@@ -22,6 +22,32 @@ export class ResourceRegistry {
         next.#owners.set(resource.name, module.name)
       }
     }
+    const lookupKeys = new Set<string>()
+    const roleKeys = new Set<string>()
+    for (const module of next.#modules.values()) {
+      for (const [group, rows] of Object.entries(module.lookups ?? {})) {
+        identifier(group)
+        for (const row of rows) {
+          if (typeof row.key !== 'string' || !row.key.trim() || row.key.length > 255)
+            throw new Error(`Module ${module.name}: invalid lookup key in ${group}`)
+          if (!row.label?.ar || !row.label?.en)
+            throw new Error(
+              `Module ${module.name}: lookup ${group}.${row.key} needs bilingual labels`
+            )
+          if (lookupKeys.has(`${group}\u0000${row.key}`))
+            throw new Error(`Duplicate lookup: ${group}.${row.key}`)
+          lookupKeys.add(`${group}\u0000${row.key}`)
+        }
+      }
+      for (const role of module.defaultRoles ?? []) {
+        if (!/^[a-z][a-z0-9_]{0,99}$/.test(role.key))
+          throw new Error(`Module ${module.name}: invalid role key ${role.key}`)
+        if (roleKeys.has(role.key)) throw new Error(`Duplicate default role: ${role.key}`)
+        if (!role.name?.trim())
+          throw new Error(`Module ${module.name}: role ${role.key} needs a name`)
+        roleKeys.add(role.key)
+      }
+    }
     for (const resource of next.all()) {
       if (resource.scope) {
         const field = resource.fields[resource.scope.from]
