@@ -354,7 +354,7 @@ export function diagnoseResourceSnapshots(
     check: 'resources.snapshots',
     status: drift.length ? 'warn' : 'pass',
     message: drift.length
-      ? `Pending create-migrations differ from their resource definitions; update the embedded definition before migration:run: ${drift.join(' | ')}`
+      ? `Pending create-migrations differ from their resource definitions; run node ace adula:resource:snapshot <name> (or update the embedded definition) before migration:run: ${drift.join(' | ')}`
       : 'Pending resource migrations match their definitions',
   }
 }
