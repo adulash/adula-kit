@@ -475,6 +475,11 @@ test.group('Generic resource browser acceptance', (group) => {
     // The list returns with its query and shows the saved change.
     await page.locator('tbody').getByText(`عينة معدلة ${stamp}`, { exact: true }).waitFor()
     await page.assertElementsCount('tbody tr[aria-rowindex]', 3)
+    // Closing replaced the record's history entry: Back stays on the list (#31).
+    await page.goBack()
+    await page.waitForURL(listUrl)
+    await page.waitForTimeout(300)
+    assert.equal(await page.getByRole('dialog').count(), 0)
     // A direct link still opens the standalone record; its deferred sections share one request.
     recordRequests.length = 0
     await page.goto(record)

@@ -135,7 +135,7 @@
       "component": "resource-actions"
     },
     "inertia/components/ui/resource-surface.tsx": {
-      "hash": "dd4d86ec339c26ec54f504ca5bf2ae7816deb4c7ed8bace85dd4057d81bed552",
+      "hash": "744421ae546b2d34c4003299d4b65453562e6f81f86e1b08e02a9504b975f966",
       "component": "resource-surface"
     },
     "inertia/components/ui/ui-preferences.tsx": {

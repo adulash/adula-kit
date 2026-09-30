@@ -110,7 +110,9 @@ export async function openRecord(
 /** Closes a record dialog opened by openRecord and returns to its list, refreshed if changed. */
 export function closeRecord(overlay: RecordOverlay) {
   if (overlay.changed) {
+    // Replace the record's history entry, so Back does not reopen a record that changed.
     router.visit(overlay.list, {
+      replace: true,
       preserveScroll: true,
       onSuccess: () => restoreFocus(overlay.record),
     })

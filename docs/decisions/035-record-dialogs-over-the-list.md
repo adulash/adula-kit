@@ -10,11 +10,14 @@ still unmounted and reloaded, and an edit that was saved left the dialog.
 ## Decisions
 
 1. From the generic list, the view and edit links call `openRecord(resource, id, mode)`,
-   exported by the registry's `resource-surface`. It reads the record once from
-   `GET /resources/:resource/:id/view` and pushes a client-side Inertia visit with the
-   record URL. The list stays mounted with its query, loaded pages and scroll.
-2. Closing replaces the history entry with the list, refreshes its rows only when the
-   record changed, and returns focus to the row link.
+   exported by the registry's `resource-surface`. It fetches the record with one request
+   to `GET /resources/:resource/:id/view` and pushes a client-side Inertia visit with the
+   record URL. In show mode the server reads the record once; in edit mode it reads it
+   for the editor and again for the permissions, as the standalone edit page does. The list stays mounted with its query, loaded pages and scroll.
+2. Editing and saving inside the dialog replace its history entry, and closing replaces
+   it with the list, whether or not the record changed: Back never reopens a record that
+   was closed. The list refreshes its rows only when the record changed, and focus
+   returns to the row link.
 3. Saving an edit turns the dialog into the record's details, over the list and on a
    direct edit URL.
 4. A direct record URL still renders the standalone dialog. Its inline children and
