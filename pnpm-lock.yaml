@@ -8,6 +8,7 @@ overrides:
   eslint-plugin-react>eslint: 10.9.0
   monaco-editor>dompurify: 3.4.15
   node-cron>uuid: 11.1.1
+  '@adonisjs/mail>nodemailer': 10.0.12
 
 importers:
 
@@ -4975,9 +4976,9 @@ packages:
     resolution: {integrity: sha512-mIrE/Cw9y+9Au6dS5vDKDhQza9YvG6w+ZrS6X+ZzA7yFW/soAeaups4Qzn1bL6g5FVy8WtP79+0j82oPIbqRjQ==}
     engines: {node: '>=18'}
 
-  nodemailer@9.1.1:
-    resolution: {integrity: sha512-izw9mVKFix6YSnC9eLgV6g1opl9DUlRio9ZNcq+Wu9Ujn2UwF+8Nl0B8nz22kEC+CTZCvinkxwJ0DeFbb6NwcQ==}
-    engines: {node: '>=6.0.0'}
+  nodemailer@10.0.12:
+    resolution: {integrity: sha512-PQ46oNbNMuH/Sno7B5IWIU9etytwrO0xdTFvWXpIQFRXhBAXtzD48243AS+BCbQQTPD8y3fqUrgLn0tSo77gvg==}
+    engines: {node: '>=20.0.0'}
 
   normalize-package-data@8.0.0:
     resolution: {integrity: sha512-RWk+PI433eESQ7ounYxIp67CYuVsS1uYSonX3kA6ps/3LWfjVQa/ptEg6Y3T6uAMq1mWpX9PQ+qx+QaHpsc7gQ==}
@@ -6615,7 +6616,7 @@ snapshots:
       fastq: 1.20.3
       ical-generator: 11.1.1(@types/luxon@3.7.5)(@types/node@26.2.0)(dayjs@1.11.23)(luxon@3.7.2)
       ky: 2.1.0
-      nodemailer: 9.1.1
+      nodemailer: 10.0.12
     optionalDependencies:
       '@adonisjs/assembler': 8.5.0(typescript@6.0.3)
       edge.js: 6.5.1
@@ -11005,7 +11006,7 @@ snapshots:
 
   node-releases@2.0.55: {}
 
-  nodemailer@9.1.1: {}
+  nodemailer@10.0.12: {}
 
   normalize-package-data@8.0.0:
     dependencies:
