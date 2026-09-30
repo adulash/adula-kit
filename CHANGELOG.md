@@ -71,6 +71,15 @@ Minor release: additive APIs and one additive kit migration
   record page authorizes the reader. Notification e-mail receives the target so the
   host can append an absolute link (#38). `Notification` gains the nullable `target`,
   so code that builds it needs the member; the new parameters are optional.
+* Resources: optional bilingual `recordLabel` (the singular noun, for example «حساب»)
+  and `createLabel` (the full button text, for example «مهمة جديدة»). Generated pages
+  say «إضافة حساب» on the create button, «إضافة حساب» / «تعديل حساب» as the form title
+  and «تمت إضافة حساب» after saving; resources without them keep «إضافة سجل».
+  `adula:resource` scaffolds a `recordLabel` (#37). `ResourceDescription` and
+  `ResourceEditor` gain the nullable `recordLabel` (and `createLabel` on the
+  description), so code that builds these objects itself needs them; `pnpm check:api`
+  therefore also reports `Resource` and `createResourceController`. Projects with
+  copied `resource-page` or `resource-form` need the updated components.
 
 ## 1.0.1 — unreleased
 

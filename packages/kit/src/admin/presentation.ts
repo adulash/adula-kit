@@ -5,6 +5,10 @@ export type RecordPermissions = Partial<Record<Action, boolean>>
 export type ResourceDescription = {
   name: string
   label: string
+  /** Singular record noun in Arabic, or null when the resource does not declare one. */
+  recordLabel: string | null
+  /** Arabic create-button text, or null to derive «إضافة <recordLabel>» (or «إضافة سجل»). */
+  createLabel: string | null
   fields: ResourceField[]
   list: string[]
   show: string[]
