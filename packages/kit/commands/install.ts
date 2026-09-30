@@ -38,10 +38,11 @@ export default class Install extends BaseCommand {
       let role = await trx('roles').where('name', 'administrator').first()
       if (!role) {
         const [created] = await trx('roles')
-          .insert({ name: 'administrator', permission_level: 1 })
+          .insert({ name: 'administrator', key: 'administrator', permission_level: 1 })
           .returning('*')
         role = created
-      }
+      } else if (!role.key && !(await trx('roles').where('key', 'administrator').first()))
+        await trx('roles').where('id', role.id).update({ key: 'administrator' })
       // Repair a missing bootstrap grant even when the role already exists.
       // The transaction lock makes repeated/concurrent installation idempotent.
       if (

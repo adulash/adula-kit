@@ -18,6 +18,7 @@ export default class RolesController {
       () =>
         service().create(actorId(ctx), {
           name: ctx.request.input('name'),
+          key: ctx.request.input('key'),
           permissionLevel: ctx.request.input('permissionLevel'),
         }),
       'تم إنشاء الدور'
@@ -36,7 +37,8 @@ export default class RolesController {
     return mutate(
       ctx,
       async () => {
-        const { name, permissionLevel } = ctx.request.only(['name', 'permissionLevel'])
+        const { name, key, permissionLevel } = ctx.request.only(['name', 'key', 'permissionLevel'])
+        if (key !== undefined) await service().setKey(actorId(ctx), id, key)
         if (name !== undefined) await service().rename(actorId(ctx), id, name)
         if (permissionLevel !== undefined)
           await service().setPermissionLevel(actorId(ctx), id, Number(permissionLevel))

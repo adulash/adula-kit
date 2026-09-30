@@ -208,6 +208,10 @@
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>, resource: Pick<Resource, \"fields\" | \"name\" | \"scoped\" | \"submittable\" | \"version\" | \"customFields\">) => Promise<void>"
     },
+    "createRoleKeysSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
     "createSavedViewsSchema": {
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>) => Promise<void>"
@@ -654,7 +658,7 @@
     },
     "RoleSummary": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ id: number; name: string; permissionLevel: number; rules: number; users: number; }"
+      "type": "{ id: number; key: string | null; name: string; permissionLevel: number; rules: number; users: number; }"
     },
     "Rule": {
       "kind": "TypeAliasDeclaration",
