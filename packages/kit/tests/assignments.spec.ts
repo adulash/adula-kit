@@ -66,6 +66,7 @@ test.group('Assignments', (group) => {
     const inbox = await db('notifications').where('user_id', 4)
     assert.lengthOf(inbox, 1)
     assert.equal(inbox[0].title, 'مهمة جديدة مسندة إليك')
+    assert.deepEqual([inbox[0].resource, inbox[0].record_id], ['orders', orderId])
 
     const mine = await assignments().mine(viewer)
     assert.equal(mine.open, 1)
@@ -80,6 +81,7 @@ test.group('Assignments', (group) => {
     assert.equal(reopened.open, 0)
     const back = await db('notifications').where('user_id', 2)
     assert.equal(back[0].title, 'أُنجزت مهمة أسندتها')
+    assert.deepEqual([back[0].resource, back[0].record_id], ['orders', orderId])
     const again = await failure(() => assignments().complete(created.id, viewer))
     assert.equal(again.code, 'E_ASSIGNMENT_CLOSED')
   })
@@ -214,6 +216,8 @@ test.group('Assignments', (group) => {
     })
     const notified = await db('notifications').where('user_id', 2)
     assert.lengthOf(notified, 1, 'the assigner learns that the task closed')
+    assert.equal(notified[0].resource, 'orders')
+    assert.equal(Number(notified[0].record_id), orderId)
     const closedPage = await assignments().mine(viewer, { status: 'done' })
     const [done] = closedPage.data
     assert.equal(done.closeReason, 'قُبل الحل')

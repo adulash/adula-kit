@@ -36,6 +36,7 @@ export {
   createWorkflowSchema,
   createManagedAssignmentsSchema,
   createRoleKeysSchema,
+  createNotificationTargetsSchema,
 } from './src/database/schema.js'
 export { defineWorkflow, nextStep } from './src/workflows/define_workflow.js'
 export type {
@@ -136,6 +137,7 @@ export type {
 } from './src/attachments/storage_migrate.js'
 export { diagnoseAttachments } from './src/attachments/doctor.js'
 export { Settings, sequence, notify } from './src/services/settings.js'
+export type { NotificationTarget } from './src/services/settings.js'
 export {
   uiPreferences,
   validateUiPreferences,

@@ -491,3 +491,14 @@ export async function createRoleKeysSchema(db: Knex) {
   })
   await db.raw("UPDATE roles SET key = name WHERE name ~ '^[a-z][a-z0-9_]*$'")
 }
+
+/**
+ * Notifications may name the record they are about (1.1). Links are authorized when
+ * opened, by the record page itself, never when the notification is written.
+ */
+export async function createNotificationTargetsSchema(db: Knex) {
+  await db.schema.alterTable('notifications', (t) => {
+    t.string('resource', 100)
+    t.integer('record_id')
+  })
+}

@@ -195,12 +195,14 @@ export class RecordCollaboration {
       const authorName = author?.full_name ? String(author.full_name) : `مستخدم #${actor.id}`
       const label = this.label(name)
       for (const userId of mentioned)
-        await notifyWithTemplate(trx, userId, 'comment.mentioned', {
-          author: authorName,
-          resource: label,
-          id,
-          excerpt: body.slice(0, 200),
-        })
+        await notifyWithTemplate(
+          trx,
+          userId,
+          'comment.mentioned',
+          { author: authorName, resource: label, id, excerpt: body.slice(0, 200) },
+          undefined,
+          { resource: name, recordId: id }
+        )
       const followers = await trx('followers')
         .where({ resource: name, record_id: id })
         .whereNot('user_id', actor.id)
@@ -208,12 +210,14 @@ export class RecordCollaboration {
         .pluck('user_id')
       for (const userId of followers) {
         if (!(await this.canView(name, id, Number(userId)))) continue
-        await notifyWithTemplate(trx, Number(userId), 'comment.created', {
-          author: authorName,
-          resource: label,
-          id,
-          excerpt: body.slice(0, 200),
-        })
+        await notifyWithTemplate(
+          trx,
+          Number(userId),
+          'comment.created',
+          { author: authorName, resource: label, id, excerpt: body.slice(0, 200) },
+          undefined,
+          { resource: name, recordId: id }
+        )
       }
       const names = mentioned.length
         ? await trx('users').whereIn('id', mentioned).select('id', 'full_name')
@@ -384,11 +388,15 @@ export class RecordCollaboration {
         }
         for (const userId of followers) {
           if (event !== 'deleted' && !(await this.canView(resource, id, Number(userId)))) continue
-          await notifyWithTemplate(trx, Number(userId), 'record.changed', {
-            change: verbs[event] ?? 'تحديث',
-            resource: this.label(resource),
-            id,
-          })
+          await notifyWithTemplate(
+            trx,
+            Number(userId),
+            'record.changed',
+            { change: verbs[event] ?? 'تحديث', resource: this.label(resource), id },
+            undefined,
+            // A deleted record has no page to open.
+            event === 'deleted' ? null : { resource, recordId: id }
+          )
         }
       },
     }

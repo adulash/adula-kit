@@ -200,6 +200,10 @@
       "kind": "FunctionDeclaration",
       "type": "(db: Knex<any, any[]>) => Promise<void>"
     },
+    "createNotificationTargetsSchema": {
+      "kind": "FunctionDeclaration",
+      "type": "(db: Knex<any, any[]>) => Promise<void>"
+    },
     "createResourceController": {
       "kind": "FunctionDeclaration",
       "type": "(resolveRuntime: (ctx: HttpContext) => Promise<ResourceRuntime>, renderList?: ((ctx: HttpContext, resource: Resource, result: { data: SerializedRecord[]; permissions: { [k: string]: Partial<Record<Action, boolean>>; }; meta: { limit: number; estimatedTotal: number | undefined; nextCursor: string | null; }; related: Record<string, SerializedRecord[]>; }) => unknown) | undefined, renderForm?: ((ctx: HttpContext, resource: Resource, editor: { mode: string; name: string; label: string; fields: ({ label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"string\" | \"boolean\" | \"text\" | \"integer\" | \"money\" | \"date\" | \"datetime\" | \"json\"; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"attachment\"; accept?: string[] | \"any\" | undefined; maxSize?: string | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"belongsTo\"; resource: string; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"user\"; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"hasMany\"; resource: string; foreignKey: string; inline?: boolean | undefined; key: string; } | { label: Label; column?: string | undefined; required?: boolean | undefined; unique?: boolean | undefined; sortable?: boolean | undefined; searchable?: boolean | undefined; filterable?: boolean | undefined; permissionLevel?: number | undefined; sequence?: string | undefined; type: \"lookup\"; group: string; key: string; })[]; defaults: SerializedRecord; inline: Record<string, { rows: SerializedRecord[]; hasMore: boolean; canCreate: boolean; permissions: Record<string, { update: boolean; delete: boolean; }>; fields: ResourceField[]; createFields: string[]; updateFields: Record<string, string[]>; }>; options: Record<string, { value: string; label: string; }[]>; relationSearch: Record<string, boolean>; orgUnits: { value: string; label: string; }[]; scoped: boolean; scopeFrom: string | null; record: SerializedRecord | null; }) => unknown) | undefined, renderShow?: ((ctx: HttpContext, resource: Resource, result: { data: SerializedRecord; permissions: Partial<Record<Action, boolean>>; related: Record<string, SerializedRecord[]>; }) => unknown) | undefined) => new () => ResourceController"
@@ -418,7 +422,7 @@
     },
     "MailSender": {
       "kind": "TypeAliasDeclaration",
-      "type": "(message: { to: string; name: string | null; subject: string; text: string; }) => Promise<void>"
+      "type": "(message: { to: string; name: string | null; subject: string; text: string; target?: NotificationTarget | null | undefined; }) => Promise<void>"
     },
     "MailTestState": {
       "kind": "TypeAliasDeclaration",
@@ -462,7 +466,7 @@
     },
     "Notification": {
       "kind": "TypeAliasDeclaration",
-      "type": "{ id: number; title: string; body: string; readAt: string | null; createdAt: string; }"
+      "type": "{ id: number; title: string; body: string; readAt: string | null; createdAt: string; target: { resource: string; recordId: number; href: string; } | null; }"
     },
     "NotificationPage": {
       "kind": "TypeAliasDeclaration",
@@ -476,13 +480,17 @@
       "kind": "TypeAliasDeclaration",
       "type": "{ userId: number; id: number; }"
     },
+    "NotificationTarget": {
+      "kind": "TypeAliasDeclaration",
+      "type": "{ resource: string; recordId: number; }"
+    },
     "notify": {
       "kind": "FunctionDeclaration",
-      "type": "(db: Knex<any, any[]>, userId: number, title: string, body: string) => Promise<void>"
+      "type": "(db: Knex<any, any[]>, userId: number, title: string, body: string, target?: NotificationTarget | null | undefined) => Promise<void>"
     },
     "notifyWithTemplate": {
       "kind": "FunctionDeclaration",
-      "type": "(db: Knex<any, any[]>, userId: number, key: string, variables: Record<string, unknown>, templates?: MessageTemplates | undefined) => Promise<void>"
+      "type": "(db: Knex<any, any[]>, userId: number, key: string, variables: Record<string, unknown>, templates?: MessageTemplates | undefined, target?: NotificationTarget | null | undefined) => Promise<void>"
     },
     "openApiDocument": {
       "kind": "FunctionDeclaration",
