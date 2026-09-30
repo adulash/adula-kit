@@ -51,8 +51,10 @@ const shieldConfig = defineConfig({
      * Route patterns to exclude from CSRF checks.
      * Useful for external webhooks or API endpoints.
      */
-    // Bearer-token API requests carry no cookies, so CSRF does not apply to them.
-    exceptRoutes: (ctx) => ctx.request.url().startsWith('/api/'),
+    // Bearer-token API requests carry no cookies, so CSRF does not apply to them; signed
+    // inbound webhooks authenticate with their source secret instead.
+    exceptRoutes: (ctx) =>
+      ctx.request.url().startsWith('/api/') || ctx.request.url().startsWith('/webhooks/in/'),
 
     /**
      * Expose an encrypted XSRF-TOKEN cookie for frontend HTTP clients.

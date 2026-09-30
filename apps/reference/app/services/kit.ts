@@ -7,6 +7,7 @@ import {
   SavedViews,
   Webhooks,
   ImportBatches,
+  InboundWebhooks,
   WorkflowEngine,
 } from '@adula/kit'
 import app from '@adonisjs/core/services/app'
@@ -52,6 +53,10 @@ export function kit() {
       }
     ),
     imports: new ImportBatches(knex, registry, resources, actors),
+    inbound: new InboundWebhooks(knex, {
+      seal: (value) => encryption.encrypt(value),
+      open: (value) => encryption.decrypt<string>(value),
+    }),
     webhooks: new Webhooks(
       knex,
       registry,

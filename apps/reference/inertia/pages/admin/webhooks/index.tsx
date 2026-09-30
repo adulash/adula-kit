@@ -2,7 +2,8 @@ import { useState, type ReactElement } from 'react'
 import { Head, router } from '@inertiajs/react'
 import axios from 'axios'
 import { Copy, History, Plus, RotateCcw, Trash2 } from 'lucide-react'
-import type { Webhook, WebhookDelivery } from '@adula/kit'
+import type { InboundSource, Webhook, WebhookDelivery } from '@adula/kit'
+import { InboundWebhooks } from '~/components/inbound-webhooks'
 import Workspace from '~/layouts/workspace'
 import { useDateTimeFormatter } from '~/components/admin-nav'
 import { Badge } from '~/components/ui/badge'
@@ -21,7 +22,7 @@ import {
 } from '~/components/ui/dialog'
 
 type EventOption = { key: string; resource: string; verb: string }
-type Props = { webhooks: Webhook[]; events: EventOption[] }
+type Props = { webhooks: Webhook[]; events: EventOption[]; inbound: InboundSource[] }
 
 const json = { headers: { Accept: 'application/json' }, withXSRFToken: true }
 const verbs: Record<string, string> = {
@@ -44,7 +45,7 @@ function message(error: unknown, fallback: string) {
     : fallback
 }
 
-export default function WebhooksIndex({ webhooks, events }: Props) {
+export default function WebhooksIndex({ webhooks, events, inbound }: Props) {
   const formatDateTime = useDateTimeFormatter()
   const [editing, setEditing] = useState<Webhook | 'new' | null>(null)
   const [name, setName] = useState('')
@@ -167,6 +168,7 @@ export default function WebhooksIndex({ webhooks, events }: Props) {
           </li>
         )}
       </ul>
+      <InboundWebhooks sources={inbound} />
 
       <Dialog open={editing !== null} onOpenChange={(value) => !value && setEditing(null)}>
         <DialogContent dir="rtl" className="sm:max-w-2xl">
