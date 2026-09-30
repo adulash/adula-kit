@@ -1,0 +1,56 @@
+name: Kit bug
+description: The kit behaves wrongly. Describe the kit, not your project.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report only defects in the kit's packages. Reproduce them on a new application
+        from `npm create @adula/app` or on `apps/reference`, and leave out project names,
+        records and credentials. A report outside the kit's scope is closed as not planned.
+  - type: input
+    id: package
+    attributes:
+      label: Package
+      description: Package and version, for example `@adula/kit 1.0.0`.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Numbered steps on a new application from create-app or on apps/reference.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: Include the error or output.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: The test that would prove the bug is fixed.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Node, PostgreSQL and operating system versions.
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround
+      description: What the project does meanwhile, or none.

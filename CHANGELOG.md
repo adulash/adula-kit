@@ -149,6 +149,13 @@ Minor release: additive APIs and additive kit migrations
   fields the actor may not query. It is served at `/resources/<name>/aggregate` and
   `/api/v1/resources/<name>/aggregate` and described in OpenAPI. `canQueryField` is
   exported for module services (#27).
+* Gaps: `adula:gaps report` prints, for each KIT_GAPS.md entry without an `Issue:`
+  line, a link that opens the kit's gap form prefilled with the masked entry, and
+  lists the required fields still missing. Nothing is sent: the developer reviews and
+  submits the form, then records `Issue: #<number>`. New projects get a KIT_GAPS.md
+  template with the form's fields (Package, Needed by, Tried, Blocked because, Proposed
+  kit change, Reproduction, Acceptance, Workaround, Issue). Managed AGENTS rule 17 says
+  so; run `adula:install` to refresh it.
 
 ## 1.0.1 — unreleased
 
