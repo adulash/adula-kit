@@ -11,6 +11,10 @@ export type StepContext = {
 export type Recipients =
   | 'creator'
   | 'submitter'
+  /**
+   * The members of a role, addressed by its stable key (roles.key). A role without a
+   * key is still found by its display name, which administrators can rename.
+   */
   | { role: string }
   | { users: number[] }
   | ((context: StepContext) => number[] | Promise<number[]>)

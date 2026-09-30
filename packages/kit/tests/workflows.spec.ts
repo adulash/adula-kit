@@ -5,6 +5,7 @@ import {
   Assignments,
   KitError,
   ResourceService,
+  RolesAdmin,
   WorkflowEngine,
   consumeEvent,
   defineWorkflow,
@@ -499,7 +500,7 @@ test.group('Workflow engine', (group) => {
     let [run] = await workflows.runsFor('orders', id, admin)
     assert.equal(run.status, 'failed')
     assert.equal(run.attempts, 1)
-    assert.include(run.lastError, 'role "مدير مشروع", which does not exist')
+    assert.include(run.lastError, 'role "مدير مشروع", which matches no role key or name')
     const failed = await workflows.failed()
     assert.include(
       failed.map((entry) => entry.id),
@@ -519,6 +520,60 @@ test.group('Workflow engine', (group) => {
       assert.equal(run.status, 'waiting')
       assert.lengthOf(await db('assignments').where({ workflow_run_id: run.id }), 1)
     } finally {
+      await db('user_roles').del()
+      await db('roles').where('id', role.id).del()
+    }
+  })
+
+  test('a role key keeps approvals addressed after the display name is renamed', async ({
+    assert,
+  }) => {
+    const flow = defineWorkflow({
+      name: 'keyed_approval',
+      version: 1,
+      resource: 'orders',
+      label: 'اعتماد بمفتاح الدور',
+      start: 'review',
+      steps: {
+        review: {
+          type: 'approval',
+          label: 'مراجعة المدير',
+          assignees: { role: 'project_manager' },
+          approve: 'done',
+          reject: 'done',
+        },
+        done: { type: 'end', outcome: 'completed' },
+      },
+    })
+    const roles = new RolesAdmin(db, registry)
+    const role = await roles.create(admin.id, {
+      name: 'مدير مشروع',
+      key: 'project_manager',
+      permissionLevel: 0,
+    })
+    try {
+      await db('user_roles').insert({ user_id: manager.id, role_id: role.id })
+      // Administrators rename the Arabic display name; the workflow keeps its approvers.
+      await roles.rename(admin.id, role.id, 'مدير المشروع')
+      const workflows = engine([flow])
+      const id = await submittedOrder('2')
+      await deliver(workflows)
+      const [run] = await workflows.runsFor('orders', id, admin)
+      assert.equal(run.status, 'waiting')
+      const [assigned] = await db('assignments').where({ workflow_run_id: run.id })
+      assert.equal(assigned.assignee_id, manager.id)
+      const fixed = await failure(() => roles.setKey(admin.id, role.id, 'other_key'))
+      assert.equal(fixed.code, 'E_ROLE_KEY_FIXED')
+      const taken = await failure(() =>
+        roles.create(admin.id, { name: 'آخر', key: 'project_manager' })
+      )
+      assert.equal(taken.code, 'E_ROLE_KEY_EXISTS')
+      const invalid = await failure(() => roles.create(admin.id, { name: 'سيئ', key: 'Bad Key' }))
+      assert.equal(invalid.code, 'E_ROLE_KEY')
+      const stored = await roles.get(role.id)
+      assert.equal(stored.key, 'project_manager')
+    } finally {
+      await db('assignments').del()
       await db('user_roles').del()
       await db('roles').where('id', role.id).del()
     }

@@ -94,7 +94,7 @@ export default defineWorkflow({
   start: 'size',
   steps: {
     size: { type: 'condition', when: (o) => BigInt(o.total ?? '0') >= 1000000n, then: 'manager', else: 'done' },
-    manager: { type: 'approval', label: 'موافقة المدير', assignees: { role: 'مدير القسم' }, approve: 'mark', reject: 'rejected' },
+    manager: { type: 'approval', label: 'موافقة المدير', assignees: { role: 'department_manager' }, approve: 'mark', reject: 'rejected' },
     mark: { type: 'update', values: { status: 'approved' }, next: 'tell' },
     tell: { type: 'notify', to: 'submitter', next: 'done' },
     done: { type: 'end', outcome: 'approved' },
@@ -104,6 +104,10 @@ export default defineWorkflow({
 ```
 
 Step types: `condition`, `update`, `notify`, `approval`, `delay`, `http`, `end`.
+`{ role }` recipients name the role's stable key (`roles.key`, set when the role is
+created or once in the roles screen). Administrators can rename the Arabic display
+name without detaching approvers. A role without a key is still matched by its
+name, and `adula:doctor` (`workflows.roles`) warns about such references.
 Submitting a document starts the newest version; the run keeps that version.
 Change a workflow by adding a new version; move unfinished runs explicitly with
 `WorkflowEngine.migrateRuns`. The worker advances due runs; approvers decide in

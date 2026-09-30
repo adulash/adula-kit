@@ -56,6 +56,14 @@ Minor release: additive APIs and one additive kit migration
   unresolved and the rule is refused. Hosts that build actors themselves call
   `resolveActorConditions` (#29).
 
+* Roles: a stable, unique `roles.key` (additive migration `1770000000012_kit_role_keys`;
+  existing identifier-like names such as `administrator` become their key).
+  `RolesAdmin.create` accepts a key and `setKey` assigns one once. Workflow `{ role }`
+  recipients resolve by key first and by display name for compatibility, so renaming
+  a role no longer detaches its workflows, and the `workflows.roles` doctor check warns
+  about references that match only a display name. The starter role screens show and
+  set the key (#25). Projects with copied `admin/roles` pages need the updated pages.
+
 ## 1.0.1 — unreleased
 
 Patch release: fixes reported against 1.0.0, with no public API or schema change.
