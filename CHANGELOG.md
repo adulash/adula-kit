@@ -29,6 +29,16 @@ Minor release: workspace and realtime changes decided in ADR 034 and later.
   `ResourceService.record()` serves show, children and activity together. See ADR 035.
   Projects with copied `data-table`, `resource-form`, `resource-page` or `resource-show`
   need the updated components.
+* Integrations: signed inbound webhooks (#30). Administrators add sources with a
+  generated, rotatable secret; senders post to `POST /webhooks/in/<key>`, the HMAC over
+  the raw body is verified before anything is stored, deliveries are deduplicated and
+  raised as `inbound.<key>.<event>` through the outbox, and the delivery log can raise
+  one again. A body already received from a source is refused under any delivery id or
+  event name (`dedupeBody`, on by default), form-encoded deliveries get 415, updates
+  change only the fields given, and deliveries are kept for 90 days
+  (`InboundWebhooks.pruneDeliveries()`, scheduled daily). Additive migration
+  `1770000000015_kit_inbound_webhooks`. See ADR 037. Projects need the starter's route
+  with both limiters, controller, scheduler entry and shield exception.
 
 ## 1.1.0 — unreleased
 

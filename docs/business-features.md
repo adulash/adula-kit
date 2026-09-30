@@ -53,6 +53,36 @@ Failures retry for six attempts with growing delays; the creator is notified on
 final failure and can retry from the delivery log. Private and loopback targets
 are refused in production.
 
+## Inbound webhooks
+
+Administrators add inbound sources at `/admin/webhooks` (section «الروابط الواردة»).
+Each source has a key, a generated secret (shown once, rotatable) and header names
+that default to GitHub's. Senders post to `POST /webhooks/in/<key>`:
+
+```
+X-Hub-Signature-256: sha256=HMAC_SHA256(secret, <raw body>)
+X-GitHub-Event: pull_request          # the event name
+X-GitHub-Delivery: <id>               # deduplicated per source
+```
+
+A missing or wrong signature is refused before anything is stored. Each delivery
+is stored once and raised through the outbox as `inbound.<key>.<event>` with the
+payload `{ source, delivery, event, body }`. Modules react with an idempotent
+listener in `start/listeners.ts`, for example:
+
+```ts
+{
+  name: 'projects.link_pull_requests',
+  event: 'inbound.github.pull_request',
+  handle: async (event, trx) => {
+    const body = event.payload.body as { pull_request?: { title?: string } }
+    // Find TSK-000123 in the title and move the task, inside trx.
+  },
+}
+```
+
+The delivery log shows every stored delivery and can raise it again.
+
 ## API tokens and OpenAPI
 
 Users create read or read-write tokens under their account menu. `/api/v1`

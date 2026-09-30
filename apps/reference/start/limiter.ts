@@ -87,3 +87,17 @@ export const apiThrottle = limiter.define('api', (ctx) =>
     .usingKey(ctx.auth.user ? `user:${ctx.auth.user.id}` : `ip:${ctx.request.ip()}`)
     .limitExceeded(withMessage)
 )
+
+/** Signed inbound webhooks: 300 deliveries per minute per source and sender address. */
+export const inboundThrottle = limiter.define('inbound_webhooks', (ctx) =>
+  limiter
+    .allowRequests(300)
+    .every('1 minute')
+    .usingKey(`${String(ctx.params.source)}:${ctx.request.ip()}`)
+    .limitExceeded(withMessage)
+)
+
+/** Inbound webhooks per sender address across all sources, so path keys cannot be rotated. */
+export const inboundAddressThrottle = limiter.define('inbound_webhooks_address', (ctx) =>
+  limiter.allowRequests(600).every('1 minute').usingKey(ctx.request.ip()).limitExceeded(withMessage)
+)
