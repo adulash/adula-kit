@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0 — unreleased
+## 1.2.0 — 2026-10-01
 
 Minor release: workspace and realtime changes decided in ADR 034 and later. 1.0.1
 and 1.1.0 were not published separately; their changes below ship in 1.2.0, so

@@ -147,9 +147,10 @@
       "reviewedBy": "repository owner (conversation)",
       "reviewedAt": "2026-09-30",
       "evidence": [
-        "docs/evidence/release-1-2-0-2026-09-30.json"
+        "docs/evidence/release-1-2-0-2026-09-30.json",
+        "docs/evidence/publication-1-2-0-2026-10-01.json"
       ],
-      "remaining": "Authorized by the owner on 2026-09-30 (ADR 038): «أأذن بنشر 1.2.0 على latest». Publication path: v1.2.0 tag on the merge commit, then Release npm packages on latest."
+      "remaining": "Authorized by the owner on 2026-09-30 (ADR 038) and published on 2026-10-01: 1.2.0 of the three packages is on npm latest with provenance (docs/evidence/publication-1-2-0-2026-10-01.json)."
     }
   ]
 }
