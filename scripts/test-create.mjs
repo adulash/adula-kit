@@ -57,8 +57,10 @@ async function step(name, command, args, cwd = root, env = process.env, failure 
 }
 for (const name of packageNames) {
   if (reusePackages) continue
-  await step(`${name}-build`, process.execPath, [pnpm, '--filter', name, 'build'])
-  await step(`${name}-pack`, process.execPath, [
+  // Step names become log file names: @adula/ui -> adula-ui.
+  const label = name.replace(/^@/, '').replace('/', '-')
+  await step(`${label}-build`, process.execPath, [pnpm, '--filter', name, 'build'])
+  await step(`${label}-pack`, process.execPath, [
     pnpm,
     '--filter',
     name,
