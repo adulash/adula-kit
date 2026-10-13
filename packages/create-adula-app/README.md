@@ -2,7 +2,7 @@
 
 Creates a complete, project-owned AdonisJS 7 application with adula, React/Inertia,
 shadcn/ui, authentication, administration and the managed business-design skill.
-Version 1.0.0.
+Version 2.0.0. To move a 1.x application to AdulaJS 2, run `npx create-adula-app@latest upgrade` in it; see the [upgrade guide](https://github.com/adulash/adulajs/blob/main/docs/upgrade-2.0.md).
 
 ```sh
 npx create-adula-app@latest my-app

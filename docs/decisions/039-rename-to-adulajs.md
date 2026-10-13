@@ -93,3 +93,6 @@ date and evidence. A 3.x release needs its own track.
   a message pointing to `adula` and `create-adula-app`. The `0.0.0-stage` placeholders on
   the new names are superseded by 2.0.0.
 - Decision records 001–038 and dated evidence keep the names that were true when written.
+- The items ADR 027 deferred "to 2.0" (two-factor authentication, the human review of
+  impersonation and the natural schedule observations) are not part of this rename; they
+  stay open in GAP-005 for a later major release.

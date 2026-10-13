@@ -54,9 +54,9 @@ Needed by: 2.0 (the 1.0 budget passed on CI hardware).
 Resolved for 1.0: the 100000-row, 50-user k6 workload passes on a GitHub runner with the compiled build: list p95 152.15 ms, save p95 134.71 ms, 16476 checks without failure ([evidence](docs/evidence/phase5-performance-2026-09-25.json)). Earlier failures (504.83/463.00 ms and 1140/1060 ms) measured the development server.
 Remaining: a run on staging hardware with `NODE_ENV=production`, and a scheduled weekly k6 run (the Performance workflow runs on demand and when the harness changes).
 
-## GAP-005 — Items deferred to 2.0
+## GAP-005 — Items deferred to a later major release
 
-Needed by: 2.0.
+Needed by: the major release after 2.0 (ADR 027 named 2.0; 2.0.0 became the AdulaJS rename, ADR 039).
 Deferred by the owner (ADR 027): two-factor authentication with its human ASVS review (the reverted implementation is commit f7c68b6), the natural daily backup and monthly restore-test observations and an operated production consumer.
 Also open: `make restore` reopens traffic right after reconcile without the acceptance check that restore.sh advises; restored files are root-owned (0644); impersonation human review (deferred by the owner; automated review only in 1.0), the timed feasibility exercise, the weekly agent test, an independent repetition of the fourth-module exercise from published packages, killing a real worker process in the workflow crash test, and API contract coverage for the `./mcp`, `./provider`, `./commands` and `./eslint` exports.
 
