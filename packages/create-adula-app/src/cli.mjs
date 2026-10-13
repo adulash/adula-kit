@@ -114,7 +114,9 @@ async function upgrade(positionals, values) {
     else {
       const manager =
         locked === 'npm' ? [process.execPath, await npmEntry()] : await packageManager()
-      await run(manager[0], [...manager.slice(1), 'install'], { cwd: root })
+      // The manifest just changed on purpose; pnpm freezes the lockfile in CI by default.
+      const install = locked === 'npm' ? ['install'] : ['install', '--no-frozen-lockfile']
+      await run(manager[0], [...manager.slice(1), ...install], { cwd: root })
     }
   }
   console.log(

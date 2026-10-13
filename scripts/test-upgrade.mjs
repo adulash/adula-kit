@@ -257,7 +257,7 @@ try {
     )
     assert.match(rewrite, /updated package\.json/)
     assert.match(rewrite, /updated config\/database\.ts/, 'The database config must be rewritten')
-    await runPnpm('install-upgraded', ['install', '--ignore-scripts'], options)
+    await runPnpm('install-upgraded', ['install', '--no-frozen-lockfile', '--ignore-scripts'], options)
     assert.doesNotMatch(
       await readFile(join(target, 'config/database.ts'), 'utf8'),
       /@adula\/kit|withKitDatabase/,
