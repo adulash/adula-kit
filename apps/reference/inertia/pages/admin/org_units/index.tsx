@@ -1,7 +1,7 @@
 import { useState, type FormEvent, type ReactElement } from 'react'
 import { Head, router } from '@inertiajs/react'
 import { CornerDownLeft, Pencil, Plus, Trash2 } from 'lucide-react'
-import type { OrgUnitNode } from '@adula/kit'
+import type { OrgUnitNode } from 'adula'
 import Workspace from '~/layouts/workspace'
 import { AdminHeader } from '~/components/admin-nav'
 import { Button } from '~/components/ui/button'

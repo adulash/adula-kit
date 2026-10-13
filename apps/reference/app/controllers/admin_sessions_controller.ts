@@ -1,7 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { Exception } from '@adonisjs/core/exceptions'
-import { buildAbility } from '@adula/kit'
-import { kit } from '#services/kit'
+import { buildAbility } from 'adula'
+import { adula } from '#services/adula'
 import {
   listActiveSessions,
   resolveSessionHandle,
@@ -30,8 +30,8 @@ export default class AdminSessionsController {
 
   private async authorize({ auth }: HttpContext) {
     const user = auth.getUserOrFail()
-    const actor = await kit().actors.load(user.id)
-    const ability = buildAbility(actor.rules, kit().registry.all())
+    const actor = await adula().actors.load(user.id)
+    const ability = buildAbility(actor.rules, adula().registry.all())
     if (!ability.can('manage', 'all'))
       throw new Exception('غير مصرح لك بالوصول إلى هذه الصفحة', {
         status: 403,

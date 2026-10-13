@@ -1,5 +1,32 @@
 # Changelog
 
+## 2.0.0 — unreleased
+
+Major release: the project is renamed to **AdulaJS** (ADR 039, #78). No features are
+added. Upgrade 1.x applications with the three steps in
+[docs/upgrade-2.0.md](docs/upgrade-2.0.md).
+
+* Packages: `@adula/kit` becomes `adula` and `@adula/create-app` becomes
+  `create-adula-app` (bin `create-adula-app`). `@adula/ui` keeps its name. New
+  applications start with `npx create-adula-app@latest my-app`.
+* Public API: `KitError`, `KitAbility`, `KitActor`, `KIT_VERSION` and `withKitDatabase` are
+  renamed `AdulaError`, `AdulaAbility`, `AdulaActor`, `ADULA_VERSION` and
+  `withAdulaDatabase`. The lint rule `adula/no-kit-patching` is `adula/no-core-patching`
+  and also covers `node_modules/adula`.
+* Upgrade: `npx create-adula-app@latest upgrade` rewrites a 1.x application without
+  booting AdonisJS; the new `node ace adula:upgrade` renames the recorded migration
+  history in one transaction, renames `KIT_GAPS.md` to `GAPS.md` and the managed
+  AGENTS.md block, then runs pending migrations. Doctor names the command while 1.x
+  history remains.
+* Migrations: core migration files drop the `kit_` prefix (timestamps and bodies
+  unchanged). New migration `1770000000016_adulajs_names` renames the authorization and
+  notification functions and triggers, the notification channel (`adula_notifications`),
+  the `adula.version` setting and processed listener names (`adula.*`).
+* Files: the routes preload is `start/adula_routes.ts`; the gap log is `GAPS.md`;
+  managed markers are `<!-- adula:start -->` / `<!-- adula:end -->`.
+* Release gate: `latest` accepts 2.x under ADR 038's owner-authorization rule. CI runs
+  the genuine upgrade from the published 1.2.0 and the new `pnpm check:naming` gate.
+
 ## 1.2.0 — 2026-10-01
 
 Minor release: workspace and realtime changes decided in ADR 034 and later. 1.0.1

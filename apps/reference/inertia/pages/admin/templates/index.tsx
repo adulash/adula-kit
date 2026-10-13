@@ -1,7 +1,7 @@
 import { useState, type ReactElement } from 'react'
 import { Head, router } from '@inertiajs/react'
 import { Mail, Pencil, RotateCcw } from 'lucide-react'
-import type { MessageTemplate } from '@adula/kit'
+import type { MessageTemplate } from 'adula'
 import Workspace from '~/layouts/workspace'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'

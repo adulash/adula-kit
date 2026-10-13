@@ -2,9 +2,9 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import app from '@adonisjs/core/services/app'
 import type { HttpContext } from '@adonisjs/core/http'
-import { createResourceController } from '@adula/kit'
-import type { Actor, ResourceDescription } from '@adula/kit'
-import { kit, requestActor } from '#services/kit'
+import { createResourceController } from 'adula'
+import type { Actor, ResourceDescription } from 'adula'
+import { adula, requestActor } from '#services/adula'
 import { testFixturesEnabled } from '#start/test_fixtures'
 const fixtureRenderers = testFixturesEnabled ? await import('#tests/fixtures/presentation') : null
 
@@ -52,7 +52,7 @@ export function childDescriptions(description: ResourceDescription, actor: Actor
   for (const field of description.fields) {
     if (field.type !== 'hasMany') continue
     try {
-      children[field.key] = kit().resources.describe(field.resource, actor)
+      children[field.key] = adula().resources.describe(field.resource, actor)
     } catch {
       // A child the actor cannot view is omitted; the deferred rows are authorized separately.
     }
@@ -62,11 +62,11 @@ export function childDescriptions(description: ResourceDescription, actor: Actor
 
 export default createResourceController(
   async (ctx) => {
-    const runtime = kit()
+    const runtime = adula()
     return { ...runtime, actor: await requestActor(ctx) }
   },
   async (ctx, resource, result) => {
-    const runtime = kit()
+    const runtime = adula()
     const actor = await actorOf(ctx)
     const page = pageFor(resource.name, 'index')
     const custom = await fixtureRenderers?.index(ctx, page, runtime, actor, result)
@@ -94,7 +94,7 @@ export default createResourceController(
     if (custom !== undefined) return custom
     const actor = await actorOf(ctx)
     const shown = editor.record
-      ? await kit().resources.show(resource.name, Number(editor.record.id), actor)
+      ? await adula().resources.show(resource.name, Number(editor.record.id), actor)
       : null
     const permissions = shown ? shown.permissions : {}
     return ctx.inertia.render(generic(page), {
@@ -102,7 +102,7 @@ export default createResourceController(
     })
   },
   async (ctx, resource, result) => {
-    const runtime = kit()
+    const runtime = adula()
     const actor = await actorOf(ctx)
     const id = Number(result.data.id)
     const description = runtime.resources.describe(resource.name, actor)

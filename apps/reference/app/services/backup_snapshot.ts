@@ -8,7 +8,7 @@ import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import db from '@adonisjs/lucid/services/db'
 import drive from '@adonisjs/drive/services/main'
-import { isRelativeDiskPath } from '@adula/kit'
+import { isRelativeDiskPath } from 'adula'
 import env from '#start/env'
 
 const run = promisify(execFile)

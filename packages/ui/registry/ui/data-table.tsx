@@ -34,7 +34,7 @@ import type {
   SavedView,
   SavedViewQuery,
   SerializedRecord,
-} from '@adula/kit'
+} from 'adula'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { useUiPreferences } from '~/components/ui/ui-preferences'
@@ -514,7 +514,7 @@ export function DataTable({
   )
 }
 
-/** Presets over the same query keys the list already accepts; the kit validates every one. */
+/** Presets over the same query keys the list already accepts; AdulaJS validates every one. */
 function SavedViewsBar({
   resource,
   views,

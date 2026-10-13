@@ -9,7 +9,7 @@ import app from '@adonisjs/core/services/app'
 import db from '@adonisjs/lucid/services/db'
 import env from '#start/env'
 import User from '#models/user'
-import { Settings } from '@adula/kit'
+import { Settings } from 'adula'
 
 const run = promisify(execFile)
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { router } from '@inertiajs/react'
-import type { UiPreferences, CalendarPreference } from '@adula/kit'
+import type { UiPreferences, CalendarPreference } from 'adula'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Button } from '~/components/ui/button'
 import { Label } from '~/components/ui/label'

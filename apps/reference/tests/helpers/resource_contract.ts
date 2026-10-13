@@ -2,10 +2,10 @@ import { test } from '@japa/runner'
 import User from '#models/user'
 import app from '@adonisjs/core/services/app'
 import db from '@adonisjs/lucid/services/db'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import { randomUUID } from 'node:crypto'
-import { attachmentPolicy, columnName } from '@adula/kit'
-import type { Action, Field, RecordData, Resource, SerializedRecord } from '@adula/kit'
+import { attachmentPolicy, columnName } from 'adula'
+import type { Action, Field, RecordData, Resource, SerializedRecord } from 'adula'
 
 export type FixtureContext = { userId: number; orgUnitId: number; unique: string }
 export type ContractFixture = {
@@ -100,7 +100,7 @@ export function resourceContract(name: string, fixture: ResourceFixture) {
       const database = databaseInfo.rows[0].name
       if (!app.inTest || !database.endsWith('_test'))
         throw new Error('Resource contracts require a dedicated *_test database')
-      resource = kit().registry.get(name)
+      resource = adula().registry.get(name)
       const suffix = randomUUID()
       const users = []
       for (const label of ['denied', 'writer', 'reader', 'outside']) {
@@ -286,7 +286,7 @@ export function resourceContract(name: string, fixture: ResourceFixture) {
           const field = resource.fields[key]
           if (field.type === 'hasMany') {
             assert.property(inline, key, `Missing expected ${name}.${key} child rows`)
-            const child = kit().registry.get(field.resource)
+            const child = adula().registry.get(field.resource)
             const foreignKey = child.fields[field.foreignKey].column ?? columnName(field.foreignKey)
             const rows = await db
               .connection()

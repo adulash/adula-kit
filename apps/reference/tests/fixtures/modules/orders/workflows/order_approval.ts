@@ -1,4 +1,4 @@
-import { defineWorkflow } from '@adula/kit'
+import { defineWorkflow } from 'adula'
 
 /**
  * Two-level approval: orders from 10,000.00 need the department manager and then

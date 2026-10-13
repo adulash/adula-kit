@@ -58,8 +58,8 @@ export default class BackupRestoreTest extends BaseCommand {
   async run() {
     const { default: db } = await import('@adonisjs/lucid/services/db')
     const { default: env } = await import('#start/env')
-    const { Settings } = await import('@adula/kit')
-    const { isRelativeDiskPath } = await import('@adula/kit')
+    const { Settings } = await import('adula')
+    const { isRelativeDiskPath } = await import('adula')
     const { registry } = await import('#start/modules')
     const { verifySnapshot, extractSnapshot, verifyAttachments, restoreAttachments } =
       await import('#services/backup_snapshot')

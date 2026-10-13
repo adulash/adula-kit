@@ -4,8 +4,8 @@ import { BaseModel } from '@adonisjs/lucid/orm'
 import db from '@adonisjs/lucid/services/db'
 import app from '@adonisjs/core/services/app'
 import User from '#models/user'
-import { createResourceTable, defineResource } from '@adula/kit'
-import type { Module, RecordData } from '@adula/kit'
+import { createResourceTable, defineResource } from 'adula'
+import type { Module, RecordData } from 'adula'
 import { modules, registry } from '#start/modules'
 
 export type Rule = { subject: string; action: string }

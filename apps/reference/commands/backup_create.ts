@@ -20,7 +20,7 @@ export default class BackupCreate extends BaseCommand {
   async run() {
     const { default: env } = await import('#start/env')
     const { default: db } = await import('@adonisjs/lucid/services/db')
-    const { Settings } = await import('@adula/kit')
+    const { Settings } = await import('adula')
     const { createSnapshot } = await import('#services/backup_snapshot')
     const { publishSnapshot } = await import('#services/backup_publish')
     const directory = resolve(this.snapshot)

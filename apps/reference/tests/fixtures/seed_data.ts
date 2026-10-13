@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import db from '@adonisjs/lucid/services/db'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import type { BaseCommand } from '@adonisjs/core/ace'
 
 export async function seedData(userId: number, count: number, logger: BaseCommand['logger']) {
@@ -34,7 +34,7 @@ export async function seedData(userId: number, count: number, logger: BaseComman
       .onConflict(['group', 'key'])
       .ignore()
   }
-  const runtime = kit()
+  const runtime = adula()
   const actor = await runtime.actors.load(userId)
   let customer = await knex('customers')
     .where('name', 'شركة الأفق للخدمات المتكاملة')

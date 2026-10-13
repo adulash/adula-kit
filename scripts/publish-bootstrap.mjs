@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
-import { checkRelease } from './check-release.mjs'
+import { checkRelease, packageNames, tarballName } from './check-release.mjs'
 
 // npm CLI treats provenance and provenance-file as mutually exclusive even when
 // provenance=false. Use its publisher and normal interactive 2FA handler directly
@@ -22,7 +22,7 @@ const npa = require('npm-package-arg')
 const dir = resolve(directory)
 const sums = await readFile(resolve(dir, 'SHA256SUMS'), 'utf8')
 for (const line of sums.trim().split(/\r?\n/)) {
-  const match = line.match(/^([a-f0-9]{64})  (adula-(?:kit|ui|create-app)-[\w.-]+\.tgz)$/)
+  const match = line.match(/^([a-f0-9]{64})  ((?:adula|adula-ui|create-adula-app)-[\w.-]+\.tgz)$/)
   assert(match, 'Unexpected checksum entry')
   const bytes = await readFile(resolve(dir, match[2]))
   assert.equal(createHash('sha256').update(bytes).digest('hex'), match[1])
@@ -33,11 +33,11 @@ const npm = new Npm()
 await npm.load()
 try {
   const packages = []
-  for (const name of ['kit', 'ui', 'create-app']) {
-    const archive = resolve(dir, `adula-${name}-${version}.tgz`)
+  for (const name of packageNames) {
+    const archive = resolve(dir, tarballName(name, version))
     const bytes = await readFile(archive)
     const manifest = await pacote.manifest(archive, { fullMetadata: true, fullReadJson: true })
-    assert.equal(manifest.name, `@adula/${name}`)
+    assert.equal(manifest.name, name)
     assert.equal(manifest.version, version)
     const subject = {
       name: npa.toPurl(npa.resolve(manifest.name, version)),
@@ -47,7 +47,7 @@ try {
     const bundle = await verifyProvenance(subject, provenanceFile)
     const statement = JSON.parse(Buffer.from(bundle.dsseEnvelope.payload, 'base64'))
     assert.equal(statement.predicate.buildDefinition.externalParameters.workflow.repository,
-      'https://github.com/adulash/adula-kit')
+      'https://github.com/adulash/adulajs')
     assert.equal(statement.predicate.buildDefinition.externalParameters.workflow.ref, 'refs/heads/main')
     packages.push({ manifest, bytes, provenanceFile })
     console.log(`Verified signed ${manifest.name}@${version}`)

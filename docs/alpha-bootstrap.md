@@ -21,5 +21,5 @@ provenance generation setting without changing or repacking the tested archives.
 Never repack, change the bundle, publish a placeholder, or use latest/next.
 
 After publication, configure each package's trusted publisher for
-`adulash/adula-kit`, workflow `release.yml`, environment `npm`, with publish
+`adulash/adulajs`, workflow `release.yml`, environment `npm`, with publish
 permission. Subsequent releases use the default OIDC publishing job.

@@ -4,11 +4,11 @@ Use Node 24 or newer, pnpm 11.19.0, PostgreSQL 17 and Redis 7. Measured runtime 
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm --filter @adula/kit build
+pnpm --filter adula build
 pnpm --filter @adula/ui build
 ```
 
-Copy `apps/reference/.env.example` into local `.env` and `.env.test` files. Generate separate APP_KEY values with `node ace generate:key`, set database/Redis connections, and use `DRIVE_DISK=local` unless a real S3 disk is configured. Tests require a dedicated database ending in `_test`; set `TEST_DATABASE_URL` for kit tests. Never commit credentials.
+Copy `apps/reference/.env.example` into local `.env` and `.env.test` files. Generate separate APP_KEY values with `node ace generate:key`, set database/Redis connections, and use `DRIVE_DISK=local` unless a real S3 disk is configured. Tests require a dedicated database ending in `_test`; set `TEST_DATABASE_URL` for core tests. Never commit credentials.
 
 On the original Windows workstation, `pwsh -File scripts/local-postgres.ps1` and `node scripts/setup-local.mjs` provision the isolated loopback PostgreSQL profile on port 55432. Run Redis separately with `wsl -d Ubuntu --exec sh scripts/local-redis.sh` (port 16379), then run:
 
@@ -38,7 +38,7 @@ pnpm check:release --artifacts=.work
 
 On Windows, put Git's `usr/bin` on PATH for GNU tar; Windows' BSD tar does not support the restore drill's `--force-local`. Set `PLAYWRIGHT_BROWSERS_PATH` when using `.work/playwright`. Linux CI installs Chromium with system dependencies.
 
-Authorization tests use real PostgreSQL. Kit tests recreate their isolated `kit_test` schema; reference tests truncate their dedicated test database. Never use business data. Customers/orders/tasks and their migrations/listeners/pages load only under `NODE_ENV=test` with a `_test` database. Their removal from the normal application does not drop local tables.
+Authorization tests use real PostgreSQL. Core tests recreate their isolated `adula_test` schema; reference tests truncate their dedicated test database. Never use business data. Customers/orders/tasks and their migrations/listeners/pages load only under `NODE_ENV=test` with a `_test` database. Their removal from the normal application does not drop local tables.
 
 After the fixture-path relocation, use a fresh dedicated test database if an older test database already recorded the original migration paths. Do not rename production migration history or reset a development database. Build the reference application before the tests: fixture isolation also inspects its production frontend manifest.
 
@@ -52,7 +52,7 @@ Supply `ADULA_STARTER_PATH` or checkout `adonisjs/starter-kits` revision `7e1c79
 
 `pnpm test:upgrade:synthetic` is a local compatibility rehearsal with a synthetic baseline, not proof of a genuine published minor-version upgrade. Acceptance still requires a separately released predecessor and a customized independent consumer. `pnpm test:upgrade` refuses ambiguous use, and synthetic mode rejects `ADULA_PREVIOUS_VERSION`. See the [acceptance runbook](release-acceptance-runbook.md).
 
-CI builds/packs the creator once and uses `test:create --reuse-packages` for both service modes, retaining the exact kit/UI archives exercised by `test:consumer`. This flag skips only rebuilding/repacking; it still creates and verifies a fresh independent application.
+CI builds/packs the creator once and uses `test:create --reuse-packages` for both service modes, retaining the exact core/UI archives exercised by `test:consumer`. This flag skips only rebuilding/repacking; it still creates and verifies a fresh independent application.
 
 `pnpm test:medical` builds a disposable independent acceptance consumer from those local archives. It tests four generated resources, project-owned UI, real PostgreSQL authorization, a 100000-row dataset, cached Ability timing and bound-attachment recovery into separate storage. Set `K6_BINARY` for the local 50-user load run. See [fixture requirements and resume instructions](../tests/medical-consumer/README.md). This is a test application with no company-brand requirement; it does not add medical or educational resources to the reference menu. Local recovery is not published-version upgrade or staging acceptance.
 
@@ -76,4 +76,4 @@ Source credentials require read access for backups and write/read/delete access 
 
 For recovery from offsite storage, download the complete snapshot prefix into the backups volume, including its manifest, checksums and marker. Run `make restore FILE=/backups/<UTC timestamp>` with the original disk configuration. This stops traffic, verifies snapshot integrity, restores the database, restores and reads back every original attachment key, and reconciles queue/cache state before restarting services. A failure leaves services stopped; inspect the error before retrying. `backup:restore-files --snapshot=<directory> --apply` is the explicit file-only recovery command after the database has been restored. Do not use it against a running application or a different database snapshot. Legacy archives lack a manifest and remain local-only.
 
-Local Compose application services and the backup/restore shell passed Docker acceptance; see [Docker operations](docker-operations.md) and [dated evidence](evidence/docker-backup-2026-09-22.json). Caddy/TLS, `make deploy`, natural scheduled execution and staging supervision remain pending. Production requires database sessions and real `BACKUP_S3_*` configuration. `backup:verify` checks objects; `backup:restore-test` separately restores a record and attachment. See [gaps](../KIT_GAPS.md).
+Local Compose application services and the backup/restore shell passed Docker acceptance; see [Docker operations](docker-operations.md) and [dated evidence](evidence/docker-backup-2026-09-22.json). Caddy/TLS, `make deploy`, natural scheduled execution and staging supervision remain pending. Production requires database sessions and real `BACKUP_S3_*` configuration. `backup:verify` checks objects; `backup:restore-test` separately restores a record and attachment. See [gaps](../GAPS.md).

@@ -1,7 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import env from '#start/env'
-import { KitError, htmlToPdf, renderPrintHtml, type ResourceDescription } from '@adula/kit'
-import { kit, requestActor } from '#services/kit'
+import { AdulaError, htmlToPdf, renderPrintHtml, type ResourceDescription } from 'adula'
+import { adula, requestActor } from '#services/adula'
 import { identity } from '#services/initial_setup'
 import { positiveId } from '#controllers/admin/support'
 
@@ -12,12 +12,12 @@ import { positiveId } from '#controllers/admin/support'
 export default class PrintController {
   async handle(ctx: HttpContext) {
     const actor = await requestActor(ctx)
-    const runtime = kit()
+    const runtime = adula()
     let name: string
     try {
       name = runtime.registry.get(ctx.params.resource).name
     } catch {
-      throw new KitError(404, 'E_NOT_FOUND', 'الكيان غير موجود')
+      throw new AdulaError(404, 'E_NOT_FOUND', 'الكيان غير موجود')
     }
     const id = positiveId(ctx.params.id)
     const shown = await runtime.resources.show(name, id, actor)
@@ -55,7 +55,11 @@ export default class PrintController {
       return ctx.response.header('Content-Type', 'text/html; charset=utf-8').send(html)
     const gotenberg = env.get('GOTENBERG_URL')
     if (!gotenberg)
-      throw new KitError(501, 'E_PDF_UNAVAILABLE', 'تحويل PDF غير مفعّل؛ استخدم الطباعة من المتصفح')
+      throw new AdulaError(
+        501,
+        'E_PDF_UNAVAILABLE',
+        'تحويل PDF غير مفعّل؛ استخدم الطباعة من المتصفح'
+      )
     const pdf = await htmlToPdf(html, { gotenbergUrl: gotenberg })
     return ctx.response
       .header('Content-Type', 'application/pdf')

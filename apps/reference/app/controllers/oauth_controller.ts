@@ -3,7 +3,7 @@ import { Exception } from '@adonisjs/core/exceptions'
 import { isSocialProvider, linkOrCreateSocialUser } from '#services/social_accounts'
 import { logAuthActivity, requestContext } from '#services/auth_activity'
 import { recordSession } from '#services/sessions'
-import { Settings } from '@adula/kit'
+import { Settings } from 'adula'
 import db from '@adonisjs/lucid/services/db'
 import { oauthFingerprint } from '#services/initial_setup'
 

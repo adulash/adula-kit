@@ -5,11 +5,11 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import attachmentManager from '@jrmc/adonis-attachment/services/main'
 import env from '#start/env'
-import { attachmentUrl, registerUpload } from '@adula/kit'
-import { kit } from '#services/kit'
+import { attachmentUrl, registerUpload } from 'adula'
+import { adula } from '#services/adula'
 import type { FixtureContext, ResourceFixture } from '#tests/helpers/resource_contract'
 
-/** A real Drive write plus the kit metadata row, exactly what POST /attachments does. */
+/** A real Drive write plus AdulaJS metadata row, exactly what POST /attachments does. */
 async function uploadContract(
   userId: number,
   unique: string,
@@ -53,7 +53,7 @@ async function uploadContract(
 }
 
 async function parentOrder({ userId, orgUnitId, unique }: FixtureContext) {
-  const runtime = kit()
+  const runtime = adula()
   const actor = await runtime.actors.load(userId)
   return runtime.resources.save('orders', actor, { orgUnitId, notes: `طلب مرتبط ${unique}` })
 }
@@ -66,7 +66,7 @@ export const resourceFixtures: Record<string, ResourceFixture> = {
     updated: { name: `عميل محدث ${unique}`, email: 'updated@example.test' },
   }),
   orders: async ({ userId, unique }) => {
-    const runtime = kit()
+    const runtime = adula()
     const actor = await runtime.actors.load(userId)
     const customer = await runtime.resources.save('customers', actor, {
       name: `عميل الطلب ${unique}`,

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 import { AtSign, Bell, BellOff, MessageSquare, Pencil, Tag, Trash2, X } from 'lucide-react'
-import type { MentionCandidate, RecordCollaborationState, ResourceDescription } from '@adula/kit'
+import type { MentionCandidate, RecordCollaborationState, ResourceDescription } from 'adula'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'

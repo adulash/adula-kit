@@ -1,15 +1,15 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import db from '@adonisjs/lucid/services/db'
-import { NotificationsAdmin, UserInvitations, buildAbility, isBackupStale } from '@adula/kit'
-import { IMPERSONATOR_KEY, kit } from '#services/kit'
+import { NotificationsAdmin, UserInvitations, buildAbility, isBackupStale } from 'adula'
+import { IMPERSONATOR_KEY, adula } from '#services/adula'
 import { activeImpersonation } from '#services/impersonation'
 import { setupPending } from '#services/initial_setup'
 
 export { IMPERSONATOR_KEY }
 
 export async function isAdministrator(userId: number) {
-  const runtime = kit()
+  const runtime = adula()
   const actor = await runtime.actors.load(userId)
   return buildAbility(actor.rules, runtime.registry.all()).can('manage', 'all')
 }
@@ -21,7 +21,7 @@ async function countRows(table: string, where: Record<string, string | number>) 
 
 /** Whether the actor can create any resource, which is what importing needs. */
 async function canImport(userId: number) {
-  const runtime = kit()
+  const runtime = adula()
   const actor = await runtime.actors.load(userId)
   const ability = buildAbility(actor.rules, runtime.registry.all())
   return runtime.registry

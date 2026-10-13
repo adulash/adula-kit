@@ -1,5 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { KitError, UserInvitations } from '@adula/kit'
+import { AdulaError, UserInvitations } from 'adula'
 import db from '@adonisjs/lucid/services/db'
 import hash from '@adonisjs/core/services/hash'
 import mail from '@adonisjs/mail/services/main'
@@ -13,14 +13,14 @@ const service = () => new UserInvitations(db.connection().getWriteClient())
 export default class UserInvitationsController {
   async create(ctx: HttpContext) {
     if (!(await service().canInvite(ctx.auth.getUserOrFail().id)))
-      throw new KitError(403, 'E_FORBIDDEN', 'ليس لديك صلاحية دعوة المستخدمين')
+      throw new AdulaError(403, 'E_FORBIDDEN', 'ليس لديك صلاحية دعوة المستخدمين')
     return ctx.inertia.render('users/invite', {})
   }
 
   async store(ctx: HttpContext) {
     const id = ctx.auth.getUserOrFail().id
     if (!(await service().canInvite(id)))
-      throw new KitError(403, 'E_FORBIDDEN', 'ليس لديك صلاحية دعوة المستخدمين')
+      throw new AdulaError(403, 'E_FORBIDDEN', 'ليس لديك صلاحية دعوة المستخدمين')
     try {
       const input = await ctx.request.validateUsing(invitationValidator)
       const data = await service().invite(id, input, async ({ email, token }) => {
@@ -79,7 +79,7 @@ export default class UserInvitationsController {
           )
         : error.messages
       ctx.session.flash('inputErrorsBag', messages)
-    } else if (error instanceof KitError) {
+    } else if (error instanceof AdulaError) {
       ctx.session.flash('inputErrorsBag', { form: error.message })
     } else throw error
     // Bearer-token pages deliberately omit Referer; redirect to the known GET route explicitly.

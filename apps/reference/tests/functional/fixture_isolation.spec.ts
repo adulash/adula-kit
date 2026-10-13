@@ -30,7 +30,7 @@ test.group('Educational fixture isolation', () => {
     assert.deepEqual(probe.resources, [])
     // Framework listeners (webhooks, followers) are not example code; none may be educational.
     assert.deepEqual(
-      probe.listeners.filter((name: string) => !name.startsWith('kit.')),
+      probe.listeners.filter((name: string) => !name.startsWith('adula.')),
       []
     )
     assert.isFalse(

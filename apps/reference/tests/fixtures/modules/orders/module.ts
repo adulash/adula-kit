@@ -1,4 +1,4 @@
-import type { Module } from '@adula/kit'
+import type { Module } from 'adula'
 import orders from './resources/orders.js'
 import order_lines from './resources/order_lines.js'
 import order_receipts from './resources/order_receipts.js'

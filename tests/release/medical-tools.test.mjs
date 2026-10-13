@@ -3,14 +3,14 @@ import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { generateResource } from '../../packages/kit/build/src/commands/generator.js'
+import { generateResource } from '../../packages/adula/build/src/commands/generator.js'
 import { installMedicalModule } from '../medical-consumer/install.mjs'
 import { resources } from '../medical-consumer/resources.mjs'
 
 test('packed creator module entrypoint supports generating and specializing an independent module', async () => {
   const target = await mkdtemp(join(tmpdir(), 'adula-medical-scaffold-'))
   try {
-    const { files } = JSON.parse(await readFile(new URL('../../packages/create-app/build/template.json', import.meta.url)))
+    const { files } = JSON.parse(await readFile(new URL('../../packages/create-adula-app/build/template.json', import.meta.url)))
     await mkdir(join(target, 'start'))
     await mkdir(join(target, 'docs'))
     await writeFile(join(target, 'start/modules.ts'), files['start/modules.ts'])

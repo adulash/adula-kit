@@ -22,7 +22,7 @@ The shipped source-S3 backup and recovery commands passed direct external accept
 
 ## Earlier local verification — 2026-09-21
 
-The review reran `pnpm build`, `pnpm typecheck`, `pnpm test`, `pnpm lint`, `pnpm check:boundaries` and `pnpm test:release` on Node 24.21.0 and PostgreSQL 17.6. All passed: 130 kit, 136 reference, four calendar and 12 creator tests (282), plus five release-guard tests. The working tree was clean after generated formatting was restored. Independent consumer/creator packaging and external provider receipt were reviewed from their dated evidence rather than rerun during that review.
+The review reran `pnpm build`, `pnpm typecheck`, `pnpm test`, `pnpm lint`, `pnpm check:boundaries` and `pnpm test:release` on Node 24.21.0 and PostgreSQL 17.6. All passed: 130 core, 136 reference, four calendar and 12 creator tests (282), plus five release-guard tests. The working tree was clean after generated formatting was restored. Independent consumer/creator packaging and external provider receipt were reviewed from their dated evidence rather than rerun during that review.
 
 After adding the explicit source-S3 harness and updating this documentation, all six commands passed again with the same 282 local tests and five release guards. The external S3 exercise separately passed one HTTP phase against the source database and one against the restored database. Its evidence records the exact harness hashes, file hashes, cleanup, retained offsite snapshots and the production-integration boundary.
 
@@ -30,7 +30,7 @@ After adding the explicit source-S3 harness and updating this documentation, all
 
 Source-S3 recovery is integrated into the shipped commands, COMPLETE is published after verified artifact transfer, and the scheduler mounts the backup volume. Direct real-S3 recovery and negative cases are recorded in [operational backup evidence](evidence/operational-backup-2026-09-22.json). Staging, actual scheduled daily backup and monthly recovery, performance, human RTL review, the genuine independent upgrade, later business/workflow features and production/public release remain separate gates.
 
-See [implementation status](implementation-status.md), [remaining gaps](../KIT_GAPS.md) and [1.0 acceptance](acceptance-1.0.md). No merge, push, publication or external deployment is implied by this ledger.
+See [implementation status](implementation-status.md), [remaining gaps](../GAPS.md) and [1.0 acceptance](acceptance-1.0.md). No merge, push, publication or external deployment is implied by this ledger.
 
 ## Schedule follow-up — 2026-09-22
 

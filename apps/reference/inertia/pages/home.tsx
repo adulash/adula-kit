@@ -1,6 +1,6 @@
 import { Head, usePage } from '@inertiajs/react'
 import { Link } from '@adonisjs/inertia/react'
-import type { ResourceNavigation } from '@adula/kit'
+import type { ResourceNavigation } from 'adula'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card'
 import Workspace from '~/layouts/workspace'
@@ -14,7 +14,7 @@ export default function Home() {
   }>().props
   return (
     <>
-      <Head title="مساحة العمل · adula kit" />
+      <Head title="مساحة العمل · AdulaJS" />
       <div className="mx-auto max-w-5xl space-y-6 px-6 py-12" dir="rtl">
         <Card>
           <CardHeader>

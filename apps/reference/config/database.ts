@@ -19,7 +19,7 @@ export default defineConfig({
         naturalSort: true,
         paths: [
           'database/migrations',
-          'node_modules/@adula/kit/build/database/migrations',
+          'node_modules/adula/build/database/migrations',
           ...modules.map(
             (module) =>
               `${fixtureModuleNames.has(module.name) ? 'tests/fixtures/modules' : 'app/modules'}/${module.name}/migrations`

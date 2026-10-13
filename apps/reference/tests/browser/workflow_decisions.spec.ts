@@ -10,8 +10,8 @@ import {
   type DomainEvent,
   type Module,
   type RecordData,
-} from '@adula/kit'
-import { kit } from '#services/kit'
+} from 'adula'
+import { adula } from '#services/adula'
 import { modules, registry } from '#start/modules'
 import { seedActor, type UiActor } from '#tests/helpers/ui_fixtures'
 
@@ -86,14 +86,14 @@ test.group('Workflow decision steps in the approvals inbox', (group) => {
       workflows: [workflow],
     }
     registry.register([...modules, module])
-    const actor = await kit().actors.load(requester.user.id)
-    const saved = await kit().resources.save('ui_requests', actor, {
+    const actor = await adula().actors.load(requester.user.id)
+    const saved = await adula().resources.save('ui_requests', actor, {
       subject: 'تأجيل الزيارة',
       orgUnitId: requester.orgUnitId,
     })
     id = Number(saved.id)
-    await kit().resources.transition('ui_requests', id, actor, 'submit', saved.version)
-    const listeners = workflowListeners(registry, () => kit().workflows)
+    await adula().resources.transition('ui_requests', id, actor, 'submit', saved.version)
+    const listeners = workflowListeners(registry, () => adula().workflows)
     for (const row of await knex()('outbox').whereNull('published_at')) {
       const event: DomainEvent = { id: row.id, event: row.event, payload: row.payload }
       for (const listener of listeners) await consumeEvent(knex(), listener, event)
@@ -149,10 +149,10 @@ test.group('Workflow decision steps in the approvals inbox', (group) => {
     const stored = await knex()('ui_requests').where('id', id).first()
     assert.equal(stored.doc_status, 1, 'the request stays submitted and unchanged')
     assert.equal(stored.subject, 'تأجيل الزيارة')
-    const [run] = await kit().workflows.runsFor(
+    const [run] = await adula().workflows.runsFor(
       'ui_requests',
       id,
-      await kit().actors.load(requester.user.id)
+      await adula().actors.load(requester.user.id)
     )
     assert.equal(run.outcome, 'approved')
     assert.deepInclude(

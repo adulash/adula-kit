@@ -1,6 +1,6 @@
 import drive from '@adonisjs/drive/services/main'
 import db from '@adonisjs/lucid/services/db'
-import { UNBOUND_UPLOAD_TTL_MS, forgetUpload, pruneUploadGrants, staleUploads } from '@adula/kit'
+import { UNBOUND_UPLOAD_TTL_MS, forgetUpload, pruneUploadGrants, staleUploads } from 'adula'
 
 /**
  * Removes uploads that were never bound to a record: the file first, then the

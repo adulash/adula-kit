@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react'
-import type { SerializedRecord } from '@adula/kit/types'
+import type { SerializedRecord } from 'adula/types'
 type Props = {
   label: string
   name: string

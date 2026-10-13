@@ -16,7 +16,7 @@ Check, citing file and line:
 - Save paths keep one transaction: record, lines, activity, field changes and outbox.
   Anything slow (mail, HTTP, PDF, imports) runs in the worker, never inline.
 - Listeners are idempotent and cheap or dispatch jobs; workflows do not poll.
-- Caches (Ability, lookups, settings) are invalidated by the kit's revision rules,
+- Caches (Ability, lookups, settings) are invalidated by AdulaJS's revision rules,
   not by time alone.
 - Run `pnpm test:medical` with `K6_BINARY` on staging-like hardware before release
   and record the measured p95 values; never relax the thresholds.

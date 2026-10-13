@@ -1,6 +1,6 @@
 import { Job } from '@nemoventures/adonis-jobs'
 import db from '@adonisjs/lucid/services/db'
-import { consumeEvent, type DomainEvent } from '@adula/kit'
+import { consumeEvent, type DomainEvent } from 'adula'
 import { listeners } from '#start/listeners'
 
 export default class DomainEventJob extends Job<DomainEvent, void> {

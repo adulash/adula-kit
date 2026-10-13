@@ -1,5 +1,5 @@
 import { test } from '@japa/runner'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import { seedActor, type UiActor } from '#tests/helpers/ui_fixtures'
 
 test.group('Record printing', (group) => {
@@ -14,7 +14,7 @@ test.group('Record printing', (group) => {
       level: 0,
     })
     outsider = await seedActor([{ subject: 'orders', action: 'view' }], { level: 0 })
-    const saved = await kit().resources.save('orders', await kit().actors.load(owner.user.id), {
+    const saved = await adula().resources.save('orders', await adula().actors.load(owner.user.id), {
       notes: 'طلب للطباعة',
       total: '990000',
       internalNote: 'لا تطبع للقارئ',

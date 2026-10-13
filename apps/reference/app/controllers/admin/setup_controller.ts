@@ -1,5 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { KitError } from '@adula/kit'
+import { AdulaError } from 'adula'
 import { actorId, mutate, wantsJson } from './support.js'
 import {
   setup,
@@ -23,7 +23,7 @@ export default class SetupController {
       async () => {
         const name = ctx.params.service
         if (name !== 'storage' && name !== 'infrastructure')
-          throw new KitError(422, 'E_SETUP_SERVICE', 'الخدمة غير معروفة')
+          throw new AdulaError(422, 'E_SETUP_SERVICE', 'الخدمة غير معروفة')
         await setup().check(
           actorId(ctx),
           name,
@@ -40,7 +40,7 @@ export default class SetupController {
       ctx,
       async () => {
         if (ctx.request.input('confirmed') !== true)
-          throw new KitError(422, 'E_SETUP_CONFIRM', 'تأكيد الهوية مطلوب')
+          throw new AdulaError(422, 'E_SETUP_CONFIRM', 'تأكيد الهوية مطلوب')
         await setup().acknowledgeIdentity(actorId(ctx), await identityFingerprint())
       },
       'تم اعتماد الهوية الحالية',

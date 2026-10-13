@@ -1,11 +1,11 @@
 # Medical-assets acceptance slice
 
 Approved-plan consumer, phase 2; not the full phase 6 production application.
-The kit's idea-review was applied before implementation. All application files
+AdulaJS's idea-review was applied before implementation. All application files
 are installed into a separate application under `.work`, with its own package
 lock, PostgreSQL databases, cache namespace and copied UI. No domain is registered
-in apps/reference. The owner confirmed this is a disposable kit test and does not
-need company branding. Reuse the existing kit theme; keep customizations only to
+in apps/reference. The owner confirmed this is a disposable AdulaJS test and does not
+need company branding. Reuse the existing AdulaJS theme; keep customizations only to
 exercise project ownership and later upgrade preservation.
 
 | Resource | Ownership/scope | Relations and visibility |

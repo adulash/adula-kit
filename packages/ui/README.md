@@ -1,6 +1,6 @@
 # @adula/ui
 
-Version 1.0.0, accepted by the owner (ADR 028). For complete consumer setup, use the canonical [installation guide](https://github.com/adulash/adula-kit/blob/main/docs/installation.md).
+Version 1.0.0, accepted by the owner (ADR 028). For complete consumer setup, use the canonical [installation guide](https://github.com/adulash/adulajs/blob/main/docs/installation.md).
 
 Arabic RTL shadcn registry for project-owned React components. This package ships JSON assets, not a runtime React component library. Install with `node ace adula:ui add all` or `node ace adula:ui add dialog`. The command invokes the pinned shadcn CLI and records each generated file hash in `ui.lock.json`. Project modifications are preserved; use `--preview` to review upstream differences before merging an update.
 
@@ -8,7 +8,7 @@ The 25 primitives are based on the official shadcn new-york-v4 registry. See LIC
 
 Build with `pnpm --filter @adula/ui build`. Refreshing upstream sources is an explicit maintenance task: run scripts/sync-ui-registry.mjs, review changes, run scripts/prepare-ui-registry.mjs to recheck dependency metadata and adapt sources, then build and visually test.
 
-Required host tooling: Node 24, React 19, shadcn 4.21.0, Tailwind CSS 4.3.3 and @tailwindcss/vite 4.3.3. The kit installer supports the official AdonisJS React starter layout. The registry is unpublished until explicitly authorized.
+Required host tooling: Node 24, React 19, shadcn 4.21.0, Tailwind CSS 4.3.3 and @tailwindcss/vite 4.3.3. AdulaJS installer supports the official AdonisJS React starter layout. The registry is unpublished until explicitly authorized.
 
 The theme disables automatic Tailwind source discovery and explicitly scans the consumer's inertia directory. It does not scan node_modules or unrelated workspace files. Add explicit source paths for any additional application-owned frontend directories.
 
@@ -16,7 +16,7 @@ Components merge `className` with `cn` (shadcn's clsx + tailwind-merge replaceme
 
 ## Resource components
 
-Nine kit components sit on top of the primitives and are registered by `scripts/register-resource-ui.mjs`. They consume the `ResourceDescription`, `ResourceList`, `ResourceEditor`, `ResourceShow`, `ResourceChildren`, `ResourceLookups` and `ResourceActivity` contracts exported by `@adula/kit`; the copied files are project-owned like every other registry item.
+Nine AdulaJS components sit on top of the primitives and are registered by `scripts/register-resource-ui.mjs`. They consume the `ResourceDescription`, `ResourceList`, `ResourceEditor`, `ResourceShow`, `ResourceChildren`, `ResourceLookups` and `ResourceActivity` contracts exported by `adula`; the copied files are project-owned like every other registry item.
 
 | Component | Role |
 |---|---|

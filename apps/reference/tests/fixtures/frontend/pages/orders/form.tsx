@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '~/components/ui/alert'
 import { ResourceSurface } from '~/components/ui/resource-surface'
 import { ResourceSelect } from '~/components/ui/resource-field'
 import Workspace from '~/layouts/workspace'
-import type { ResourceEditor } from '@adula/kit'
+import type { ResourceEditor } from 'adula'
 type Line = {
   id?: number
   version?: number

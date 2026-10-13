@@ -1,5 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { MessageTemplates } from '@adula/kit'
+import { MessageTemplates } from 'adula'
 import { actorId, knex, mutate, wantsJson } from './support.js'
 
 /** Administrators edit notification wording; package defaults stay untouched. */

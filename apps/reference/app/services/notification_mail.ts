@@ -1,6 +1,6 @@
 import mail from '@adonisjs/mail/services/main'
 import db from '@adonisjs/lucid/services/db'
-import { deliverNotificationMail } from '@adula/kit'
+import { deliverNotificationMail } from 'adula'
 import env from '#start/env'
 
 /** Sends pending templated notification e-mails through the configured mailer. */

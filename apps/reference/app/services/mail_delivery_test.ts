@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto'
 import mail from '@adonisjs/mail/services/main'
-import { MailDeliveryTest, type MailTestState } from '@adula/kit'
+import { MailDeliveryTest, type MailTestState } from 'adula'
 import db from '@adonisjs/lucid/services/db'
 import env from '#start/env'
 

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { router } from '@inertiajs/react'
 import axios from 'axios'
 import { toast } from 'sonner'
-import type { RecordPermissions } from '@adula/kit'
+import type { RecordPermissions } from 'adula'
 import { Button } from '~/components/ui/button'
 import {
   Dialog,

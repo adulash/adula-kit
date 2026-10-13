@@ -31,6 +31,10 @@ async function readConnection() {
   }
 }
 
+/** Releases before 2.0 published the core package under its 1.x name (ADR 039). */
+export const coreName = (baseline) =>
+  baseline && Number(baseline.split('.')[0]) < 2 ? '@adula/kit' : 'adula'
+
 /** `baseline` installs published npm versions instead of the local archives. */
 export async function prepareConsumer({ baseline } = {}) {
   const source = resolve(process.env.ADULA_STARTER_PATH || join(work, 'starter-kits-main/inertia-react'))
@@ -71,7 +75,7 @@ export async function prepareConsumer({ baseline } = {}) {
   const pkg = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'))
   const pins = JSON.parse(await readFile(join(repo, 'apps/reference/package.json'), 'utf8'))
   const workspace = JSON.parse(await readFile(join(repo, 'package.json'), 'utf8'))
-  const kit = JSON.parse(await readFile(join(repo, 'packages/kit/package.json'), 'utf8'))
+  const core = JSON.parse(await readFile(join(repo, 'packages/adula/package.json'), 'utf8'))
   const ui = JSON.parse(await readFile(join(repo, 'packages/ui/package.json'), 'utf8'))
   for (const kind of ['dependencies', 'devDependencies']) {
     for (const name of Object.keys(pkg[kind] ?? {})) {
@@ -85,7 +89,7 @@ export async function prepareConsumer({ baseline } = {}) {
   delete pkg.pnpm
   pkg.dependencies.pg = pins.dependencies.pg
   pkg.dependencies['@inertiajs/core'] = pins.dependencies['@inertiajs/core']
-  pkg.dependencies['@adula/kit'] = baseline ?? `file:../adula-kit-${kit.version}.tgz`
+  pkg.dependencies[coreName(baseline)] = baseline ?? `file:../adula-${core.version}.tgz`
   pkg.dependencies['@adula/ui'] = baseline ?? `file:../adula-ui-${ui.version}.tgz`
   pkg.dependencies.tailwindcss = pins.dependencies.tailwindcss
   for (const name of ['shadcn', '@tailwindcss/vite', '@japa/api-client'])
@@ -105,7 +109,7 @@ export async function prepareConsumer({ baseline } = {}) {
   }
   await mkdir(join(target, 'tests/functional'), { recursive: true })
   await cp(join(repo, 'tests/consumer/roundtrip.stub'), join(target, 'tests/functional/packed.spec.ts'))
-  const consumer = { root: target, database, starterRevision }
+  const consumer = { root: target, database, starterRevision, core: coreName(baseline) }
   await writeFile(join(work, 'consumer-latest.json'), `${JSON.stringify(consumer, null, 2)}\n`)
   return consumer
 }

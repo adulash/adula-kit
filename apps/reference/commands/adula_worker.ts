@@ -7,9 +7,9 @@ export default class AdulaWorker extends BaseCommand {
   async run() {
     const { publishEvents } = await import('#services/events')
     const { deliverNotificationEmails } = await import('#services/notification_mail')
-    const { kit } = await import('#services/kit')
+    const { adula } = await import('#services/adula')
     const { default: db } = await import('@adonisjs/lucid/services/db')
-    const { Settings } = await import('@adula/kit')
+    const { Settings } = await import('adula')
     const worker = await this.kernel.exec('queue:work', [])
     if (worker.error) throw worker.error
     let active: Promise<void> | undefined
@@ -20,9 +20,9 @@ export default class AdulaWorker extends BaseCommand {
         try {
           await publishEvents()
           await deliverNotificationEmails()
-          await kit().workflows.tick()
-          await kit().imports.process()
-          await kit().webhooks.deliver(async (url, init) => {
+          await adula().workflows.tick()
+          await adula().imports.process()
+          await adula().webhooks.deliver(async (url, init) => {
             const response = await fetch(url, { method: 'POST', redirect: 'manual', ...init })
             return { status: response.status }
           })

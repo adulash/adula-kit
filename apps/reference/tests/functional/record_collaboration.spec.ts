@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import {
   installSampleResources,
   removeSampleResources,
@@ -35,8 +35,8 @@ test.group('Record collaboration over HTTP', (group) => {
       fullName: 'عمر الخارجي',
     })
     await installSampleResources()
-    const actor = await kit().actors.load(owner.user.id)
-    const saved = await kit().resources.save('ui_samples', actor, {
+    const actor = await adula().actors.load(owner.user.id)
+    const saved = await adula().resources.save('ui_samples', actor, {
       title: 'عينة للتعاون',
       amount: 1200,
       orgUnitId: owner.orgUnitId,
@@ -136,10 +136,10 @@ test.group('Record collaboration over HTTP', (group) => {
   })
 
   test('field history hides fields the viewer may not read', async ({ client, assert }) => {
-    const current = await kit().resources.show(
+    const current = await adula().resources.show(
       'ui_samples',
       id,
-      await kit().actors.load(owner.user.id)
+      await adula().actors.load(owner.user.id)
     )
     const updated = await client
       .patch(base)
@@ -166,7 +166,7 @@ test.group('Record collaboration over HTTP', (group) => {
       .headers(json)
       .json({ following: true })
       .then((response) => response.assertStatus(200))
-    const listener = kit().collaboration.followerListener('ui_fixtures', 'ui_samples', 'updated')
+    const listener = adula().collaboration.followerListener('ui_fixtures', 'ui_samples', 'updated')
     await knex().transaction((trx) =>
       listener.handle(
         { id: 'e-1', event: listener.event, payload: { id, actorId: owner.user.id } },

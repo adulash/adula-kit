@@ -1,5 +1,5 @@
 import db from '@adonisjs/lucid/services/db'
-import { AdonisJobs, publishOutbox, type DomainEvent } from '@adula/kit'
+import { AdonisJobs, publishOutbox, type DomainEvent } from 'adula'
 import DomainEventJob from '../jobs/domain_event_job.js'
 
 export const jobs = new AdonisJobs({

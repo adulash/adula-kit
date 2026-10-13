@@ -1,7 +1,7 @@
 import { useEffect, type ReactElement } from 'react'
 import { Head, router } from '@inertiajs/react'
 import { FileSpreadsheet } from 'lucide-react'
-import type { ImportBatch } from '@adula/kit'
+import type { ImportBatch } from 'adula'
 import Workspace from '~/layouts/workspace'
 import { useDateTimeFormatter } from '~/components/admin-nav'
 import { Badge } from '~/components/ui/badge'

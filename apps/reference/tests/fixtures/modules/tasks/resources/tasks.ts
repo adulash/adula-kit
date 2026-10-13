@@ -1,4 +1,4 @@
-import { defineResource } from '@adula/kit'
+import { defineResource } from 'adula'
 import Model from '#tests/fixtures/modules/tasks/models/tasks'
 import { validator } from '#tests/fixtures/modules/tasks/validators/tasks'
 

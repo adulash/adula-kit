@@ -1,7 +1,7 @@
 import scheduler from 'adonisjs-scheduler/services/main'
 import db from '@adonisjs/lucid/services/db'
-import { Settings } from '@adula/kit'
-import { kit } from '#services/kit'
+import { Settings } from 'adula'
+import { adula } from '#services/adula'
 // Exactly one scheduler process is deployed. The worker owns outbox publication.
 scheduler.command('backup:verify').hourly().withoutOverlapping()
 // The monthly drill restores the latest snapshot and opens a record with its attachment.
@@ -11,7 +11,7 @@ scheduler.command('adula:uploads:prune').daily().withoutOverlapping()
 // Stored inbound webhook deliveries are kept for 90 days (ADR 037).
 scheduler
   .call(async () => {
-    await kit().inbound.pruneDeliveries()
+    await adula().inbound.pruneDeliveries()
   })
   .daily()
   .withoutOverlapping()

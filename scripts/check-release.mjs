@@ -5,8 +5,11 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const repository = 'git+https://github.com/adulash/adula-kit.git'
-export const packageNames = ['@adula/kit', '@adula/ui', '@adula/create-app']
+const repository = 'git+https://github.com/adulash/adulajs.git'
+export const packageNames = ['adula', '@adula/ui', 'create-adula-app']
+export const packageDirectories = ['adula', 'ui', 'create-adula-app']
+/** The archive name pnpm pack writes for a package: @adula/ui -> adula-ui-<version>.tgz. */
+export const tarballName = (name, version) => `${name.replace(/^@/, '').replace('/', '-')}-${version}.tgz`
 export function validateManifest(pkg, name, version) {
   assert.equal(pkg.name, name, 'Unexpected package name')
   assert.equal(pkg.version, version, 'Package versions must match')
@@ -14,7 +17,7 @@ export function validateManifest(pkg, name, version) {
   assert.notEqual(pkg.private, true, 'Package is private')
   assert.equal(pkg.license, 'MIT')
   assert.equal(pkg.repository?.url, repository, 'Provenance repository mismatch')
-  assert.equal(pkg.repository?.directory, `packages/${name.split('/')[1]}`)
+  assert.equal(pkg.repository?.directory, `packages/${packageDirectories[packageNames.indexOf(name)]}`)
   assert.equal(pkg.publishConfig?.access, 'public')
   assert.equal(pkg.publishConfig?.provenance, true)
   assert(pkg.files?.includes('build'), 'Build allowlist is missing')
@@ -33,7 +36,7 @@ export function validateContents(pkg, files) {
     assert(!/(^|\/)(?:\.env(?:\..*)?|\.npmrc|.*\.(?:pem|key|pfx|log))$/i.test(path), `Private file in archive: ${path}`)
   }
   const required = ['package/package.json', 'package/README.md']
-  if (pkg.name === '@adula/kit') required.push('package/LICENSE.md', 'package/build/index.js', 'package/build/index.d.ts', 'package/build/configure.js', 'package/build/commands/main.js', 'package/build/agent/AGENTS.template.md', 'package/build/agent/skills/adula-frontend-design/SKILL.md', 'package/build/agent/skills/idea-review/SKILL.md')
+  if (pkg.name === 'adula') required.push('package/LICENSE.md', 'package/build/index.js', 'package/build/index.d.ts', 'package/build/configure.js', 'package/build/commands/main.js', 'package/build/agent/AGENTS.template.md', 'package/build/agent/skills/adula-frontend-design/SKILL.md', 'package/build/agent/skills/idea-review/SKILL.md')
   else if (pkg.name === '@adula/ui') required.push('package/LICENSE', 'package/LICENSE.shadcn.md', 'package/UPSTREAM.json', 'package/build/manifest.json', 'package/build/dialog.json', 'package/build/resource-page.json', 'package/build/resource-surface.json')
   else required.push('package/LICENSE', 'package/build/cli.mjs', 'package/build/project.mjs', 'package/build/system.mjs', 'package/build/prerequisites.mjs', 'package/build/template.json')
   for (const path of required) assert(paths.has(path), `Required package file missing: ${path}`)
@@ -61,11 +64,12 @@ export function validateReadiness(readiness, version, channel) {
     for (const path of preview.evidence) assert(/^docs\/evidence\/[a-zA-Z0-9_./-]+$/.test(path) && !path.includes('..'), `Invalid evidence path: ${path}`)
     return preview.evidence
   }
-  // A stable release after 1.0.0 is a 1.x minor or patch release (ADR 038, owner-approved):
-  // the accepted 1.0 phases still apply, and the owner authorizes that exact version.
+  // A stable release after 1.0.0 is a 1.x release (ADR 038) or a 2.x release, the AdulaJS
+  // rename that adds no scope (ADR 039): the accepted 1.0 phases still apply, and the
+  // owner authorizes that exact version.
   const later = channel === 'latest' && version !== readiness.target
   if (later) {
-    assert.match(version, /^1\.\d+\.\d+$/, 'The stable track after 1.0.0 accepts 1.x releases only')
+    assert.match(version, /^[12]\.\d+\.\d+$/, 'The stable track after 1.0.0 accepts 1.x and 2.x releases only')
     const release = (readiness.releases ?? []).find((entry) => entry.version === version)
     assert(release, 'A stable release after 1.0.0 needs a record in releases')
     assert.equal(release.authorized, true, 'A stable release after 1.0.0 requires explicit owner authorization')
@@ -85,7 +89,7 @@ export function validateReadiness(readiness, version, channel) {
 }
 
 export async function checkRelease({ root = fileURLToPath(new URL('../', import.meta.url)), artifacts, channel } = {}) {
-  const manifests = await Promise.all(['kit', 'ui', 'create-app'].map(async (name) => JSON.parse(await readFile(resolve(root, `packages/${name}/package.json`), 'utf8'))))
+  const manifests = await Promise.all(packageDirectories.map(async (name) => JSON.parse(await readFile(resolve(root, `packages/${name}/package.json`), 'utf8'))))
   const version = manifests[0].version
   manifests.forEach((pkg, index) => validateManifest(pkg, packageNames[index], version))
   if (channel) {
@@ -97,7 +101,7 @@ export async function checkRelease({ root = fileURLToPath(new URL('../', import.
   if (artifacts) {
     const sums = []
     for (const source of manifests) {
-      const filename = `adula-${source.name.split('/')[1]}-${version}.tgz`
+      const filename = tarballName(source.name, version)
       const archive = resolve(root, artifacts, filename)
       // A bare filename avoids GNU tar interpreting a Windows drive colon as a remote host.
       const tar = (args) => execFileSync('tar', args, { cwd: dirname(archive), encoding: 'utf8', windowsHide: true })
@@ -112,11 +116,11 @@ export async function checkRelease({ root = fileURLToPath(new URL('../', import.
         assert.equal(registry.version, version, 'Registry was not rebuilt')
         for (const item of registry.items) assert(files.includes(`package/build/${item.name}.json`), `Missing registry item: ${item.name}`)
       }
-      if (source.name === '@adula/create-app') {
+      if (source.name === 'create-adula-app') {
         const template = JSON.parse(tar(['-xOf', filename, 'package/build/template.json']))
         assert.equal(template.version, version, 'Creator template was not rebuilt')
         const app = JSON.parse(template.files['package.json'])
-        for (const dependency of ['@adula/kit', '@adula/ui']) assert.equal(app.dependencies[dependency], version, 'Creator dependency version mismatch')
+        for (const dependency of ['adula', '@adula/ui']) assert.equal(app.dependencies[dependency], version, 'Creator dependency version mismatch')
         for (const path of Object.keys(template.files)) {
           assert(!path.startsWith('/') && !path.includes('..') && !path.includes('\\'), 'Unsafe template path')
           assert(!/(^|\/)(?:\.env(?:\..*)?|node_modules|fixtures|\.git|\.work)(?:\/|$)/.test(path), `Private template file: ${path}`)

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 import { CheckCircle2, GitBranch, XCircle } from 'lucide-react'
-import type { WorkflowRun } from '@adula/kit'
+import type { WorkflowRun } from 'adula'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Label } from '~/components/ui/label'

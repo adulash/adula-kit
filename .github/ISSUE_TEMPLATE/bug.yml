@@ -1,18 +1,18 @@
-name: Kit bug
-description: The kit behaves wrongly. Describe the kit, not your project.
+name: AdulaJS bug
+description: AdulaJS behaves wrongly. Describe AdulaJS, not your project.
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Report only defects in the kit's packages. Reproduce them on a new application
-        from `npm create @adula/app` or on `apps/reference`, and leave out project names,
-        records and credentials. A report outside the kit's scope is closed as not planned.
+        Report only defects in AdulaJS's packages. Reproduce them on a new application
+        from `npx create-adula-app` or on `apps/reference`, and leave out project names,
+        records and credentials. A report outside AdulaJS's scope is closed as not planned.
   - type: input
     id: package
     attributes:
       label: Package
-      description: Package and version, for example `@adula/kit 1.0.0`.
+      description: Package and version, for example `adula 1.0.0`.
     validations:
       required: true
   - type: textarea

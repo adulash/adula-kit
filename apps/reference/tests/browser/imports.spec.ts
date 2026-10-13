@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 import { join } from 'node:path'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import {
   installSampleResources,
   removeSampleResources,
@@ -38,7 +38,7 @@ test.group('CSV import browser acceptance', (group) => {
     await dialog.getByRole('button', { name: 'بدء الاستيراد' }).click()
     await page.waitForURL(/\/imports$/)
     await page.getByText('samples.csv').waitFor()
-    await kit().imports.process()
+    await adula().imports.process()
     await page.getByText('نجح 1').waitFor({ timeout: 10000 })
     await page.screenshot({ path: join(await screenshotDir(), 'imports.png') })
   })

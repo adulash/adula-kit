@@ -1,6 +1,6 @@
 # 1.0 acceptance
 
-The owner explicitly selected the **complete 1.0 plan**, not a stable label for 0.2.0. All gates in the [approved plan](../adula-kit-plan.md) remain applicable, with educational-module removal recorded in [ADR 017](decisions/017-test-only-examples-and-release-gates.md) and optional OAuth excluded from base release requirements by [ADR 021](decisions/021-optional-oauth.md).
+The owner explicitly selected the **complete 1.0 plan**, not a stable label for 0.2.0. All gates in the [approved plan](../adulajs-plan.md) remain applicable, with educational-module removal recorded in [ADR 017](decisions/017-test-only-examples-and-release-gates.md) and optional OAuth excluded from base release requirements by [ADR 021](decisions/021-optional-oauth.md).
 
 | Phase | Required acceptance evidence | Current boundary |
 |---|---|---|

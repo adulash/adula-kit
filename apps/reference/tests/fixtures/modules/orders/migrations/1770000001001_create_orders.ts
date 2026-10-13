@@ -1,5 +1,5 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
-import { createResourceTable } from '@adula/kit'
+import { createResourceTable } from 'adula'
 // Immutable initial schema snapshot. Later changes require a new migration.
 export default class extends BaseSchema {
   async up() {

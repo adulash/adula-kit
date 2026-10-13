@@ -1,9 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { OrgUnitsAdmin } from '@adula/kit'
-import { kit } from '#services/kit'
+import { OrgUnitsAdmin } from 'adula'
+import { adula } from '#services/adula'
 import { actorId, knex, mutate, optionalId, positiveId, wantsJson } from './support.js'
 
-const service = () => new OrgUnitsAdmin(knex(), kit().registry)
+const service = () => new OrgUnitsAdmin(knex(), adula().registry)
 
 export default class OrgUnitsController {
   async index(ctx: HttpContext) {

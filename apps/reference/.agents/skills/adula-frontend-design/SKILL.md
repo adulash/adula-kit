@@ -1,11 +1,11 @@
 ---
 name: adula-frontend-design
-description: Design business application interfaces for adula-kit using project-owned shadcn/ui components, Arabic RTL layouts, practical data density, and modal forms and record details. Apply whenever creating or changing an operational page, form, table, dialog, or dashboard in a kit consumer.
+description: Design business application interfaces for AdulaJS using project-owned shadcn/ui components, Arabic RTL layouts, practical data density, and modal forms and record details. Apply whenever creating or changing an operational page, form, table, dialog, or dashboard in an AdulaJS application.
 ---
 
-# Frontend design for adula-kit
+# Frontend design for AdulaJS
 
-This is the kit's self-contained frontend-design skill. Read it before UI work; it does not require a globally installed skill or a particular agent vendor.
+This is AdulaJS's self-contained frontend-design skill. Read it before UI work; it does not require a globally installed skill or a particular agent vendor.
 
 ## Request company identity on day one
 
@@ -15,7 +15,7 @@ At project kickoff, before the first visual design, inspect the user's brief, ex
 
 Use the normal conversation when requesting logo files or a brand guide; a text-only input tool cannot receive attachments. Ask only for missing items when some identity is already known. Do not request information or approval already supplied. If the user explicitly delegates brand creation or says there is no identity, propose a restrained business direction within that authorization.
 
-Record supplied identity in project-owned `docs/design-identity.md`: company/product names, local asset paths or supplied source links, color tokens, Arabic and Latin fonts if specified, logo usage, source of each decision and unresolved items. This is application content, not a kit-managed file; installation and upgrades must preserve it. Do not claim that a proposed or inferred choice came from the company's official guidelines.
+Record supplied identity in project-owned `docs/design-identity.md`: company/product names, local asset paths or supplied source links, color tokens, Arabic and Latin fonts if specified, logo usage, source of each decision and unresolved items. This is application content, not an AdulaJS-managed file; installation and upgrades must preserve it. Do not claim that a proposed or inferred choice came from the company's official guidelines.
 
 Apply known identity from the first interface through theme tokens, typography, logo placement and naming. Adapt inaccessible color combinations through readable pairings while retaining the brand's role and noting the decision. Do not distort logos or fetch unrelated branding. If a reply or assets are pending, continue independent work; use the existing theme or a clearly provisional neutral theme for unavoidable previews. Elapsed time is not brand approval. Incorporate supplied identity once it arrives.
 
@@ -40,7 +40,7 @@ If a general frontend-design skill is also available, apply its craft within the
 
 Use the copied shadcn/ui primitives in `inertia/components/ui/`: Button, Input, Textarea, Select, Checkbox, Switch, Table, Card, Dialog, Alert and related components. Compose them; do not recreate controls with styled native HTML, a custom modal overlay or an unrelated component library. Semantic elements such as main, section, headings, dl and form remain appropriate for structure and submission. Hidden inputs remain appropriate for metadata.
 
-Install missing registry components with `node ace adula:ui add <component>`. Never run `shadcn add` directly or modify installed kit internals. Preserve application-owned component customizations; preview updates and merge deliberate changes.
+Install missing registry components with `node ace adula:ui add <component>`. Never run `shadcn add` directly or modify installed AdulaJS internals. Preserve application-owned component customizations; preview updates and merge deliberate changes.
 
 ## Modal is the default
 

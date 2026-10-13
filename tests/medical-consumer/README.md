@@ -1,13 +1,13 @@
 # Disposable medical-assets consumer
 
-This is a reproducible kit acceptance fixture, not a customer application. The
+This is a reproducible AdulaJS acceptance fixture, not a customer application. The
 owner explicitly waived company identity for this temporary test. No domain or
 navigation item is added to the reference application's normal operation.
 
 After the full build and release/consumer checks, build/pack the creator and run:
 
 ```sh
-pnpm --filter @adula/create-app pack --pack-destination ../../.work
+pnpm --filter create-adula-app pack --pack-destination ../../.work
 pnpm check:release --artifacts=.work
 pnpm test:medical
 ```
@@ -20,7 +20,7 @@ Playwright Chromium installation. Dependencies are the approved creator packages
 
 It creates a fresh application and Git repository under `.work/medical-<timestamp>/app`,
 separate source/test/restore databases, local uploads and cache/queue namespaces.
-It installs kit/UI archives, uses adula:resource for scaffolds, embeds immutable
+It installs core/UI archives, uses adula:resource for scaffolds, embeds immutable
 initial schema snapshots, fills the generated HTTP contracts and adds transaction
 tests. It installs copied UI through the creator's adula:ui flow. A larger default
 button height and a resource index override exercise project ownership; no brand

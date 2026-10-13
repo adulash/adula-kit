@@ -1,11 +1,11 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import {
-  KitError,
+  AdulaError,
   SETTING_SCOPES,
   SettingsAdmin,
   parseSettingValue,
   type SettingScope,
-} from '@adula/kit'
+} from 'adula'
 import { actorId, knex, mutate, positiveId, text, wantsJson } from './support.js'
 import {
   mailTest,
@@ -17,7 +17,7 @@ import {
 function scopeOf(value: unknown): SettingScope {
   const scope = text(value) ?? 'system'
   if (!SETTING_SCOPES.includes(scope as SettingScope))
-    throw new KitError(422, 'E_SETTING_SCOPE', 'النطاق غير معروف')
+    throw new AdulaError(422, 'E_SETTING_SCOPE', 'النطاق غير معروف')
   return scope as SettingScope
 }
 

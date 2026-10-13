@@ -7,7 +7,7 @@ import type {
   ResourceDescription,
   ResourceShow as Show,
   SerializedRecord,
-} from '@adula/kit'
+} from 'adula'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { useUiPreferences } from '~/components/ui/ui-preferences'

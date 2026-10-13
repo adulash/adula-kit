@@ -13,7 +13,7 @@ export async function installMedicalModule(root) {
     const resourcePath = join(base, 'resources', `${resource.name}.ts`)
     const source = await readFile(resourcePath, 'utf8')
     assert(source.includes("label: { ar: 'العنوان', en: 'Title' }"), 'Refusing to overwrite a customized resource')
-    await writeFile(resourcePath, `import { defineResource } from '@adula/kit'\nimport Model from '../models/${resource.name}.js'\nimport { validator } from '../validators/${resource.name}.js'\nexport default defineResource({\n...${JSON.stringify(resource, null, 2)}, model: Model, validator,\n})\n`)
+    await writeFile(resourcePath, `import { defineResource } from 'adula'\nimport Model from '../models/${resource.name}.js'\nimport { validator } from '../validators/${resource.name}.js'\nexport default defineResource({\n...${JSON.stringify(resource, null, 2)}, model: Model, validator,\n})\n`)
     await writeFile(join(base, 'validators', `${resource.name}.ts`), `import vine from '@vinejs/vine'\nexport const validator = vine.create({${validation}})\n`)
     await writeFile(join(root, 'tests/functional', `${resource.name}.spec.ts`), `import { resourceContract } from '#tests/helpers/resource_contract'\nimport { medicalFixture } from '#tests/medical/fixture'\nresourceContract('${resource.name}', (context) => medicalFixture('${resource.name}', context))\n`)
     const columns = Object.entries(resource.fields).filter(([, field]) => field.type !== 'hasMany').map(([key, field]) =>
@@ -24,7 +24,7 @@ export async function installMedicalModule(root) {
     const matches = migrationNames.filter((name) => name.endsWith(`_create_${resource.name}.ts`))
     assert.equal(matches.length, 1)
     const { name, scoped, fields, version } = resource
-    await writeFile(join(base, 'migrations', matches[0]), `import { BaseSchema } from '@adonisjs/lucid/schema'\nimport { createResourceTable } from '@adula/kit'\n// Immutable initial schema snapshot; do not import the resource definition.\nexport default class extends BaseSchema {\n  async up() { await createResourceTable(this.db.getWriteClient(), ${JSON.stringify({ name, scoped, version, fields }, null, 2)}) }\n  async down() { throw new Error('Use an expand/contract migration or restore a backup') }\n}\n`)
+    await writeFile(join(base, 'migrations', matches[0]), `import { BaseSchema } from '@adonisjs/lucid/schema'\nimport { createResourceTable } from 'adula'\n// Immutable initial schema snapshot; do not import the resource definition.\nexport default class extends BaseSchema {\n  async up() { await createResourceTable(this.db.getWriteClient(), ${JSON.stringify({ name, scoped, version, fields }, null, 2)}) }\n  async down() { throw new Error('Use an expand/contract migration or restore a backup') }\n}\n`)
   }
   const modulePath = join(base, 'module.ts')
   await writeFile(modulePath, (await readFile(modulePath, 'utf8')).replace("ar: 'medical', en: 'medical'", "ar: 'الأصول الطبية', en: 'Medical assets'"))

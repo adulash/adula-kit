@@ -11,9 +11,10 @@ import {
   createDatabases,
   npmEntry,
   pingRedis,
-} from '../packages/create-app/src/system.mjs'
-import { dockerBackend } from '../packages/create-app/src/docker-runtime.mjs'
-import { holdDockerSession } from '../packages/create-app/src/docker-session.mjs'
+} from '../packages/create-adula-app/src/system.mjs'
+import { dockerBackend } from '../packages/create-adula-app/src/docker-runtime.mjs'
+import { holdDockerSession } from '../packages/create-adula-app/src/docker-session.mjs'
+import { packageNames, tarballName } from './check-release.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const work = join(root, '.work')
@@ -54,13 +55,13 @@ async function step(name, command, args, cwd = root, env = process.env, failure 
   }
   console.log(`PASS ${name}`)
 }
-for (const name of ['kit', 'ui', 'create-app']) {
+for (const name of packageNames) {
   if (reusePackages) continue
-  await step(`${name}-build`, process.execPath, [pnpm, '--filter', `@adula/${name}`, 'build'])
+  await step(`${name}-build`, process.execPath, [pnpm, '--filter', name, 'build'])
   await step(`${name}-pack`, process.execPath, [
     pnpm,
     '--filter',
-    `@adula/${name}`,
+    name,
     'pack',
     '--pack-destination',
     work,
@@ -106,7 +107,7 @@ await writeFile(
   })
 )
 const version = JSON.parse(
-  await readFile(join(root, 'packages/create-app/package.json'), 'utf8')
+  await readFile(join(root, 'packages/create-adula-app/package.json'), 'utf8')
 ).version
 const target = join(work, `created-app-${Date.now()}`)
 const npm = await npmEntry()
@@ -134,7 +135,7 @@ for (const directory of env[pathKey].split(delimiter)) {
   }
 }
 // This uses npm exec's installed bin, not source imports. It also exercises the
-// npm -> pinned pnpm bootstrap, with neither Adonis nor kit present beforehand.
+// npm -> pinned pnpm bootstrap, with neither Adonis nor AdulaJS present beforehand.
 let runtime
 let releaseDocker = () => {}
 try {
@@ -145,9 +146,9 @@ try {
       npm,
       'exec',
       '--yes',
-      `--package=${join(work, `adula-create-app-${version}.tgz`)}`,
+      `--package=${join(work, tarballName('create-adula-app', version))}`,
       '--',
-      'create-adula',
+      'create-adula-app',
       target,
       '--company',
       'شركة الاختبار',
@@ -217,7 +218,7 @@ try {
   assert.match(await readFile(join(target, 'inertia/components/ui/dialog.tsx'), 'utf8'), /Dialog/)
   assert(
     !JSON.stringify(
-      JSON.parse(await readFile(join(root, 'packages/create-app/build/template.json'), 'utf8'))
+      JSON.parse(await readFile(join(root, 'packages/create-adula-app/build/template.json'), 'utf8'))
         .files
     ).includes('#tests/fixtures')
   )
@@ -271,7 +272,7 @@ try {
     'refuse-overwrite',
     process.execPath,
     [
-      join(root, 'packages/create-app/build/cli.mjs'),
+      join(root, 'packages/create-adula-app/build/cli.mjs'),
       target,
       '--company',
       'Changed',

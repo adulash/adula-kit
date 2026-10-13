@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { buildAbility, type Actor, type ResourceEditor, type ResourceList } from '@adula/kit'
-import type { kit } from '#services/kit'
+import { buildAbility, type Actor, type ResourceEditor, type ResourceList } from 'adula'
+import type { adula } from '#services/adula'
 
 // Only the test runtime imports these legacy page adapters. They exercise page overrides.
 declare module '@adonisjs/inertia/types' {
@@ -18,7 +18,7 @@ declare module '@adonisjs/inertia/types' {
 export function index(
   ctx: HttpContext,
   page: string,
-  runtime: ReturnType<typeof kit>,
+  runtime: ReturnType<typeof adula>,
   actor: Actor,
   result: ResourceList
 ) {
