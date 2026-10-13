@@ -1,0 +1,47 @@
+{
+  "release": "2.0.0",
+  "date": "2026-10-13",
+  "decision": "docs/decisions/039-rename-to-adulajs.md",
+  "issue": 78,
+  "packages": [
+    "adula",
+    "@adula/ui",
+    "create-adula-app"
+  ],
+  "replaces": {
+    "@adula/kit": "adula",
+    "@adula/create-app": "create-adula-app"
+  },
+  "previousPublished": "1.2.0",
+  "npmNames": {
+    "adula": "registered by the owner's account on 2026-10-13 as a 0.0.0-stage placeholder",
+    "create-adula-app": "registered by the owner's account on 2026-10-13 as a 0.0.0-stage placeholder"
+  },
+  "migrations": {
+    "renamedFiles": 15,
+    "added": [
+      "1770000000016_adulajs_names"
+    ]
+  },
+  "localChecks": {
+    "environment": "Windows 11, Node 26.7.0, pnpm 11.19.0; PostgreSQL 17 service stopped during preparation",
+    "passed": [
+      "pnpm build",
+      "pnpm typecheck",
+      "pnpm lint",
+      "pnpm check:api",
+      "pnpm check:boundaries",
+      "pnpm check:naming",
+      "pnpm test:release (25 tests)",
+      "create-adula-app tests (45 passed, 1 skipped on Windows)"
+    ],
+    "notRunLocally": "pnpm test (PostgreSQL), pnpm test:consumer, pnpm test:create and pnpm test:upgrade --published=1.2.0 need PostgreSQL 17, which was not running; CI runs them on the pull request."
+  },
+  "ownerActionsBeforePublication": [
+    "Rename the GitHub repository adulash/adula-kit to adulash/adulajs",
+    "Update the npm trusted publisher of @adula/ui to repository adulajs",
+    "Create npm trusted publishers for adula and create-adula-app (owner adulash, repository adulajs, workflow release.yml, environment npm)",
+    "Authorize 2.0.0 in docs/release-readiness.json (ADR 038, ADR 039)",
+    "After publication, deprecate @adula/kit and @adula/create-app pointing to adula and create-adula-app"
+  ]
+}
