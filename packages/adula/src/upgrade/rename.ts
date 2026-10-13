@@ -68,7 +68,17 @@ export async function renameLegacyDatabaseObjects(knex: Knex) {
   const [oldVersion, newVersion] = LEGACY_DATABASE.versionSetting
   const [oldPrefix, newPrefix] = LEGACY_DATABASE.listenerPrefix
 
-  await knex.raw(`ALTER FUNCTION IF EXISTS ${oldFunction}() RENAME TO ${newFunction}`)
+  // PostgreSQL has no ALTER FUNCTION IF EXISTS; look the 1.x function up in this schema.
+  const functionExists = async (name: string) =>
+    Boolean(
+      await knex('pg_proc as p')
+        .join('pg_namespace as n', 'n.oid', 'p.pronamespace')
+        .where('p.proname', name)
+        .whereRaw('n.nspname = current_schema()')
+        .first('p.oid')
+    )
+  if (await functionExists(oldFunction))
+    await knex.raw(`ALTER FUNCTION ${oldFunction}() RENAME TO ${newFunction}`)
   const triggers = await knex('pg_trigger as t')
     .join('pg_class as c', 'c.oid', 't.tgrelid')
     .join('pg_namespace as n', 'n.oid', 'c.relnamespace')
@@ -78,12 +88,7 @@ export async function renameLegacyDatabaseObjects(knex: Knex) {
   for (const { table } of triggers)
     await knex.raw('ALTER TRIGGER ?? ON ?? RENAME TO ??', [oldTrigger, table, newTrigger])
 
-  const signal = await knex('pg_proc as p')
-    .join('pg_namespace as n', 'n.oid', 'p.pronamespace')
-    .where('p.proname', oldSignal)
-    .whereRaw('n.nspname = current_schema()')
-    .first('p.oid')
-  if (signal) {
+  if (await functionExists(oldSignal)) {
     await knex.raw(
       `CREATE OR REPLACE FUNCTION ${newSignal}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN PERFORM pg_notify('${newChannel}', json_build_object('userId', NEW.user_id, 'id', NEW.id)::text); RETURN NULL; END $$`
     )
