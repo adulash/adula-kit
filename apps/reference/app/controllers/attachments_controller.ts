@@ -4,9 +4,9 @@ import attachmentManager from '@jrmc/adonis-attachment/services/main'
 import drive from '@adonisjs/drive/services/main'
 import db from '@adonisjs/lucid/services/db'
 import env from '#start/env'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import {
-  KitError,
+  AdulaError,
   PENDING_UPLOAD_LIMIT,
   attachmentPolicy,
   attachmentUrl,
@@ -15,10 +15,10 @@ import {
   pendingUploadCount,
   redeemUploadGrant,
   registerUpload,
-} from '@adula/kit'
-import type { Actor, AttachmentRecord } from '@adula/kit'
+} from 'adula'
+import type { Actor, AttachmentRecord } from 'adula'
 
-const notFound = () => new KitError(404, 'E_NOT_FOUND', 'المرفق غير موجود')
+const notFound = () => new AdulaError(404, 'E_NOT_FOUND', 'المرفق غير موجود')
 
 /** RFC 5987: an ASCII fallback plus the UTF-8 name so Arabic titles survive every browser. */
 function contentDisposition(name: string) {
@@ -32,7 +32,7 @@ function contentDisposition(name: string) {
 
 export default class AttachmentsController {
   async store({ auth, request, response }: HttpContext) {
-    const runtime = kit()
+    const runtime = adula()
     const actor = await runtime.actors.load(auth.getUserOrFail().id)
     const knex = db.connection().getWriteClient()
     // A grant issued by module code for one record replaces the resource-wide role rule.
@@ -42,21 +42,21 @@ export default class AttachmentsController {
         ? null
         : await redeemUploadGrant(knex, runtime.registry, grantToken, actor.id)
     if (grantToken && !grant)
-      throw new KitError(403, 'E_UPLOAD_GRANT', 'انتهت صلاحية إذن الرفع أو لا يخصك')
+      throw new AdulaError(403, 'E_UPLOAD_GRANT', 'انتهت صلاحية إذن الرفع أو لا يخصك')
     const resourceName = grant ? grant.resource : request.input('resource')
     const fieldName = grant ? grant.field : request.input('field')
     if (
       typeof resourceName !== 'string' ||
       !runtime.registry.all().some((entry) => entry.name === resourceName)
     )
-      throw new KitError(404, 'E_NOT_FOUND', 'الكيان غير موجود')
+      throw new AdulaError(404, 'E_NOT_FOUND', 'الكيان غير موجود')
     const resource = runtime.registry.get(resourceName)
     const field =
       typeof fieldName === 'string' && Object.hasOwn(resource.fields, fieldName)
         ? resource.fields[fieldName]
         : undefined
     if (!field || field.type !== 'attachment' || (!grant && !resource.form.includes(fieldName)))
-      throw new KitError(422, 'E_FIELD_INVALID', 'الحقل ليس حقل مرفقات')
+      throw new AdulaError(422, 'E_FIELD_INVALID', 'الحقل ليس حقل مرفقات')
     if (!grant) {
       const ability = buildAbility(actor.rules, runtime.registry.all())
       const level = Math.max(
@@ -71,19 +71,19 @@ export default class AttachmentsController {
             ability.can(action, resource.name) &&
             ability.can(action, resource.name, fieldName)
         )
-      if (!allowed) throw new KitError(403, 'E_FORBIDDEN', 'ليس لديك صلاحية لرفع مرفق لهذا الحقل')
+      if (!allowed) throw new AdulaError(403, 'E_FORBIDDEN', 'ليس لديك صلاحية لرفع مرفق لهذا الحقل')
     }
     // Unbound uploads are pruned after a day; cap them so one user cannot fill the disk.
     if ((await pendingUploadCount(knex, actor.id)) >= PENDING_UPLOAD_LIMIT)
-      throw new KitError(
+      throw new AdulaError(
         429,
         'E_UPLOAD_LIMIT',
         'لديك ملفات مرفوعة كثيرة لم تُحفظ في سجل. احفظ السجلات المفتوحة أو انتظر حتى تُنظَّف.'
       )
     const file = request.file('file', attachmentPolicy(field))
-    if (!file) throw new KitError(422, 'E_FILE_REQUIRED', 'اختر ملفاً للرفع')
+    if (!file) throw new AdulaError(422, 'E_FILE_REQUIRED', 'اختر ملفاً للرفع')
     if (!file.isValid)
-      throw new KitError(
+      throw new AdulaError(
         422,
         'E_FILE_INVALID',
         file.errors.map((error) => error.message).join('، ')
@@ -129,7 +129,7 @@ export default class AttachmentsController {
   }
 
   async show({ auth, params, response }: HttpContext) {
-    const runtime = kit()
+    const runtime = adula()
     const actor = await runtime.actors.load(auth.getUserOrFail().id)
     const id = Number(params.id)
     const row = await findAttachment(
@@ -140,7 +140,7 @@ export default class AttachmentsController {
     await this.#authorize(row, actor, runtime)
     const disk = drive.use(row.disk as never)
     if (!(await disk.exists(row.path)))
-      throw new KitError(500, 'E_ATTACHMENT_FILE_MISSING', 'ملف المرفق غير متاح على وحدة التخزين')
+      throw new AdulaError(500, 'E_ATTACHMENT_FILE_MISSING', 'ملف المرفق غير متاح على وحدة التخزين')
     response.header('Content-Type', row.mimeType)
     response.header('Content-Length', String(row.size))
     response.header('Content-Disposition', contentDisposition(row.originalName))
@@ -150,7 +150,7 @@ export default class AttachmentsController {
   }
 
   /** Bound files inherit the record's view policy; unbound uploads belong to their uploader only. */
-  async #authorize(row: AttachmentRecord, actor: Actor, runtime: ReturnType<typeof kit>) {
+  async #authorize(row: AttachmentRecord, actor: Actor, runtime: ReturnType<typeof adula>) {
     if (row.recordId === null || row.resource === null || row.field === null) {
       if (row.uploadedBy !== actor.id) throw notFound()
       return
@@ -160,7 +160,7 @@ export default class AttachmentsController {
     try {
       shown = await runtime.resources.show(row.resource, row.recordId, actor)
     } catch (error) {
-      if (error instanceof KitError && [403, 404].includes(error.status)) throw notFound()
+      if (error instanceof AdulaError && [403, 404].includes(error.status)) throw notFound()
       throw error
     }
     const value = shown.data[row.field]

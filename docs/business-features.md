@@ -1,14 +1,14 @@
 # Business features (phases 3 and 4)
 
-How to use the kit's business features in an application. Every feature is a kit
+How to use AdulaJS's business features in an application. Every feature is an AdulaJS
 service plus an additive migration; the reference application shows the wiring
-(routes, controllers, pages) that `@adula/create-app` copies into new projects.
+(routes, controllers, pages) that `create-adula-app` copies into new projects.
 All record features call `ResourceService.access`, so they can never reach a
 record the user could not open.
 
 ## Collaboration around a record
 
-`RecordCollaboration` (`kit().collaboration`) provides comments with mentions,
+`RecordCollaboration` (`adula().collaboration`) provides comments with mentions,
 followers, tags and field history. ResourceShow renders the `record-collaboration`
 panel automatically.
 
@@ -17,7 +17,7 @@ panel automatically.
 - Tags require update permission; lists filter with `?tag=<name>`.
 - Every update stores before/after values in `field_changes` inside the save
   transaction. Readers only see changes of fields they may read.
-- `followerListeners(registry, () => kit().collaboration)` notifies followers of
+- `followerListeners(registry, () => adula().collaboration)` notifies followers of
   updates and document transitions.
 
 ## Assignments and "my tasks"
@@ -30,7 +30,7 @@ create assignments of kind `approval`.
 ## Notifications, templates, e-mail and realtime
 
 - `notifyWithTemplate(db, userId, key, variables)` writes a notification from a
-  message template. Defaults live in the kit (`DEFAULT_TEMPLATES`); administrators
+  message template. Defaults live in AdulaJS (`DEFAULT_TEMPLATES`); administrators
   edit wording at `/admin/templates` (placeholders are validated).
 - Templates with mail enabled are e-mailed by the worker
   (`deliverNotificationMail`, three attempts).

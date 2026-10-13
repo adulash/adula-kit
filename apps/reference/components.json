@@ -6,7 +6,7 @@
   "rtl": true,
   "tailwind": {
     "config": "",
-    "css": "inertia/css/kit.css",
+    "css": "inertia/css/adula.css",
     "baseColor": "neutral",
     "cssVariables": true
   },

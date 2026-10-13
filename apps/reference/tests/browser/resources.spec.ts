@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { join } from 'node:path'
 import db from '@adonisjs/lucid/services/db'
 import type { Page } from 'playwright'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import {
   installSampleResources,
   removeSampleResources,
@@ -22,7 +22,7 @@ type Scrollable = {
 
 const knex = () => db.connection().getWriteClient()
 async function service(actor: UiActor) {
-  const runtime = kit()
+  const runtime = adula()
   return { runtime, loaded: await runtime.actors.load(actor.user.id) }
 }
 async function loadAll(page: Page) {

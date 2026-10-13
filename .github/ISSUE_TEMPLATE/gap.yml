@@ -1,33 +1,33 @@
-name: Kit gap
-description: A capability the kit lacks. Describe the kit, not your project.
+name: AdulaJS gap
+description: A capability AdulaJS lacks. Describe AdulaJS, not your project.
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Report only what the kit itself should offer. Reproduce it on a new application
-        from `npm create @adula/app`, not on your project, and leave out project names,
+        Report only what AdulaJS itself should offer. Reproduce it on a new application
+        from `npx create-adula-app`, not on your project, and leave out project names,
         records and credentials. `node ace adula:gaps report` opens this form prefilled
-        from your KIT_GAPS.md. A gap outside the kit's scope is closed as not planned.
+        from your GAPS.md. A gap outside AdulaJS's scope is closed as not planned.
   - type: input
     id: package
     attributes:
       label: Package
-      description: Package and version, for example `@adula/kit 1.0.0`.
+      description: Package and version, for example `adula 1.0.0`.
     validations:
       required: true
   - type: textarea
     id: needed
     attributes:
       label: Needed by
-      description: The kit capability that is missing, stated without project details.
+      description: AdulaJS capability that is missing, stated without project details.
     validations:
       required: true
   - type: textarea
     id: tried
     attributes:
       label: Tried
-      description: The kit extension points you tried.
+      description: AdulaJS extension points you tried.
     validations:
       required: true
   - type: textarea
@@ -40,8 +40,8 @@ body:
   - type: textarea
     id: proposal
     attributes:
-      label: Proposed kit change
-      description: The API, option or fix the kit should offer.
+      label: Proposed AdulaJS change
+      description: The API, option or fix AdulaJS should offer.
     validations:
       required: true
   - type: textarea

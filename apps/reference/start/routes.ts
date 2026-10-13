@@ -12,7 +12,7 @@ import { controllers } from '#generated/controllers'
 import router from '@adonisjs/core/services/router'
 import transmit from '@adonisjs/transmit/services/main'
 import db from '@adonisjs/lucid/services/db'
-import { Settings } from '@adula/kit'
+import { Settings } from 'adula'
 import redis from '@adonisjs/redis/services/main'
 import {
   apiThrottle,

@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
-import { notifyWithTemplate } from '@adula/kit'
+import { notifyWithTemplate } from 'adula'
 import { seedActor, type UiActor } from '#tests/helpers/ui_fixtures'
 
 test.group('Realtime notification bell', (group) => {

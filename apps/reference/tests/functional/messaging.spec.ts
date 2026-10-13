@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
 import transmit from '@adonisjs/transmit/services/main'
-import { notify, notifyWithTemplate } from '@adula/kit'
+import { notify, notifyWithTemplate } from 'adula'
 import { seedActor, type UiActor } from '#tests/helpers/ui_fixtures'
 
 const json = { Accept: 'application/json' }

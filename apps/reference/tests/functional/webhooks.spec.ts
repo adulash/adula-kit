@@ -2,8 +2,8 @@ import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
-import { consumeEvent, signWebhook, type DomainEvent } from '@adula/kit'
-import { kit } from '#services/kit'
+import { consumeEvent, signWebhook, type DomainEvent } from 'adula'
+import { adula } from '#services/adula'
 import { listeners } from '#start/listeners'
 import { seedActor, type UiActor } from '#tests/helpers/ui_fixtures'
 
@@ -61,17 +61,21 @@ test.group('Outgoing webhooks over HTTP', (group) => {
       const listed = await client.get('/admin/webhooks').loginAs(admin.user).headers(json)
       assert.notInclude(JSON.stringify(listed.body()), secret)
 
-      const order = await kit().resources.save('orders', await kit().actors.load(member.user.id), {
-        notes: 'طلب يصل للمحاسبة',
-        orgUnitId: admin.orgUnitId,
-      })
+      const order = await adula().resources.save(
+        'orders',
+        await adula().actors.load(member.user.id),
+        {
+          notes: 'طلب يصل للمحاسبة',
+          orgUnitId: admin.orgUnitId,
+        }
+      )
       const row = await knex()('outbox')
         .where('event', 'orders.orders.created')
         .whereRaw("payload->>'id' = ?", [String(order.id)])
         .first()
       const event: DomainEvent = { id: row.id, event: row.event, payload: row.payload }
       for (const listener of listeners) await consumeEvent(knex(), listener, event)
-      await kit().webhooks.deliver(async (url, init) => {
+      await adula().webhooks.deliver(async (url, init) => {
         const response = await fetch(url, { method: 'POST', ...init })
         return { status: response.status }
       })

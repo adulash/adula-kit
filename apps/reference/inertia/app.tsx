@@ -7,9 +7,9 @@ import { createInertiaApp, type ResolvedComponent } from '@inertiajs/react'
 import { TuyauProvider } from '@adonisjs/inertia/react'
 import { resolvePageComponent } from '@adonisjs/inertia/helpers'
 import fixturePages from '~/fixture_pages'
-import './css/kit.css'
+import './css/adula.css'
 
-const appName = import.meta.env.VITE_APP_NAME || 'adula kit'
+const appName = import.meta.env.VITE_APP_NAME || 'AdulaJS'
 
 createInertiaApp({
   title: (title) => (title ? `${title} - ${appName}` : appName),

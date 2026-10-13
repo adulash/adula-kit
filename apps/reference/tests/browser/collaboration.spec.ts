@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 import { join } from 'node:path'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import {
   installSampleResources,
   removeSampleResources,
@@ -21,8 +21,8 @@ test.group('Record collaboration browser acceptance', (group) => {
       level: 0,
     })
     await installSampleResources()
-    const actor = await kit().actors.load(owner.user.id)
-    const saved = await kit().resources.save('ui_samples', actor, {
+    const actor = await adula().actors.load(owner.user.id)
+    const saved = await adula().resources.save('ui_samples', actor, {
       title: 'عينة التعليقات',
       orgUnitId: owner.orgUnitId,
     })
@@ -59,10 +59,10 @@ test.group('Record collaboration browser acceptance', (group) => {
     assert.equal(direction, 'rtl')
     await page.screenshot({ path: join(await screenshotDir(), 'record-collaboration.png') })
 
-    const inbox = await kit().collaboration.state(
+    const inbox = await adula().collaboration.state(
       'ui_samples',
       id,
-      await kit().actors.load(colleague.user.id)
+      await adula().actors.load(colleague.user.id)
     )
     assert.lengthOf(inbox.comments, 1)
     assert.deepEqual(inbox.tags, ['عاجل', 'مراجعة'])
@@ -102,10 +102,10 @@ test.group('Record collaboration browser acceptance', (group) => {
     await tasks.getByRole('dialog').getByLabel('ملاحظة الإغلاق').fill('تم التدقيق')
     await tasks.getByRole('button', { name: 'تأكيد الإنجاز' }).click()
     await tasks.getByText('لا مهام ولا موافقات مفتوحة.').waitFor()
-    const [row] = await kit().assignments.forRecord(
+    const [row] = await adula().assignments.forRecord(
       'ui_samples',
       id,
-      await kit().actors.load(owner.user.id)
+      await adula().actors.load(owner.user.id)
     )
     assert.equal(row.status, 'done')
     assert.equal(row.closeReason, 'تم التدقيق')

@@ -1,15 +1,15 @@
-import { followerListeners, workflowListeners, type Listener } from '@adula/kit'
+import { followerListeners, workflowListeners, type Listener } from 'adula'
 import { testFixturesEnabled } from '#start/test_fixtures'
 import { registry } from '#start/modules'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 
 export const listeners: Listener[] = [
-  ...followerListeners(registry, () => kit().collaboration),
-  ...workflowListeners(registry, () => kit().workflows),
+  ...followerListeners(registry, () => adula().collaboration),
+  ...workflowListeners(registry, () => adula().workflows),
   {
-    name: 'kit.webhooks',
+    name: 'adula.webhooks',
     event: '*',
-    handle: (event, trx) => kit().webhooks.listener().handle(event, trx),
+    handle: (event, trx) => adula().webhooks.listener().handle(event, trx),
   },
 ]
 if (testFixturesEnabled) {

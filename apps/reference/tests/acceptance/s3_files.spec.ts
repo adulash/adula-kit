@@ -5,7 +5,7 @@ import db from '@adonisjs/lucid/services/db'
 import drive from '@adonisjs/drive/services/main'
 import User from '#models/user'
 import { seedActor } from '#tests/helpers/ui_fixtures'
-import { migrateStorage } from '@adula/kit'
+import { migrateStorage } from 'adula'
 
 type FileEvidence = {
   id: number

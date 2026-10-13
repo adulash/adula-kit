@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import { randomUUID } from 'node:crypto'
 import db from '@adonisjs/lucid/services/db'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import { pageFor } from '#controllers/resources_controller'
 import {
   installSampleResources,
@@ -163,7 +163,7 @@ test.group('Generic pages for scoped and versioned resources', (group) => {
   group.setup(async () => {
     admin = await seedActor([{ subject: 'all', action: 'manage' }])
     await installSampleResources()
-    const runtime = kit()
+    const runtime = adula()
     const loaded = await runtime.actors.load(admin.user.id)
     const order = await runtime.resources.save('orders', loaded, {
       orgUnitId: admin.orgUnitId,

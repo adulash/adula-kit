@@ -1,0 +1,9 @@
+{{{ exports({ to: app.makePath('app/services/adula.ts') }) }}}
+import db from '@adonisjs/lucid/services/db'
+import { ActorStore, ResourceService } from 'adula'
+import { registry } from '#start/modules'
+
+export function adula() {
+  const knex = db.connection().getWriteClient()
+  return { registry, resources: new ResourceService(knex, registry), actors: new ActorStore(knex, registry) }
+}

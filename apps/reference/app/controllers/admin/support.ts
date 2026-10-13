@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
-import { KitError } from '@adula/kit'
+import { AdulaError } from 'adula'
 
 export const knex = () => db.connection().getWriteClient()
 export const actorId = (ctx: HttpContext) => ctx.auth.getUserOrFail().id
@@ -9,7 +9,7 @@ export const text = (value: unknown) => (typeof value === 'string' && value ? va
 
 export function positiveId(value: unknown, message = 'السجل غير موجود') {
   const id = Number(value)
-  if (!Number.isSafeInteger(id) || id <= 0) throw new KitError(404, 'E_NOT_FOUND', message)
+  if (!Number.isSafeInteger(id) || id <= 0) throw new AdulaError(404, 'E_NOT_FOUND', message)
   return id
 }
 export function optionalId(value: unknown) {
@@ -33,7 +33,7 @@ export async function mutate(
     if (wantsJson(ctx)) throw error
     const code = (error as { code?: string })?.code
     const message =
-      error instanceof KitError
+      error instanceof AdulaError
         ? error.message
         : code === '23505'
           ? 'هذه القيمة مستخدمة في سجل آخر'

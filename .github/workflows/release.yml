@@ -50,7 +50,7 @@ jobs:
           sha=$(git rev-parse "refs/tags/v${VERSION}^{commit}")
           git merge-base --is-ancestor "$sha" origin/main
           git checkout --detach "$sha"
-          node --input-type=module -e "import fs from 'node:fs'; if (JSON.parse(fs.readFileSync('packages/kit/package.json')).version !== process.env.VERSION) throw new Error('Tag/version mismatch')"
+          node --input-type=module -e "import fs from 'node:fs'; if (JSON.parse(fs.readFileSync('packages/adula/package.json')).version !== process.env.VERSION) throw new Error('Tag/version mismatch')"
           node scripts/check-release.mjs --channel="$RELEASE_CHANNEL"
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
   verify:
@@ -96,9 +96,9 @@ jobs:
           VERSION: ${{ inputs.version }}
           RELEASE_CHANNEL: ${{ inputs.channel }}
         run: |
-          npm publish ".work/release/adula-kit-${VERSION}.tgz" --access public --provenance --tag "$RELEASE_CHANNEL" --ignore-scripts
+          npm publish ".work/release/adula-${VERSION}.tgz" --access public --provenance --tag "$RELEASE_CHANNEL" --ignore-scripts
           npm publish ".work/release/adula-ui-${VERSION}.tgz" --access public --provenance --tag "$RELEASE_CHANNEL" --ignore-scripts
-          npm publish ".work/release/adula-create-app-${VERSION}.tgz" --access public --provenance --tag "$RELEASE_CHANNEL" --ignore-scripts
+          npm publish ".work/release/create-adula-app-${VERSION}.tgz" --access public --provenance --tag "$RELEASE_CHANNEL" --ignore-scripts
   bootstrap:
     if: inputs.bootstrap == true && inputs.channel == 'alpha'
     needs: [prepare, verify]

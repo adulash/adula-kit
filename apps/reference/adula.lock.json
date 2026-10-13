@@ -1,13 +1,13 @@
 {
-  "version": "1.2.0",
-  "managedRules": "70410d2228a4f1d504d6160a30cce22b683b44f40b55882aa5d74f52e412742d",
+  "version": "2.0.0",
+  "managedRules": "6373f9a406ebaf179acccd3d6c888656cd0cd4e7a4ee3082df72571d2a9138c0",
   "skills": {
-    ".agents/skills/adula-idea-review/SKILL.md": "9d462ffe5111424a8a7bd498df0be7503ed5f1884a0b97d6bbd4119b5d1039b8",
-    ".agents/skills/adula-frontend-design/SKILL.md": "31fd57c7ce73f89c5f3a3f82cbffc75beb0c48f51255dc1345dad3cb297e5501",
-    ".agents/skills/adula-module-review/SKILL.md": "dfdc3d6a2c585b846cb97ae12aef614141f7ef8288bdf16d24a5cf5e18254285",
-    ".agents/skills/adula-security-review/SKILL.md": "95e7c4dbe3844ca8e0a42e324a9226aa3e796c913f86ea9952ee9ab033576b05",
-    ".agents/skills/adula-schema-review/SKILL.md": "276230855e6e0bb60b8a201217f37e34d650bc11a14f5fb4df4f308525a3150e",
+    ".agents/skills/adula-idea-review/SKILL.md": "bdbb4839b57d38143a614ed258af602044e1fdd763b190685e46ea0c29a27b47",
+    ".agents/skills/adula-frontend-design/SKILL.md": "aae92f3ce03c005cd9fade41818c4e41d33d8117786974edf793acc3f48270e2",
+    ".agents/skills/adula-module-review/SKILL.md": "ab891bef3d2bd521195066ed2da9f71104ab65468ad33e3210459080f2c2fa8f",
+    ".agents/skills/adula-security-review/SKILL.md": "3b391571f23c1fb9672dec6370a7b658c6c682fdac5181beae5d24e366e8e925",
+    ".agents/skills/adula-schema-review/SKILL.md": "382a714a2926ef4cfaf629d1b89f378af565bb62f6fa7c5b54b40ddf54aac4c7",
     ".agents/skills/adula-ui-review/SKILL.md": "9e5a05cb60db6512d5b2ba6d948a3bc5a66876a430afbb268938ebe9e5331c1e",
-    ".agents/skills/adula-perf-review/SKILL.md": "fdea9daa0b3e5dda88bd1409d5707534218c0944445d9c2ccce01194b1011a6e"
+    ".agents/skills/adula-perf-review/SKILL.md": "d786a1c0301685169bb90b658cc6baf6e8f6519af7c3300183b8b1ddd88cb670"
   }
 }

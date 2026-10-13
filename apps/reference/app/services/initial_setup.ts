@@ -5,7 +5,7 @@ import app from '@adonisjs/core/services/app'
 import db from '@adonisjs/lucid/services/db'
 import redis from '@adonisjs/redis/services/main'
 import drive from '@adonisjs/drive/services/main'
-import { InitialSetup, Settings, runtimeHealth, type SetupCheck } from '@adula/kit'
+import { InitialSetup, Settings, runtimeHealth, type SetupCheck } from 'adula'
 import env from '#start/env'
 import { mailTest, mailFingerprint, publicMailTest } from '#services/mail_delivery_test'
 

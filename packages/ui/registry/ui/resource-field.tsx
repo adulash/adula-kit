@@ -13,7 +13,7 @@ import {
   Upload,
   X,
 } from 'lucide-react'
-import type { CalendarSystem, ResourceEditor, ResourceField as Field } from '@adula/kit'
+import type { CalendarSystem, ResourceEditor, ResourceField as Field } from 'adula'
 import { Button } from '~/components/ui/button'
 import { Calendar } from '~/components/ui/calendar'
 import { HijriCalendar } from '~/components/ui/hijri-calendar'

@@ -1,4 +1,4 @@
-import { ResourceRegistry, type Module } from '@adula/kit'
+import { ResourceRegistry, type Module } from 'adula'
 import { testFixturesEnabled } from '#start/test_fixtures'
 // adula:imports
 export const modules: Module[] = [/* adula:modules */]

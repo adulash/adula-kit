@@ -11,7 +11,7 @@ import type {
   ResourceLookups,
   SavedView,
   ResourceShow as Show,
-} from '@adula/kit'
+} from 'adula'
 import { Button } from '~/components/ui/button'
 import { DataTable } from '~/components/ui/data-table'
 import { ResourceForm } from '~/components/ui/resource-form'

@@ -1,9 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import queue from '@nemoventures/adonis-jobs/services/main'
-import { KitError, logActivity, runtimeHealth, type QueueSnapshot } from '@adula/kit'
+import { AdulaError, logActivity, runtimeHealth, type QueueSnapshot } from 'adula'
 import { actorId, knex, mutate, wantsJson } from './support.js'
 
-/** BullMQ stays in the application; the kit only defines the snapshot shape. */
+/** BullMQ stays in the application; AdulaJS only defines the snapshot shape. */
 async function snapshot(): Promise<QueueSnapshot> {
   const events = queue.useQueue('events')
   const counts = await events.getJobCounts('waiting', 'active', 'delayed', 'failed', 'completed')
@@ -36,14 +36,15 @@ export default class JobsController {
 
   async retry(ctx: HttpContext) {
     const id = String(ctx.params.id)
-    if (!/^[\w-]{1,128}$/.test(id)) throw new KitError(404, 'E_JOB_NOT_FOUND', 'الوظيفة غير موجودة')
+    if (!/^[\w-]{1,128}$/.test(id))
+      throw new AdulaError(404, 'E_JOB_NOT_FOUND', 'الوظيفة غير موجودة')
     return mutate(
       ctx,
       async () => {
         const job = await queue.useQueue('events').getJob(id)
-        if (!job) throw new KitError(404, 'E_JOB_NOT_FOUND', 'الوظيفة غير موجودة')
+        if (!job) throw new AdulaError(404, 'E_JOB_NOT_FOUND', 'الوظيفة غير موجودة')
         if (!(await job.isFailed()))
-          throw new KitError(422, 'E_JOB_NOT_FAILED', 'يمكن إعادة المحاولة للوظائف الفاشلة فقط')
+          throw new AdulaError(422, 'E_JOB_NOT_FAILED', 'يمكن إعادة المحاولة للوظائف الفاشلة فقط')
         await job.retry()
         await logActivity(knex(), {
           resource: 'core.jobs',

@@ -1,5 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { KitError } from '@adula/kit'
+import { AdulaError } from 'adula'
 import type { AccessToken } from '@adonisjs/auth/access_tokens'
 import User from '#models/user'
 import { positiveId, wantsJson } from '#controllers/admin/support'
@@ -32,17 +32,17 @@ export default class ApiTokensController {
     const user = ctx.auth.getUserOrFail()
     // A token outlives the session, so an administrator acting as this user cannot mint one.
     if (activeImpersonation(ctx))
-      throw new KitError(403, 'E_IMPERSONATING', 'لا يمكن إنشاء رمز وصول أثناء انتحال الهوية')
+      throw new AdulaError(403, 'E_IMPERSONATING', 'لا يمكن إنشاء رمز وصول أثناء انتحال الهوية')
     const name = String(ctx.request.input('name') ?? '').trim()
     if (!name || name.length > 60)
-      throw new KitError(422, 'E_TOKEN_NAME', 'اسم الرمز مطلوب ولا يتجاوز 60 حرفاً')
+      throw new AdulaError(422, 'E_TOKEN_NAME', 'اسم الرمز مطلوب ولا يتجاوز 60 حرفاً')
     const access = ctx.request.input('access') === 'write' ? 'write' : 'read'
     const days = Number(ctx.request.input('expiresInDays') ?? 90)
     if (!Number.isInteger(days) || days < 1 || days > 365)
-      throw new KitError(422, 'E_TOKEN_EXPIRY', 'مدة الصلاحية بين يوم و365 يوماً')
+      throw new AdulaError(422, 'E_TOKEN_EXPIRY', 'مدة الصلاحية بين يوم و365 يوماً')
     const existing = await User.accessTokens.all(user)
     if (existing.length >= 20)
-      throw new KitError(422, 'E_TOKEN_LIMIT', 'بلغت الحد الأقصى للرموز (20)')
+      throw new AdulaError(422, 'E_TOKEN_LIMIT', 'بلغت الحد الأقصى للرموز (20)')
     const token = await User.accessTokens.create(user, [...ACCESS[access]], {
       name,
       expiresIn: `${days} days`,
@@ -56,7 +56,7 @@ export default class ApiTokensController {
       user,
       positiveId(ctx.params.id, 'الرمز غير موجود')
     )
-    if (!removed) throw new KitError(404, 'E_TOKEN_NOT_FOUND', 'الرمز غير موجود')
+    if (!removed) throw new AdulaError(404, 'E_TOKEN_NOT_FOUND', 'الرمز غير موجود')
     return { data: true }
   }
 }

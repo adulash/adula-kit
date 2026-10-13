@@ -1,7 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { KitError, OrgUnitsAdmin, RolesAdmin, UsersAdmin, logActivity } from '@adula/kit'
+import { AdulaError, OrgUnitsAdmin, RolesAdmin, UsersAdmin, logActivity } from 'adula'
 import User from '#models/user'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import { endSession, recordSession, revokeUserSessions } from '#services/sessions'
 import { isAdministrator } from '#middleware/admin_middleware'
 import {
@@ -29,8 +29,8 @@ export default class UsersController {
 
   async show(ctx: HttpContext) {
     const user = await service().get(positiveId(ctx.params.id))
-    const roles = await new RolesAdmin(knex(), kit().registry).list()
-    const orgUnits = await new OrgUnitsAdmin(knex(), kit().registry).tree()
+    const roles = await new RolesAdmin(knex(), adula().registry).list()
+    const orgUnits = await new OrgUnitsAdmin(knex(), adula().registry).tree()
     const props = { user, roles, orgUnits }
     if (wantsJson(ctx)) return props
     return ctx.inertia.render('admin/users/show', props)
@@ -136,15 +136,15 @@ export default class UsersController {
     return mutate(
       ctx,
       async () => {
-        if (id === admin) throw new KitError(422, 'E_SELF_IMPERSONATE', 'لا يمكنك انتحال حسابك')
+        if (id === admin) throw new AdulaError(422, 'E_SELF_IMPERSONATE', 'لا يمكنك انتحال حسابك')
         if (hasImpersonationMarker(ctx.session))
-          throw new KitError(422, 'E_ALREADY_IMPERSONATING', 'أنهِ الانتحال الحالي أولاً')
+          throw new AdulaError(422, 'E_ALREADY_IMPERSONATING', 'أنهِ الانتحال الحالي أولاً')
         const target = await service().get(id)
         if (target.disabledAt)
-          throw new KitError(422, 'E_USER_DISABLED', 'لا يمكن انتحال حساب معطّل')
+          throw new AdulaError(422, 'E_USER_DISABLED', 'لا يمكن انتحال حساب معطّل')
         // Acting as another administrator would hide one administrator behind another.
         if (await isAdministrator(id))
-          throw new KitError(403, 'E_IMPERSONATE_ADMIN', 'لا يمكن انتحال حساب مسؤول آخر')
+          throw new AdulaError(403, 'E_IMPERSONATE_ADMIN', 'لا يمكن انتحال حساب مسؤول آخر')
         const user = await User.findOrFail(id)
         await logActivity(knex(), {
           resource: RESOURCE,
@@ -173,7 +173,7 @@ export default class UsersController {
       async () => {
         // Only the impersonated user's own session may return to the administrator.
         const impersonation = activeImpersonation(ctx)
-        if (!impersonation) throw new KitError(422, 'E_NOT_IMPERSONATING', 'لا يوجد انتحال نشط')
+        if (!impersonation) throw new AdulaError(422, 'E_NOT_IMPERSONATING', 'لا يوجد انتحال نشط')
         const impersonator = impersonation.adminId
         endImpersonation(ctx.session)
         const previous = ctx.session.sessionId
@@ -184,7 +184,7 @@ export default class UsersController {
         if (!original || state?.disabledAt) {
           await ctx.auth.use('web').logout()
           await endSession(previous)
-          throw new KitError(403, 'E_IMPERSONATOR_REVOKED', 'لم يعد حساب المدير متاحاً')
+          throw new AdulaError(403, 'E_IMPERSONATOR_REVOKED', 'لم يعد حساب المدير متاحاً')
         }
         await ctx.auth.use('web').login(original)
         await endSession(previous)

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { router } from '@inertiajs/react'
-import type { MailTestState } from '@adula/kit'
+import type { MailTestState } from 'adula'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '~/components/ui/card'
 import {

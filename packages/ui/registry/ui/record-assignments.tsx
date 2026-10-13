@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import axios from 'axios'
 import { ListChecks, Plus } from 'lucide-react'
-import type { Assignment, MentionCandidate } from '@adula/kit'
+import type { Assignment, MentionCandidate } from 'adula'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Input } from '~/components/ui/input'

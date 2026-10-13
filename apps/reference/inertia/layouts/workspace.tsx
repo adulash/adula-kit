@@ -9,7 +9,7 @@ import {
   FileUp,
   UserPlus,
 } from 'lucide-react'
-import type { ResourceNavigation } from '@adula/kit'
+import type { ResourceNavigation } from 'adula'
 import { Toaster } from '~/components/ui/sonner'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'

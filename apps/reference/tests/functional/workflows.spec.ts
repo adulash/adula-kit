@@ -1,9 +1,9 @@
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
-import { consumeEvent, seedModules, type DomainEvent } from '@adula/kit'
+import { consumeEvent, seedModules, type DomainEvent } from 'adula'
 import { registry } from '#start/modules'
 import User from '#models/user'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import { listeners } from '#start/listeners'
 import { seedActor, type UiActor } from '#tests/helpers/ui_fixtures'
 
@@ -152,7 +152,7 @@ test.group('Two-level order approval workflow over HTTP', (group) => {
     assert,
   }) => {
     const id = await submit(client, '3000000')
-    const [run] = await kit().workflows.inbox(await kit().actors.load(manager.id))
+    const [run] = await adula().workflows.inbox(await adula().actors.load(manager.id))
     const rejected = await client
       .post(`/workflows/${run.id}/decide`)
       .loginAs(manager)
@@ -179,10 +179,10 @@ test.group('Two-level order approval workflow over HTTP', (group) => {
     assert,
   }) => {
     const id = await submit(client, '1000')
-    const [run] = await kit().workflows.runsFor(
+    const [run] = await adula().workflows.runsFor(
       'orders',
       id,
-      await kit().actors.load(clerk.user.id)
+      await adula().actors.load(clerk.user.id)
     )
     assert.equal(run.outcome, 'approved')
     const denied = await client.get('/admin/workflows').loginAs(manager).headers(json)

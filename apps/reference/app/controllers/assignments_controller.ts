@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { KitError, type Actor } from '@adula/kit'
-import { kit, requestActor } from '#services/kit'
+import { AdulaError, type Actor } from 'adula'
+import { adula, requestActor } from '#services/adula'
 import { positiveId, wantsJson } from '#controllers/admin/support'
 
 type Tab = 'all' | 'approvals' | 'assigned' | 'closed'
@@ -13,7 +13,7 @@ const tabs: Record<Tab, { status: 'open' | 'done'; kind?: 'approval' | 'task' }>
 
 /**
  * "My tasks": manual assignments and workflow approvals in one list with tabs (#35),
- * and record assignments. The kit re-authorizes each record.
+ * and record assignments. AdulaJS re-authorizes each record.
  */
 export default class AssignmentsController {
   async mine(ctx: HttpContext) {
@@ -26,7 +26,7 @@ export default class AssignmentsController {
           : ctx.request.input('status') === 'done'
             ? 'closed'
             : 'all'
-      const page = await kit().assignments.mine(actor, {
+      const page = await adula().assignments.mine(actor, {
         ...tabs[tab],
         cursor: ctx.request.input('cursor'),
       })
@@ -35,7 +35,7 @@ export default class AssignmentsController {
       const runIds = page.data
         .filter((item) => item.canDecide && item.workflowRunId)
         .map((item) => item.workflowRunId!)
-      const runs = await kit().workflows.inbox(actor, { runIds })
+      const runs = await adula().workflows.inbox(actor, { runIds })
       const decisions = Object.fromEntries(runs.map((run) => [run.id, run]))
       if (wantsJson(ctx)) return { ...page, decisions }
       return ctx.inertia.render('work/my_tasks', { assignments: page, tab, decisions })
@@ -44,7 +44,7 @@ export default class AssignmentsController {
 
   async complete(ctx: HttpContext) {
     return this.#run(ctx, async (actor) => {
-      await kit().assignments.complete(ctx.params.assignment, actor, 'done', {
+      await adula().assignments.complete(ctx.params.assignment, actor, 'done', {
         note: ctx.request.input('note'),
       })
       return { data: true }
@@ -53,7 +53,7 @@ export default class AssignmentsController {
 
   async cancel(ctx: HttpContext) {
     return this.#run(ctx, async (actor) => {
-      await kit().assignments.complete(ctx.params.assignment, actor, 'cancelled', {
+      await adula().assignments.complete(ctx.params.assignment, actor, 'cancelled', {
         note: ctx.request.input('note'),
       })
       return { data: true }
@@ -62,7 +62,7 @@ export default class AssignmentsController {
 
   async forRecord(ctx: HttpContext) {
     return this.#run(ctx, async (actor) => ({
-      data: await kit().assignments.forRecord(
+      data: await adula().assignments.forRecord(
         ctx.params.resource,
         positiveId(ctx.params.id),
         actor
@@ -73,7 +73,7 @@ export default class AssignmentsController {
   async store(ctx: HttpContext) {
     return this.#run(ctx, async (actor) =>
       ctx.response.created({
-        data: await kit().assignments.assign(
+        data: await adula().assignments.assign(
           ctx.params.resource,
           positiveId(ctx.params.id),
           actor,
@@ -92,7 +92,7 @@ export default class AssignmentsController {
     try {
       return await action(await requestActor(ctx))
     } catch (error) {
-      if (error instanceof KitError)
+      if (error instanceof AdulaError)
         return ctx.response
           .status(error.status)
           .send({ error: { code: error.code, message: error.message } })

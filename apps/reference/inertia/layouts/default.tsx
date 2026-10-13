@@ -27,8 +27,8 @@ export default function Layout({ children }: { children: ReactElement<Data.Share
       <header>
         <div>
           <div>
-            <Link route="home" aria-label="adula kit — الرئيسية">
-              <strong dir="ltr">adula kit</strong>
+            <Link route="home" aria-label="AdulaJS — الرئيسية">
+              <strong dir="ltr">AdulaJS</strong>
             </Link>
           </div>
           <div>

@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
 import User from '#models/user'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import { seedActor, type UiActor } from '#tests/helpers/ui_fixtures'
 
 const json = { Accept: 'application/json' }
@@ -64,16 +64,16 @@ test.group('Conditional policies configured without code', (group) => {
       response.assertStatus(200)
     }
 
-    const creator = await kit().actors.load(admin.user.id)
-    const draft = await kit().resources.save('orders', creator, {
+    const creator = await adula().actors.load(admin.user.id)
+    const draft = await adula().resources.save('orders', creator, {
       notes: 'مسودة للمحاسب',
       orgUnitId: admin.orgUnitId,
     })
-    const approved = await kit().resources.save('orders', creator, {
+    const approved = await adula().resources.save('orders', creator, {
       notes: 'طلب معتمد',
       orgUnitId: admin.orgUnitId,
     })
-    await kit().resources.transition(
+    await adula().resources.transition(
       'orders',
       Number(approved.id),
       creator,

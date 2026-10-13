@@ -7,8 +7,8 @@ import db from '@adonisjs/lucid/services/db'
 import drive from '@adonisjs/drive/services/main'
 import type { ApiClient } from '@japa/api-client'
 import User from '#models/user'
-import { PENDING_UPLOAD_LIMIT, UNBOUND_UPLOAD_TTL_MS, grantUpload } from '@adula/kit'
-import { kit } from '#services/kit'
+import { PENDING_UPLOAD_LIMIT, UNBOUND_UPLOAD_TTL_MS, grantUpload } from 'adula'
+import { adula } from '#services/adula'
 
 type UploadedFile = { id: number; name: string; size: number; mimeType: string; url: string }
 
@@ -301,7 +301,7 @@ test.group('Attachment upload, download and storage migration', (group) => {
       .json({ orgUnitId, notes: `طلب لإذن الرفع ${randomUUID()}` })
     order.assertStatus(201)
     const orderId = order.body().data.id as number
-    const runtime = kit()
+    const runtime = adula()
     const grant = await grantUpload(knex(), runtime.registry, {
       resource: 'orders',
       recordId: orderId,

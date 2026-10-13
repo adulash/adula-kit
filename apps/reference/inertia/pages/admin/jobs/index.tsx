@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from 'react'
 import { Head, router } from '@inertiajs/react'
 import { RotateCcw } from 'lucide-react'
-import type { QueueSnapshot, RuntimeHealth } from '@adula/kit'
+import type { QueueSnapshot, RuntimeHealth } from 'adula'
 import Workspace from '~/layouts/workspace'
 import { AdminHeader, formatAge, useDateTimeFormatter } from '~/components/admin-nav'
 import { Button } from '~/components/ui/button'

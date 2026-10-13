@@ -8,7 +8,7 @@ async function walk(directory) {
     if (entry.isDirectory()) await walk(path)
     else if (entry.name === 'package.json') {
       const json = JSON.parse(await readFile(path, 'utf8'))
-      if (json.dependencies?.['patch-package'] || json.devDependencies?.['patch-package'] || json.pnpm?.patchedDependencies) errors.push(`${path}: kit patching is forbidden`)
+      if (json.dependencies?.['patch-package'] || json.devDependencies?.['patch-package'] || json.pnpm?.patchedDependencies) errors.push(`${path}: core package patching is forbidden`)
       if (json.license !== 'MIT') errors.push(`${path}: MIT license is required`)
     }
   }

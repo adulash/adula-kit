@@ -6,7 +6,7 @@ description: Review migrations and resource definitions for integrity and evolut
 Check, citing file and line:
 
 - Migrations are additive (expand/contract): no drop or rename of a column still
-  read by the previous release; kit migrations are never edited after release.
+  read by the previous release; AdulaJS migrations are never edited after release.
 - Standard columns come from the generator (`id`, `org_unit_id` when scoped,
   `created_by`, `updated_by`, timestamps, `deleted_at`, `version`, `doc_status`,
   `amended_from_id`); they are not hand-edited.

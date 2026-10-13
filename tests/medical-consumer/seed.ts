@@ -12,8 +12,8 @@ export default class MedicalSeed extends BaseCommand {
     const { default: env } = await import('#start/env')
     const { default: db } = await import('@adonisjs/lucid/services/db')
     const { default: User } = await import('#models/user')
-    const { kit } = await import('#services/kit')
-    const { buildAbility } = await import('@adula/kit')
+    const { adula } = await import('#services/adula')
+    const { buildAbility } = await import('adula')
     if (!/^adula_medical_\d+_test$/.test(env.get('DB_DATABASE')))
       throw new Error('Seed only a fresh isolated medical consumer *_test database')
     const knex = db.connection().getWriteClient()
@@ -76,7 +76,7 @@ export default class MedicalSeed extends BaseCommand {
     const counts = await knex('medical_assets').select('org_unit_id').count('* as count').groupBy('org_unit_id').orderBy('org_unit_id')
     if (counts.reduce((sum, row) => sum + Number(row.count), 0) !== 100000) throw new Error('Incorrect seed count')
 
-    const runtime = kit()
+    const runtime = adula()
     for (const user of users) await runtime.actors.load(user.id)
     const queries: string[] = []
     const onQuery = (query: { sql: string }) => queries.push(query.sql)

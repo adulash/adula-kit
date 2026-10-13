@@ -1,5 +1,5 @@
 import { test } from '@japa/runner'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import {
   installSampleResources,
   removeSampleResources,
@@ -24,7 +24,7 @@ test.group('Create form defaults over HTTP (#48)', (group) => {
   })
 
   test('the create route pre-fills form fields the actor may use', async ({ client, assert }) => {
-    const customer = await kit().resources.systemSave(
+    const customer = await adula().resources.systemSave(
       'customers',
       { name: `عميل افتراضي ${editor.user.id}` },
       undefined,

@@ -1,5 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { NotificationsAdmin } from '@adula/kit'
+import { NotificationsAdmin } from 'adula'
 import { registry } from '#start/modules'
 import { actorId, knex, mutate, positiveId, text, wantsJson } from './support.js'
 

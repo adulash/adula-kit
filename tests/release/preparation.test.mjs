@@ -29,7 +29,7 @@ test('release report exposes every phase and only the accepted stable channel pa
 test('a claimed acceptance with missing evidence still fails the actual guard', async () => {
   const root = await mkdtemp(join(tmpdir(), 'adula-readiness-'))
   try {
-    for (const name of ['kit', 'ui', 'create-app']) {
+    for (const name of ['adula', 'ui', 'create-adula-app']) {
       await mkdir(join(root, 'packages', name), { recursive: true })
       const pkg = JSON.parse(await readFile(new URL(`../../packages/${name}/package.json`, import.meta.url)))
       pkg.version = '0.3.0-next.0'
@@ -62,7 +62,7 @@ test('synthetic upgrade requires explicit mode and cannot pretend to select a re
 
 test('upgrade entrypoint refuses a purported predecessor before changing package manifests', async () => {
   const script = fileURLToPath(new URL('../../scripts/test-upgrade.mjs', import.meta.url))
-  const paths = ['kit', 'ui'].map((name) => new URL(`../../packages/${name}/package.json`, import.meta.url))
+  const paths = ['adula', 'ui'].map((name) => new URL(`../../packages/${name}/package.json`, import.meta.url))
   const before = await Promise.all(paths.map((path) => readFile(path, 'utf8')))
   const run = spawnSync(process.execPath, [script, '--synthetic'], {
     env: { ...process.env, ADULA_PREVIOUS_VERSION: '0.1.0' }, encoding: 'utf8', windowsHide: true,

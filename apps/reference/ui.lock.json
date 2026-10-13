@@ -1,6 +1,6 @@
 {
   "version": "0.2.0-alpha.1",
-  "kitCompatibility": "1.0",
+  "adulaCompatibility": "1.0",
   "files": {
     "inertia/components/ui/button.tsx": {
       "hash": "79dd6f75f8136394442202d6b8b922fb269eaad0a5dba579397c9d5b41f893bb",
@@ -103,35 +103,35 @@
       "component": "alert"
     },
     "inertia/components/ui/resource-page.tsx": {
-      "hash": "305f27c839afdc9542354f1628fac926a260cae28f786f89daaabc0e8fa3d265",
+      "hash": "87a80887709ea63919b41220e757b2d9251c52d11310d794e5c549efe0da0859",
       "component": "resource-page"
     },
     "inertia/components/ui/data-table.tsx": {
-      "hash": "0135d807b630cc1715ba74c6d161dbcef3649beabff2e2fd5f54de121b6a7d2a",
+      "hash": "9d61fbea942dfd66c719e53c53d57b46c3de209a7b09b1d57a63bed5a3ad2b6e",
       "component": "data-table"
     },
     "inertia/components/ui/can.tsx": {
-      "hash": "66bc071a7e60a67237cc049dee930c66ad47e489c68b3fd0a20c1c50b3d91bba",
+      "hash": "1559a7dd6a3595841474743203b2563669d91aa9b89b198530e808e633544b1b",
       "component": "can"
     },
     "inertia/components/ui/resource-value.tsx": {
-      "hash": "1e59f3921ce6b7f19720a183597fb4b0b92db4cd630958b2b90ea9a0f7bf2bb6",
+      "hash": "6a0022b946e4a061d2f32ace227e6118a789ee31e58c3815a1c475cd7a06b7c7",
       "component": "resource-value"
     },
     "inertia/components/ui/resource-form.tsx": {
-      "hash": "2fba8535da603f10eed992b2c80076910a71813dd5425f9539700535b4c88aa5",
+      "hash": "c7ad7643871adbabeb38ac5a9cb038a47a597b59f44ce48666c02eacb7edd12e",
       "component": "resource-form"
     },
     "inertia/components/ui/resource-field.tsx": {
-      "hash": "87bf69318cbf19123979416d0954754cee7a6b445123bd613a7a81eb4ec507ac",
+      "hash": "937093533db850e0c9d643263ffe0c3ced5c352668639a7459c4690af1fb94ca",
       "component": "resource-field"
     },
     "inertia/components/ui/resource-show.tsx": {
-      "hash": "616b7126638e5c9ca2548443f2694504b898768e2992d7d93880e2b62129a0a0",
+      "hash": "e64cf951dff791b01ac32d3a5b56bd4fbceb362b3ee0ff01c7e4e850368dda01",
       "component": "resource-show"
     },
     "inertia/components/ui/resource-actions.tsx": {
-      "hash": "c0a7f4e1e7173fae477916d9a7318c5b88ae280ffda0f60da18f17a9ea93f9cb",
+      "hash": "550c2f8ace149ac54d027a970105aa18d2f40721408007ae9cd9ec928c3b1168",
       "component": "resource-actions"
     },
     "inertia/components/ui/resource-surface.tsx": {
@@ -139,7 +139,7 @@
       "component": "resource-surface"
     },
     "inertia/components/ui/ui-preferences.tsx": {
-      "hash": "a3e8ff39f640a2377cf9403b7001eb683e3b1ec2958765ea33b54f423e87ca52",
+      "hash": "bd659379f0fe095e56c2d30ce49597c0d45518e50c058764b88d697b9e789b6a",
       "component": "ui-preferences"
     },
     "inertia/components/ui/hijri-calendar.tsx": {
@@ -151,23 +151,23 @@
       "component": "confirm-action"
     },
     "inertia/components/ui/calendar_date.ts": {
-      "hash": "80b566d897a4adba913c5cc571ba11766eb22d793e32ba47455b2f271626a576",
+      "hash": "b5fa05b6782206487f0a1efee0894166ee06252f8476afeff094df38f750e4f7",
       "component": "calendar-date"
     },
     "inertia/components/ui/record-collaboration.tsx": {
-      "hash": "5df96ae393a67b982c39872ff5315f9416eee011116b653719907d511b0163a1",
+      "hash": "1c415fd2cba99e8f98a9a069b65a1e64c2e14ff588a57a50ea6d2429356cd1a6",
       "component": "record-collaboration"
     },
     "inertia/components/ui/record-assignments.tsx": {
-      "hash": "032c87d609f8b99f5c1f314ec166df42460cf14a961a04227d8f47cd5eecdb20",
+      "hash": "155dc29e0075de4effaa5b314cb09bdc8bff5c5de7bd8a3731c5fbef6e770068",
       "component": "record-assignments"
     },
     "inertia/components/ui/resource-import.tsx": {
-      "hash": "f839742219c04986b61aa65a0a3493f642ebfe43f4d690e2b2fe33f44fb21e30",
+      "hash": "a036cf45a954a63a38ba9c5df9abb51ef2a63c314b44f5bf39b339e96629983b",
       "component": "resource-import"
     },
     "inertia/components/ui/record-workflows.tsx": {
-      "hash": "ccc8332d0f7c7c2ee1b0e70840ed2dca5fc117db21ac8d45298e67dde66963bf",
+      "hash": "041c58eb40eb7b88ce88fc5db6210e0bab445eec62378754b82cc7e0a83f3aaf",
       "component": "record-workflows"
     }
   }

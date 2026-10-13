@@ -1,12 +1,12 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { KitError, type Actor as KitActor } from '@adula/kit'
-import { kit } from '#services/kit'
+import { AdulaError, type Actor as AdulaActor } from 'adula'
+import { adula } from '#services/adula'
 
-/** Saved views are per-actor list presets; the kit validates every query key. */
+/** Saved views are per-actor list presets; AdulaJS validates every query key. */
 export default class SavedViewsController {
   async store(ctx: HttpContext) {
     return this.#run(ctx, async (actor, resource) => ({
-      data: await kit().savedViews.save(resource, actor, {
+      data: await adula().savedViews.save(resource, actor, {
         name: ctx.request.input('name'),
         query: ctx.request.input('query'),
         shared: ctx.request.input('shared') === true,
@@ -18,18 +18,18 @@ export default class SavedViewsController {
     return this.#run(ctx, async (actor, resource) => {
       const id = Number(ctx.params.id)
       if (!Number.isSafeInteger(id) || id <= 0)
-        throw new KitError(404, 'E_VIEW_NOT_FOUND', 'العرض المحفوظ غير موجود')
-      await kit().savedViews.remove(resource, actor, id)
+        throw new AdulaError(404, 'E_VIEW_NOT_FOUND', 'العرض المحفوظ غير موجود')
+      await adula().savedViews.remove(resource, actor, id)
       return { data: { id } }
     })
   }
 
-  async #run(ctx: HttpContext, action: (actor: KitActor, resource: string) => Promise<unknown>) {
+  async #run(ctx: HttpContext, action: (actor: AdulaActor, resource: string) => Promise<unknown>) {
     try {
-      const actor = await kit().actors.load(ctx.auth.getUserOrFail().id)
+      const actor = await adula().actors.load(ctx.auth.getUserOrFail().id)
       return await action(actor, ctx.params.resource)
     } catch (error) {
-      if (error instanceof KitError)
+      if (error instanceof AdulaError)
         return ctx.response
           .status(error.status)
           .send({ error: { code: error.code, message: error.message } })

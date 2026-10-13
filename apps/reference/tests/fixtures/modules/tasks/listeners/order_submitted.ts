@@ -1,4 +1,4 @@
-import { recordMutation, type Listener } from '@adula/kit'
+import { recordMutation, type Listener } from 'adula'
 
 /** A trusted system action caused by an authorized submission; never an HTTP entrypoint. */
 export const orderSubmitted: Listener = {

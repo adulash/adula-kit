@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react'
-import type { UiPreferences } from '@adula/kit'
+import type { UiPreferences } from 'adula'
 
 /** A consumer without shared preferences keeps the documented defaults. */
 export function useUiPreferences(): UiPreferences {

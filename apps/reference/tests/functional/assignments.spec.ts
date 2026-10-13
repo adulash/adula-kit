@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import {
   installSampleResources,
   removeSampleResources,
@@ -32,9 +32,9 @@ test.group('Assignments and my tasks over HTTP', (group) => {
       level: 0,
     })
     await installSampleResources()
-    const saved = await kit().resources.save(
+    const saved = await adula().resources.save(
       'ui_samples',
-      await kit().actors.load(manager.user.id),
+      await adula().actors.load(manager.user.id),
       { title: 'عينة الإسناد', orgUnitId: manager.orgUnitId }
     )
     id = Number(saved.id)

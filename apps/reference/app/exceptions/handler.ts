@@ -1,7 +1,7 @@
 import app from '@adonisjs/core/services/app'
 import { type HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import type { StatusPageRange, StatusPageRenderer } from '@adonisjs/core/types/http'
-import { KitError } from '@adula/kit'
+import { AdulaError } from 'adula'
 
 export default class HttpExceptionHandler extends ExceptionHandler {
   /**
@@ -41,7 +41,7 @@ export default class HttpExceptionHandler extends ExceptionHandler {
           message: 'انتهت صلاحية الطلب. حدّث الصفحة وحاول مجدداً.',
         },
       })
-    if (error instanceof KitError)
+    if (error instanceof AdulaError)
       return ctx.response
         .status(error.status)
         .send({ error: { code: error.code, message: error.message } })

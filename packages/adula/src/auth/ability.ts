@@ -1,0 +1,76 @@
+import { Ability, subject, fieldPatternMatcher } from '@casl/ability'
+import type { Conditions } from './conditions.js'
+import { conditionsMatcher, predicates, usesActor } from './conditions.js'
+import type { RecordData, Resource } from '../resource/types.js'
+
+export type Rule = {
+  subject: string
+  action: string | string[]
+  conditions?: Conditions
+  fields?: string[]
+  inverted?: boolean
+}
+export type Actor = {
+  id: number
+  orgPaths: string[]
+  permissionLevel: number
+  rules: Rule[]
+  /** Set while an administrator acts as this user; recorded with every mutation. */
+  impersonatorId?: number
+}
+export type AdulaAbility = Ability<[string, any], Conditions>
+export const abilitySchemas = new WeakMap<
+  AdulaAbility,
+  readonly Pick<Resource, 'name' | 'fields'>[]
+>()
+
+export function buildAbility(
+  rules: readonly Rule[],
+  schemas: readonly Pick<Resource, 'name' | 'fields'>[] = []
+): AdulaAbility {
+  for (const rule of rules) {
+    predicates(rule.conditions)
+    // An unresolved placeholder would compare as text: `$ne` and inverted rules would fail open.
+    if (usesActor(rule.conditions))
+      throw new Error('Rule conditions use $actor.id; resolve them with resolveActorConditions')
+    if (rule.fields?.length === 0) throw new Error('An empty fields rule is invalid')
+  }
+  const ability: AdulaAbility = new Ability(
+    [...rules.filter((r) => !r.inverted), ...rules.filter((r) => r.inverted)],
+    {
+      conditionsMatcher: (conditions) => conditionsMatcher(conditions, schemas),
+      fieldMatcher: fieldPatternMatcher,
+    }
+  )
+  abilitySchemas.set(ability, schemas)
+  return ability
+}
+
+export function inOrgScope(path: unknown, paths: readonly string[]) {
+  return (
+    typeof path === 'string' &&
+    paths.some((parent) => path === parent || path.startsWith(`${parent}.`))
+  )
+}
+export function canRecord(
+  ability: AdulaAbility,
+  actor: Actor,
+  resource: Resource,
+  action: string,
+  record: RecordData,
+  field?: string
+) {
+  return (
+    (!resource.scoped || inOrgScope(record.orgPath, actor.orgPaths)) &&
+    ability.can(action, subject(resource.name, record), field)
+  )
+}
+export function conditionFields(ability: AdulaAbility, resource: Resource): string[] {
+  return [
+    ...new Set(
+      ability.rules
+        .filter((r) => r.subject === resource.name || r.subject === 'all')
+        .flatMap((r) => Object.keys(r.conditions ?? {}))
+    ),
+  ]
+}

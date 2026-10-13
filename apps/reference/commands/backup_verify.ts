@@ -7,7 +7,7 @@ export default class BackupVerify extends BaseCommand {
   static description = 'Verify recent database, uploads and checksum objects in offsite storage'
   static options = { startApp: true }
   async run() {
-    const { verifyBackup } = await import('@adula/kit')
+    const { verifyBackup } = await import('adula')
     const { default: db } = await import('@adonisjs/lucid/services/db')
     const { default: env } = await import('#start/env')
     const prefix = env.get('BACKUP_S3_PREFIX') ?? 'adula'
@@ -56,7 +56,7 @@ export default class BackupVerify extends BaseCommand {
       Date.now(),
       prefix
     )
-    const { Settings } = await import('@adula/kit')
+    const { Settings } = await import('adula')
     const { backupFingerprint } = await import('#services/initial_setup')
     await new Settings(db.connection().getWriteClient()).set('setup.backup_check', {
       fingerprint: backupFingerprint(),

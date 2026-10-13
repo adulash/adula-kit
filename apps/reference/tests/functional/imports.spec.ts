@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 import db from '@adonisjs/lucid/services/db'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import { seedActor, type UiActor } from '#tests/helpers/ui_fixtures'
 
 const json = { Accept: 'application/json' }
@@ -44,7 +44,7 @@ test.group('CSV imports over HTTP', (group) => {
       .headers(json)
       .json({ mapping: batch.mapping })
     started.assertStatus(200)
-    await kit().imports.process()
+    await adula().imports.process()
     const page = await client
       .get('/imports')
       .loginAs(clerk.user)

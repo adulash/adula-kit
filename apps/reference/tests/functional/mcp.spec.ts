@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import User from '#models/user'
 import db from '@adonisjs/lucid/services/db'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 
 test.group('Authenticated MCP resource adapter', (group) => {
   let admin: User
@@ -57,7 +57,7 @@ test.group('Authenticated MCP resource adapter', (group) => {
       { user_id: admin.id, org_unit_id: outside.id },
       { user_id: reader.id, org_unit_id: orgId },
     ])
-    const runtime = kit()
+    const runtime = adula()
     const actor = await runtime.actors.load(admin.id)
     const outsideRecord = await runtime.resources.save('orders', actor, {
       orgUnitId: outside.id,

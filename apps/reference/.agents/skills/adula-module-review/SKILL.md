@@ -12,10 +12,10 @@ Check, citing file and line for every finding:
   listeners (`consumeEvent` + processed_events), never by importing another
   module's controllers or services. Heavy listeners dispatch jobs.
 - Every resource declares `scoped`. Central (`scoped: false`) resources are
-  justified; scoped ones rely on the kit's organization scope, not custom filters.
+  justified; scoped ones rely on AdulaJS's organization scope, not custom filters.
 - Documents that need approval use `submittable: true` and a module workflow; the
   operational status is a lookup separate from `docStatus`.
-- No kit service is re-implemented under another name (notify, sequence, settings,
+- No AdulaJS service is re-implemented under another name (notify, sequence, settings,
   assignments, comments, imports, webhooks, workflows).
 - Educational fixtures are not imported by the application.
 

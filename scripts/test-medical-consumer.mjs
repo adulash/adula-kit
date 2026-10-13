@@ -7,7 +7,7 @@ import { dirname, join, resolve, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseEnv } from 'node:util'
 import { setTimeout as delay } from 'node:timers/promises'
-import { childEnvironment } from '../packages/create-app/src/system.mjs'
+import { childEnvironment } from '../packages/create-adula-app/src/system.mjs'
 import { resources } from '../tests/medical-consumer/resources.mjs'
 import { installMedicalModule } from '../tests/medical-consumer/install.mjs'
 
@@ -71,13 +71,13 @@ await stage('create', async () => {
     postgres: { host: profile.host, port: profile.port, user: profile.user, password: profile.password },
     redis: { host: reference.REDIS_HOST, port: Number(reference.REDIS_PORT), ...(reference.REDIS_PASSWORD ? { password: reference.REDIS_PASSWORD } : {}) },
   }), { mode: 0o600 })
-  await step('create', process.execPath, [join(root, 'packages/create-app/build/cli.mjs'), target,
+  await step('create', process.execPath, [join(root, 'packages/create-adula-app/build/cli.mjs'), target,
     '--company', 'شريحة الأصول الطبية التجريبية', '--admin-email', 'owner@example.test',
     '--services', 'existing', '--connection', join(directory, 'services.json'),
     '--database', `adula_medical_${stamp}_test`, '--packages', work, '--yes'], { cwd: root })
   const pkg = JSON.parse(await readFile(join(target, 'package.json'), 'utf8'))
-  assert(pkg.dependencies['@adula/kit'].startsWith('file:'))
-  const installed = await realpath(join(target, 'node_modules/@adula/kit'))
+  assert(pkg.dependencies['adula'].startsWith('file:'))
+  const installed = await realpath(join(target, 'node_modules/adula'))
   assert(!installed.startsWith(join(root, 'packages')), 'Consumer must not resolve workspace source')
   await step('independent-git', 'git', ['init', '--initial-branch=main'])
 })
@@ -88,7 +88,7 @@ await stage('module', async () => {
   // Application-owned Drive configuration makes isolated recovery use a separate disk root.
   const drivePath = join(target, 'config/drive.ts')
   await writeFile(drivePath, (await readFile(drivePath, 'utf8')).replace("location: app.makePath('storage/uploads')", "location: process.env.MEDICAL_UPLOADS_ROOT ?? app.makePath('storage/uploads')"))
-  await writeFile(join(target, 'docs/design-identity.md'), '# Disposable acceptance-consumer identity\n\nThe owner confirmed on 2026-09-22 that this is a temporary kit test and no company identity is required. The displayed name labels synthetic test data. Reuse existing kit tokens and Noto Sans Arabic; there is no company logo or brand approval to obtain. Component/page customizations exist only to test project ownership and upgrade preservation.\n')
+  await writeFile(join(target, 'docs/design-identity.md'), '# Disposable acceptance-consumer identity\n\nThe owner confirmed on 2026-09-22 that this is a temporary AdulaJS test and no company identity is required. The displayed name labels synthetic test data. Reuse existing AdulaJS tokens and Noto Sans Arabic; there is no company logo or brand approval to obtain. Component/page customizations exist only to test project ownership and upgrade preservation.\n')
   // Real project-owned customization, retained for later upgrade comparison.
   const button = join(target, 'inertia/components/ui/button.tsx')
   const buttonSource = await readFile(button, 'utf8')

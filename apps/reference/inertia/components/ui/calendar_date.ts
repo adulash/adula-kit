@@ -1,4 +1,4 @@
-import type { CalendarSystem, CalendarPreference } from '@adula/kit'
+import type { CalendarSystem, CalendarPreference } from 'adula'
 
 const dayMs = 86400000
 const hijri = new Intl.DateTimeFormat('en-u-nu-latn', {

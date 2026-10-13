@@ -1,5 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { ActivityAdmin } from '@adula/kit'
+import { ActivityAdmin } from 'adula'
 import { knex, optionalId, text, wantsJson } from './support.js'
 
 export default class ActivityController {

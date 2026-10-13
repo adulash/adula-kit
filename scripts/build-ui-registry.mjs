@@ -19,6 +19,6 @@ for (const entry of registry.items) {
 await cp(new URL('registry/theme.css', root), new URL('build/theme.css', root))
 await writeFile(new URL('build/manifest.json', root), JSON.stringify({
   // Derived so a minor release actually signals a compatibility review in doctor.
-  version: pkg.version, kitCompatibility: pkg.version.split('.').slice(0, 2).join('.'), items, dependencies,
+  version: pkg.version, adulaCompatibility: pkg.version.split('.').slice(0, 2).join('.'), items, dependencies,
 }, null, 2) + '\n')
 console.log(`Built ${items.length} RTL registry items (${pkg.version})`)

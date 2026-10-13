@@ -1,9 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { RolesAdmin } from '@adula/kit'
-import { kit } from '#services/kit'
+import { RolesAdmin } from 'adula'
+import { adula } from '#services/adula'
 import { actorId, knex, mutate, positiveId, wantsJson } from './support.js'
 
-const service = () => new RolesAdmin(knex(), kit().registry)
+const service = () => new RolesAdmin(knex(), adula().registry)
 
 export default class RolesController {
   async index(ctx: HttpContext) {

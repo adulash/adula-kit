@@ -10,7 +10,7 @@ export function requireSyntheticRehearsal(args, env) {
 
 /**
  * Genuine upgrade: `--published=<version>` installs that exact version of
- * @adula/kit and @adula/ui from the npm registry as the consumer's baseline.
+ * adula and @adula/ui from the npm registry as the consumer's baseline.
  */
 export function publishedBaseline(args, current) {
   assert(args.length === 1 && args[0].startsWith('--published='), 'Usage: pnpm test:upgrade --published=<npm version>')

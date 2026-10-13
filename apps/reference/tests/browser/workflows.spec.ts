@@ -1,10 +1,10 @@
 import { test } from '@japa/runner'
 import { join } from 'node:path'
 import db from '@adonisjs/lucid/services/db'
-import { consumeEvent, seedModules, type DomainEvent } from '@adula/kit'
+import { consumeEvent, seedModules, type DomainEvent } from 'adula'
 import { registry } from '#start/modules'
 import User from '#models/user'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import { listeners } from '#start/listeners'
 import { screenshotDir, seedActor, type UiActor } from '#tests/helpers/ui_fixtures'
 
@@ -30,14 +30,14 @@ test.group('Workflow approvals browser acceptance', (group) => {
     }
     manager = await member('department_manager', 'مدير القسم للمتصفح')
     await member('general_manager', 'المدير العام للمتصفح')
-    const actor = await kit().actors.load(clerk.user.id)
-    const order = await kit().resources.save('orders', actor, {
+    const actor = await adula().actors.load(clerk.user.id)
+    const order = await adula().resources.save('orders', actor, {
       notes: 'طلب يحتاج موافقة',
       total: '5000000',
       orgUnitId: clerk.orgUnitId,
     })
     id = Number(order.id)
-    await kit().resources.transition('orders', id, actor, 'submit', order.version)
+    await adula().resources.transition('orders', id, actor, 'submit', order.version)
     const rows = await knex()('outbox').whereNull('published_at')
     for (const row of rows) {
       const event: DomainEvent = { id: row.id, event: row.event, payload: row.payload }

@@ -5,7 +5,7 @@ import { Worker } from 'bullmq'
 import type { ApiRequest } from '@japa/api-client'
 import db from '@adonisjs/lucid/services/db'
 import queue from '@nemoventures/adonis-jobs/services/main'
-import { Settings } from '@adula/kit'
+import { Settings } from 'adula'
 import env from '#start/env'
 import User from '#models/user'
 import mail from '@adonisjs/mail/services/main'
@@ -559,7 +559,7 @@ test.group('Core administration screens', (group) => {
     const invalid = await put({ key: 'ui.theme', scope: 'system', value: '{bad' })
     invalid.assertStatus(422)
     assert.equal(invalid.body().error.code, 'E_SETTING_JSON')
-    for (const key of ['backup.lastOffsite', 'scheduler.heartbeat', 'kit.version']) {
+    for (const key of ['backup.lastOffsite', 'scheduler.heartbeat', 'adula.version']) {
       const denied = await put({ key, scope: 'system', value: '"x"' })
       denied.assertStatus(403)
       assert.equal(denied.body().error.code, 'E_SETTING_READ_ONLY')

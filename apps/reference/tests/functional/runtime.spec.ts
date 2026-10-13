@@ -7,7 +7,7 @@ import redis from '@adonisjs/redis/services/main'
 import queue from '@nemoventures/adonis-jobs/services/main'
 import cache from '@adonisjs/cache/services/main'
 import User from '#models/user'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import { jobs } from '#services/events'
 
 test.group('Real Redis cache and queue delivery', (group) => {
@@ -63,7 +63,7 @@ test.group('Real Redis cache and queue delivery', (group) => {
   test('revision invalidates a cached actor immediately after a rule or membership changes', async ({
     assert,
   }) => {
-    const actors = kit().actors
+    const actors = adula().actors
     const before = await actors.load(user.id)
     const cached = await actors.load(user.id)
     assert.deepEqual(cached.orgPaths, before.orgPaths)
@@ -84,7 +84,7 @@ test.group('Real Redis cache and queue delivery', (group) => {
   test('worker publishes the committed event and duplicate queue delivery creates one task', async ({
     assert,
   }) => {
-    const { resources, actors } = kit()
+    const { resources, actors } = adula()
     const actor = await actors.load(user.id)
     const order = await resources.save('orders', actor, {
       orgUnitId: orgId,
@@ -131,7 +131,7 @@ test.group('Real Redis cache and queue delivery', (group) => {
     assert.lengthOf(
       await knex()('processed_events').where({
         event_id: event.id,
-        listener: 'kit.followers.orders.orders.submitted',
+        listener: 'adula.followers.orders.orders.submitted',
       }),
       1
     )

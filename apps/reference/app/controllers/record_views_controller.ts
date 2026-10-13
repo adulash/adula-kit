@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import { KitError } from '@adula/kit'
-import { kit, requestActor } from '#services/kit'
+import { AdulaError } from 'adula'
+import { adula, requestActor } from '#services/adula'
 import { positiveId } from '#controllers/admin/support'
 import { childDescriptions, pageFor } from '#controllers/resources_controller'
 
@@ -11,7 +11,7 @@ import { childDescriptions, pageFor } from '#controllers/resources_controller'
  */
 export default class RecordViewsController {
   async show(ctx: HttpContext) {
-    const runtime = kit()
+    const runtime = adula()
     const actor = await requestActor(ctx)
     const id = positiveId(ctx.params.id)
     try {
@@ -19,11 +19,11 @@ export default class RecordViewsController {
       try {
         resource = runtime.registry.get(ctx.params.resource)
       } catch {
-        throw new KitError(404, 'E_NOT_FOUND', 'الكيان غير موجود')
+        throw new AdulaError(404, 'E_NOT_FOUND', 'الكيان غير موجود')
       }
       const edit = ctx.request.input('mode') === 'edit'
       if (pageFor(resource.name, edit ? 'form' : 'show') !== 'resources/page')
-        throw new KitError(409, 'E_PAGE_OVERRIDE', 'لهذا الكيان صفحة مخصصة')
+        throw new AdulaError(409, 'E_PAGE_OVERRIDE', 'لهذا الكيان صفحة مخصصة')
       if (edit) {
         const editor = await runtime.resources.editor(resource.name, actor, id)
         const shown = await runtime.resources.show(resource.name, id, actor)
@@ -47,7 +47,7 @@ export default class RecordViewsController {
         activity,
       }
     } catch (error) {
-      if (error instanceof KitError)
+      if (error instanceof AdulaError)
         return ctx.response
           .status(error.status)
           .send({ error: { code: error.code, message: error.message } })

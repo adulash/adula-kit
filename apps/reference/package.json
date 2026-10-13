@@ -1,6 +1,6 @@
 {
   "name": "@adula/reference",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -84,7 +84,7 @@
     "@adonisjs/transmit": "3.0.2",
     "@adonisjs/transmit-client": "1.1.0",
     "@adonisjs/vite": "6.0.1",
-    "@adula/kit": "workspace:*",
+    "adula": "workspace:*",
     "@adula/ui": "workspace:*",
     "@aws-sdk/client-s3": "3.1134.0",
     "@aws-sdk/s3-request-presigner": "3.1134.0",

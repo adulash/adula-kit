@@ -22,7 +22,7 @@ import {
   TableRow,
 } from '~/components/ui/table'
 import Workspace from '~/layouts/workspace'
-import type { ResourceList } from '@adula/kit'
+import type { ResourceList } from 'adula'
 
 type Props = { result: ResourceList; canCreate: boolean; canEdit: boolean; showTotal: boolean }
 const date = (value: unknown) =>

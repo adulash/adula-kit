@@ -2,9 +2,9 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import UserTransformer from '#transformers/user_transformer'
 import BaseInertiaMiddleware from '@adonisjs/inertia/inertia_middleware'
-import { kit } from '#services/kit'
+import { adula } from '#services/adula'
 import { sharedAdminProps } from '#middleware/admin_middleware'
-import { uiPreferences } from '@adula/kit'
+import { uiPreferences } from 'adula'
 import db from '@adonisjs/lucid/services/db'
 
 export default class InertiaMiddleware extends BaseInertiaMiddleware {
@@ -28,7 +28,7 @@ export default class InertiaMiddleware extends BaseInertiaMiddleware {
       uiPreferences: ctx.inertia.always(await uiPreferences(db.connection().getWriteClient())),
       user: ctx.inertia.always(auth?.user ? UserTransformer.transform(auth.user) : undefined),
       navigation: ctx.inertia.always(
-        auth?.user ? kit().resources.navigation(await kit().actors.load(auth.user.id)) : []
+        auth?.user ? adula().resources.navigation(await adula().actors.load(auth.user.id)) : []
       ),
       ...(await sharedAdminProps(ctx)),
     }

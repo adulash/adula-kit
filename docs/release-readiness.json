@@ -1,6 +1,6 @@
 {
   "target": "1.0.0",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "phases": [
     {
       "id": 0,
@@ -151,6 +151,16 @@
         "docs/evidence/publication-1-2-0-2026-10-01.json"
       ],
       "remaining": "Authorized by the owner on 2026-09-30 (ADR 038) and published on 2026-10-01: 1.2.0 of the three packages is on npm latest with provenance (docs/evidence/publication-1-2-0-2026-10-01.json)."
+    },
+    {
+      "version": "2.0.0",
+      "authorized": false,
+      "reviewedBy": "",
+      "reviewedAt": "",
+      "evidence": [
+        "docs/evidence/release-2-0-0-2026-10-13.json"
+      ],
+      "remaining": "Prepared on 2026-10-13 (ADR 039, issue #78): the AdulaJS rename to adula, @adula/ui and create-adula-app. Publication waits for the owner to rename the repository to adulash/adulajs, configure npm trusted publishing for adula and create-adula-app, and authorize this exact version."
     }
   ]
 }

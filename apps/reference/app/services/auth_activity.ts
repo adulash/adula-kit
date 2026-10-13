@@ -2,7 +2,7 @@ import db from '@adonisjs/lucid/services/db'
 import type { HttpContext } from '@adonisjs/core/http'
 import { activeImpersonation } from '#services/impersonation'
 
-/** Authentication events recorded in the kit "activities" table (resource "users"). */
+/** Authentication events recorded in AdulaJS "activities" table (resource "users"). */
 export type AuthAction =
   | 'login'
   | 'login_failed'

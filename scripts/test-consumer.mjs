@@ -87,8 +87,8 @@ async function filesUnder(directory) {
   return files
 }
 
-await runPnpm('kit-build', ['--filter', '@adula/kit', 'build'])
-await runPnpm('kit-pack', ['--filter', '@adula/kit', 'pack', '--pack-destination', work])
+await runPnpm('core-build', ['--filter', 'adula', 'build'])
+await runPnpm('core-pack', ['--filter', 'adula', 'pack', '--pack-destination', work])
 await runPnpm('ui-build', ['--filter', '@adula/ui', 'build'])
 await runPnpm('ui-pack', ['--filter', '@adula/ui', 'pack', '--pack-destination', work])
 const consumer = reuse
@@ -128,13 +128,13 @@ const options = { cwd: target, env: consumerEnv }
 const ace = (name, argv, extra = {}) =>
   step(name, process.execPath, ['ace', ...argv], { ...options, ...extra })
 
-const kit = JSON.parse(await readFile(join(repo, 'packages/kit/package.json'), 'utf8'))
+const core = JSON.parse(await readFile(join(repo, 'packages/adula/package.json'), 'utf8'))
 const ui = JSON.parse(await readFile(join(repo, 'packages/ui/package.json'), 'utf8'))
 await runPnpm(
   'dependencies',
   [
     'add',
-    join(work, `adula-kit-${kit.version}.tgz`),
+    join(work, `adula-${core.version}.tgz`),
     join(work, `adula-ui-${ui.version}.tgz`),
     '--ignore-scripts',
   ],
@@ -155,11 +155,11 @@ if (!reuse) {
   )
   await writeFile(join(target, '.env'), env)
 }
-await ace('configure', ['configure', '@adula/kit'])
-const service = join(target, 'app/services/kit.ts')
+await ace('configure', ['configure', 'adula'])
+const service = join(target, 'app/services/adula.ts')
 await appendFile(service, '\n// Consumer customization must survive configure.\n')
 const customized = await digest(service)
-await ace('configure-again', ['configure', '@adula/kit'])
+await ace('configure-again', ['configure', 'adula'])
 assert.equal(await digest(service), customized, 'Configure overwrote the consumer service')
 if (!reuse) {
   await ace('generate', ['adula:resource', 'samples', '--module=examples'])
@@ -185,15 +185,15 @@ await ace('tests', ['test'], { env: { ...consumerEnv, NODE_ENV: 'test' } })
 await ace('install', ['adula:install'])
 const capabilities = await ace('capabilities', ['adula:capabilities'])
 assert(
-  capabilities.includes(`# adula-kit capabilities (${kit.version})`),
+  capabilities.includes(`# AdulaJS capabilities (${core.version})`),
   'Packed capability catalog has a stale version'
 )
-// The generated catalog reads this consumer's registry, not only the kit.
+// The generated catalog reads this consumer's registry, not only AdulaJS.
 assert(
   capabilities.includes('### examples') && capabilities.includes('`samples`'),
   'The capability catalog does not list the consumer module and resource'
 )
-assert(capabilities.includes('adula:resource'), 'The catalog is missing the kit commands')
+assert(capabilities.includes('adula:resource'), 'The catalog is missing the AdulaJS commands')
 const lockPath = join(target, 'ui.lock.json')
 const uiLock = JSON.parse(await readFile(lockPath, 'utf8'))
 const registryRoot = join(repo, 'packages/ui/build')
@@ -263,7 +263,7 @@ const agentPath = join(target, 'AGENTS.md')
 const designSkillPath = join(target, '.agents/skills/adula-frontend-design/SKILL.md')
 assert.equal(
   await readFile(designSkillPath, 'utf8'),
-  await readFile(join(repo, 'packages/kit/agent/skills/adula-frontend-design/SKILL.md'), 'utf8'),
+  await readFile(join(repo, 'packages/adula/agent/skills/adula-frontend-design/SKILL.md'), 'utf8'),
   'Packed consumer is missing the current business frontend-design skill'
 )
 await mkdir(join(target, 'docs'), { recursive: true })

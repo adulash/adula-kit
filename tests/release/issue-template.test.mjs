@@ -15,7 +15,7 @@ test('required labels come from the issue forms', async () => {
     'Needed by',
     'Tried',
     'Blocked because',
-    'Proposed kit change',
+    'Proposed AdulaJS change',
     'Reproduction',
     'Acceptance',
   ])
@@ -31,11 +31,11 @@ test('required labels come from the issue forms', async () => {
 
 test('an issue submitted through the gap form passes, with an empty optional field', async () => {
   const body = render({
-    Package: '@adula/kit 1.0.0',
+    Package: 'adula 1.0.0',
     'Needed by': 'Per-record upload grants.',
     Tried: 'Role rules.',
     'Blocked because': 'POST /attachments checks resource-wide rules only.',
-    'Proposed kit change': 'attachments.grant().',
+    'Proposed AdulaJS change': 'attachments.grant().',
     Reproduction: '1. create-app\n2. upload from a module page',
     Acceptance: 'A PostgreSQL test.',
     Workaround: '_No response_',
