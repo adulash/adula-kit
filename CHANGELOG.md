@@ -24,6 +24,9 @@ added. Upgrade 1.x applications with the three steps in
   the `adula.version` setting and processed listener names (`adula.*`).
 * Files: the routes preload is `start/adula_routes.ts`; the gap log is `GAPS.md`;
   managed markers are `<!-- adula:start -->` / `<!-- adula:end -->`.
+* HTTP: outgoing webhooks send `User-Agent: adula-webhooks` and workflow `http` steps
+  `adula-workflows`. Receivers that filter on the 1.x values must accept these;
+  signature headers (`X-Adula-*`) are unchanged.
 * Release gate: `latest` accepts 2.x under ADR 038's owner-authorization rule. CI runs
   the genuine upgrade from the published 1.2.0 and the new `pnpm check:naming` gate.
 

@@ -1,10 +1,10 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdir, mkdtemp, readFile, rm, writeFile, access } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rename, rm, writeFile, access } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { rewriteManifest, rewriteSource, upgradeApplication } from '../src/upgrade.mjs'
+import { lockedManager, rewriteManifest, rewriteSource, upgradeApplication } from '../src/upgrade.mjs'
 
 // 1.x names, spelled once; this suite exercises the upgrade away from them.
 const RETIRED = 'kit'
@@ -26,6 +26,10 @@ async function legacyApplication() {
     'eslint.config.js': `export default { rules: { 'adula/no-${RETIRED}-patching': 'error' } }\n`,
     'ui.lock.json': JSON.stringify({ version: '1.2.0', [`${RETIRED}Compatibility`]: '1.2', files: {} }),
     'node_modules/untouched.js': `import x from '${CORE}'\n`,
+    'build/untouched.js': `import x from '${CORE}'\n`,
+    // Names that merely contain "lock", and a nested directory named like generated output.
+    'inertia/components/clock.tsx': `import type { Actor } from '${CORE}/types'\n`,
+    'app/modules/build/services/stock_lock.ts': `import { ${Retired}Error } from '${CORE}'\n`,
   }
   for (const [path, text] of Object.entries(files)) {
     await mkdir(join(root, path, '..'), { recursive: true })
@@ -72,6 +76,12 @@ test('upgrade rewrites a 1.x application and renames its routes preload', async 
     const lock = JSON.parse(await readFile(join(root, 'ui.lock.json'), 'utf8'))
     assert.deepEqual(Object.keys(lock), ['version', 'adulaCompatibility', 'files'])
     assert.match(await readFile(join(root, 'node_modules/untouched.js'), 'utf8'), new RegExp(CORE))
+    assert.match(await readFile(join(root, 'build/untouched.js'), 'utf8'), new RegExp(CORE))
+    assert.match(await readFile(join(root, 'inertia/components/clock.tsx'), 'utf8'), /'adula\/types'/)
+    assert.equal(
+      await readFile(join(root, 'app/modules/build/services/stock_lock.ts'), 'utf8'),
+      `import { AdulaError } from 'adula'\n`
+    )
     assert.deepEqual(await upgradeApplication(root, { version: '2.0.0' }), [], 'second run is a no-op')
   } finally {
     await rm(root, { recursive: true, force: true })
@@ -87,6 +97,33 @@ test('upgrade refuses uncommitted git changes unless forced', async () => {
     const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))
     assert.equal(pkg.dependencies[CORE], '1.2.0', 'a refused upgrade wrote nothing')
     assert.ok((await upgradeApplication(root, { version: '2.0.0', force: true })).length)
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('the git guard also covers an application inside a larger repository', async () => {
+  const repository = await mkdtemp(join(tmpdir(), 'adula-monorepo-'))
+  try {
+    if (spawnSync('git', ['init', '--quiet'], { cwd: repository }).status !== 0) return
+    const app = await legacyApplication()
+    const nested = join(repository, 'apps', 'erp')
+    await mkdir(join(repository, 'apps'), { recursive: true })
+    await rename(app, nested)
+    await assert.rejects(upgradeApplication(nested, { version: '2.0.0' }), /Commit or stash/)
+  } finally {
+    await rm(repository, { recursive: true, force: true })
+  }
+})
+
+test('the install uses the package manager the application already locks', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'adula-manager-'))
+  try {
+    assert.equal(await lockedManager(root), 'pnpm')
+    await writeFile(join(root, 'package-lock.json'), '{}')
+    assert.equal(await lockedManager(root), 'npm')
+    await writeFile(join(root, 'pnpm-lock.yaml'), '')
+    assert.equal(await lockedManager(root), 'pnpm')
   } finally {
     await rm(root, { recursive: true, force: true })
   }

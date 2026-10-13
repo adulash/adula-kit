@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { findRetiredNames } from '../../scripts/check-naming.mjs'
+import { findRetiredNames } from '../../scripts/naming.mjs'
 
 const retired = ['k', 'it'].join('')
 const Retired = retired[0].toUpperCase() + retired.slice(1)

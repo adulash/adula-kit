@@ -9,6 +9,9 @@ import {
   renamedMigration,
 } from './legacy.js'
 
+/** LIKE pattern for names under the 1.x path; `_` and `%` inside the path are literal. */
+const LEGACY_ROWS = `${LEGACY_MIGRATIONS_PATH.replace(/[\\%_]/g, '\\$&')}/%`
+
 /**
  * Renames the `adonis_schema` rows a 1.x installation recorded under
  * `node_modules/@adula/<1.x name>/...` to the 2.0 paths, in one transaction. Lucid
@@ -19,7 +22,7 @@ export async function renameRecordedMigrations(knex: Knex, table = 'adonis_schem
   if (!(await knex.schema.hasTable(table))) return 0
   return knex.transaction(async (trx) => {
     const rows: { id: number; name: string }[] = await trx(table)
-      .where('name', 'like', `${LEGACY_MIGRATIONS_PATH}/%`)
+      .where('name', 'like', LEGACY_ROWS)
       .select('id', 'name')
       .forUpdate()
     const unknown = rows.filter((row) => !renamedMigration(row.name))
@@ -40,7 +43,7 @@ export async function renameRecordedMigrations(knex: Knex, table = 'adonis_schem
 /** True while 1.x migration rows still wait for `adula:upgrade`. */
 export async function hasLegacyMigrations(knex: Knex, table = 'adonis_schema') {
   if (!(await knex.schema.hasTable(table))) return false
-  return Boolean(await knex(table).where('name', 'like', `${LEGACY_MIGRATIONS_PATH}/%`).first('id'))
+  return Boolean(await knex(table).where('name', 'like', LEGACY_ROWS).first('id'))
 }
 
 /** Renames the 1.x gap log to GAPS.md unless the application already has one. */

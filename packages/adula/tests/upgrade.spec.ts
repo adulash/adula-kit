@@ -82,13 +82,20 @@ test.group('Upgrade from 1.x names', (group) => {
       name: `${LEGACY_MIGRATIONS_PATH}/${legacyMigrationFile(name)}`,
       batch: 1,
     }))
-    await db(TABLE).insert([...legacy, { name: 'database/migrations/1_create_users', batch: 1 }])
+    // `_` is a LIKE wildcard; a look-alike path must neither match nor abort the rename.
+    const lookalike = `${LEGACY_MIGRATIONS_PATH.replace('_', 'x')}/1_other`
+    await db(TABLE).insert([
+      ...legacy,
+      { name: 'database/migrations/1_create_users', batch: 1 },
+      { name: lookalike, batch: 1 },
+    ])
     assert.isTrue(await hasLegacyMigrations(db, TABLE))
     assert.equal(await renameRecordedMigrations(db, TABLE), MIGRATIONS_BEFORE_2_0.length)
     const names = await db(TABLE).orderBy('id').pluck('name')
     assert.deepEqual(names, [
       ...MIGRATIONS_BEFORE_2_0.map((name) => `${MIGRATIONS_PATH}/${name}`),
       'database/migrations/1_create_users',
+      lookalike,
     ])
     assert.isFalse(await hasLegacyMigrations(db, TABLE))
     assert.equal(await renameRecordedMigrations(db, TABLE), 0)

@@ -21,9 +21,10 @@ import {
   LOCAL_PACKAGES,
   packageArchive,
 } from './project.mjs'
-import { upgradeApplication } from './upgrade.mjs'
+import { lockedManager, upgradeApplication } from './upgrade.mjs'
 import {
   run,
+  npmEntry,
   packageManager,
   packageManagerBin,
   freePort,
@@ -107,8 +108,14 @@ async function upgrade(positionals, values) {
   }
   for (const path of changed) console.log(`updated ${path}`)
   if (!values['no-install']) {
-    const manager = await packageManager()
-    await run(manager[0], [...manager.slice(1), 'install'], { cwd: root })
+    // Keep the application's own package manager; the bundled pnpm serves pnpm projects.
+    const locked = await lockedManager(root)
+    if (locked === 'yarn') console.log('\nRun yarn install, then continue with the steps below.')
+    else {
+      const manager =
+        locked === 'npm' ? [process.execPath, await npmEntry()] : await packageManager()
+      await run(manager[0], [...manager.slice(1), 'install'], { cwd: root })
+    }
   }
   console.log(
     `\nNext, after a database backup:\n  node ace adula:upgrade\n  ADULA_ADMIN_EMAIL=<email> node ace adula:install\n  node ace adula:doctor`

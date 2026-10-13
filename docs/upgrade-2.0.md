@@ -32,7 +32,8 @@ It adds no features: packages, identifiers and a few file and database names cha
 
    This updates `package.json`, every import of `@adula/kit`, the identifiers in the table,
    the routes preload in `adonisrc.ts`, the lint rule `adula/no-core-patching` and
-   `ui.lock.json`, then runs `pnpm install`. It prints each file it changed. Use
+   `ui.lock.json`, then installs with the package manager your lockfile names (pnpm or
+   npm; for yarn it asks you to run `yarn install`). It prints each file it changed. Use
    `--no-install` to install yourself.
 
 2. Rename the migration history and managed files, then migrate:
