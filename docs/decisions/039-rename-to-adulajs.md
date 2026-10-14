@@ -4,7 +4,9 @@ Date: 2026-10-13. Status: accepted by the owner on 2026-10-13 in conversation: �
 تسمية المشروع الى AdulaJS» (I want to rename the project to AdulaJS), «نعم تغيير جذري،
 يمكن فقط استعمال كلمة adula كاختصار، كلمة kit تحذف بشكل نهائي» (yes, a radical change;
 only the word adula may be used as a short form; the word kit is removed for good), and
-«نفذ الخطة كاملة» (carry out the whole plan). Issue #78.
+«نفذ الخطة كاملة» (carry out the whole plan). Issue #78. The owner authorized publishing
+2.0.0 on `latest` on 2026-10-14: «أأذن بنشر 2.0.0 على latest» (I authorize publishing
+2.0.0 on latest).
 
 ## Context
 

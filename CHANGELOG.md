@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 — unreleased
+## 2.0.0 — 2026-10-14
 
 Major release: the project is renamed to **AdulaJS** (ADR 039, #78). No features are
 added. Upgrade 1.x applications with the three steps in
