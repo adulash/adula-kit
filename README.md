@@ -20,9 +20,8 @@ npx create-adula-app@latest my-app
 </div>
 
 > [!NOTE]
-> **2.0.0 renames the project to AdulaJS** ([ADR 039](docs/decisions/039-rename-to-adulajs.md)) and is awaiting publication.
-> Until it is on npm, create applications with the 1.2.0 initializer: `npm create @adula/app@latest my-app`.
-> Existing applications follow the [2.0 upgrade guide](docs/upgrade-2.0.md).
+> **AdulaJS 2.0** is the 1.x framework under its new name ([ADR 039](docs/decisions/039-rename-to-adulajs.md)).
+> Applications on 1.x upgrade with `npx create-adula-app@latest upgrade`; see the [2.0 upgrade guide](docs/upgrade-2.0.md).
 
 ---
 
