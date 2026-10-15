@@ -154,13 +154,13 @@
     },
     {
       "version": "2.0.0",
-      "authorized": false,
-      "reviewedBy": "",
-      "reviewedAt": "",
+      "authorized": true,
+      "reviewedBy": "repository owner (conversation)",
+      "reviewedAt": "2026-10-14",
       "evidence": [
         "docs/evidence/release-2-0-0-2026-10-13.json"
       ],
-      "remaining": "Prepared on 2026-10-13 (ADR 039, issue #78): the AdulaJS rename to adula, @adula/ui and create-adula-app. Publication waits for the owner to rename the repository to adulash/adulajs, configure npm trusted publishing for adula and create-adula-app, and authorize this exact version."
+      "remaining": "Authorized by the owner on 2026-10-14 (ADR 038, ADR 039): «أأذن بنشر 2.0.0 على latest». The repository is adulash/adulajs and npm trusted publishers for adula, @adula/ui and create-adula-app name it. Publication path: v2.0.0 tag on the merge commit, then Release npm packages on latest."
     }
   ]
 }
