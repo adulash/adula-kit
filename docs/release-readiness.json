@@ -1,6 +1,6 @@
 {
   "target": "1.0.0",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "phases": [
     {
       "id": 0,
@@ -162,6 +162,16 @@
         "docs/evidence/publication-2-0-0-2026-10-15.json"
       ],
       "remaining": "Authorized by the owner on 2026-10-14 (ADR 038, ADR 039) and published on 2026-10-15: 2.0.0 of adula, @adula/ui and create-adula-app is on npm latest with provenance (docs/evidence/publication-2-0-0-2026-10-15.json)."
+    },
+    {
+      "version": "2.1.0",
+      "authorized": true,
+      "reviewedBy": "repository owner (conversation)",
+      "reviewedAt": "2026-10-17",
+      "evidence": [
+        "docs/evidence/release-2-1-0-2026-10-17.json"
+      ],
+      "remaining": "Authorized by the owner on 2026-10-17 (ADR 038, ADR 039). Publication through release.yml from the v2.1.0 tag on reviewed main, then a publication record."
     }
   ]
 }
