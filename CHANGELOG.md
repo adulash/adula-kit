@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 2.1.0 — authorized 2026-10-17
+
+Minor release: new defaults for the copied interface and a refreshed README. No API or
+migration changes; existing applications keep their project-owned styles until they
+reinstall UI.
 
 * UI: the default theme uses the shadcn/ui neutral palette (`oklch` values) instead of the
   green identity, and the default font is IBM Plex Sans Arabic

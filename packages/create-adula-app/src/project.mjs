@@ -4,7 +4,7 @@ import { basename, dirname, isAbsolute, relative, resolve, join } from 'node:pat
 /** Packages that `--packages` can supply as local archives instead of the registry. */
 export const LOCAL_PACKAGES = ['adula', '@adula/ui']
 
-/** The archive name pnpm pack writes: adula -> adula-2.0.0.tgz, @adula/ui -> adula-ui-2.0.0.tgz. */
+/** The archive name pnpm pack writes: adula -> adula-2.1.0.tgz, @adula/ui -> adula-ui-2.1.0.tgz. */
 export function packageArchive(name, version) {
   const base = name.replace(/^@/, '').replace('/', '-')
   return version ? `${base}-${version}.tgz` : `${base}.tgz`
