@@ -88,7 +88,7 @@ await stage('module', async () => {
   // Application-owned Drive configuration makes isolated recovery use a separate disk root.
   const drivePath = join(target, 'config/drive.ts')
   await writeFile(drivePath, (await readFile(drivePath, 'utf8')).replace("location: app.makePath('storage/uploads')", "location: process.env.MEDICAL_UPLOADS_ROOT ?? app.makePath('storage/uploads')"))
-  await writeFile(join(target, 'docs/design-identity.md'), '# Disposable acceptance-consumer identity\n\nThe owner confirmed on 2026-09-22 that this is a temporary AdulaJS test and no company identity is required. The displayed name labels synthetic test data. Reuse existing AdulaJS tokens and Noto Sans Arabic; there is no company logo or brand approval to obtain. Component/page customizations exist only to test project ownership and upgrade preservation.\n')
+  await writeFile(join(target, 'docs/design-identity.md'), '# Disposable acceptance-consumer identity\n\nThe owner confirmed on 2026-09-22 that this is a temporary AdulaJS test and no company identity is required. The displayed name labels synthetic test data. Reuse existing AdulaJS tokens and IBM Plex Sans Arabic; there is no company logo or brand approval to obtain. Component/page customizations exist only to test project ownership and upgrade preservation.\n')
   // Real project-owned customization, retained for later upgrade comparison.
   const button = join(target, 'inertia/components/ui/button.tsx')
   const buttonSource = await readFile(button, 'utf8')

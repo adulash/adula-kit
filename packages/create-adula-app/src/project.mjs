@@ -190,7 +190,7 @@ export function brandCss(identity) {
     css += `:root, .dark { --primary: ${identity.primaryColor}; --primary-foreground: ${foreground}; --ring: ${identity.primaryColor}; }\n`
   }
   if (identity.fontFamily)
-    css += `:root { --brand-font: "${identity.fontFamily}", "Noto Sans Arabic"; }\n`
+    css += `:root { --brand-font: "${identity.fontFamily}", "IBM Plex Sans Arabic"; }\n`
   return css
 }
 
@@ -244,7 +244,7 @@ export async function renderProject(target, template, { name, identity, packageF
       'brand.company'
     )
   files['docs/design-identity.md'] =
-    `# Company identity\n\nSource: project creator, supplied during installation.\n\n- Company: ${identity.company}\n- Logo: ${identity.logoPath ?? 'Pending; request it before further visual design.'}\n- Primary color: ${identity.primaryColor ?? 'Pending; existing AdulaJS colors are provisional.'}\n- Font: ${identity.fontFamily ?? 'Pending; Noto Sans Arabic is provisional.'}\n- Guidelines: ${identity.guidelines ?? 'Pending; request the company brand guide.'}\n\nUse the bundled adula-frontend-design skill for business interfaces. Keep shadcn/ui and Dialog defaults. A specified font must be licensed and installed locally or added as a project-owned asset; do not fetch unprovided fonts or branding.\n`
+    `# Company identity\n\nSource: project creator, supplied during installation.\n\n- Company: ${identity.company}\n- Logo: ${identity.logoPath ?? 'Pending; request it before further visual design.'}\n- Primary color: ${identity.primaryColor ?? 'Pending; existing AdulaJS colors are provisional.'}\n- Font: ${identity.fontFamily ?? 'Pending; IBM Plex Sans Arabic is provisional.'}\n- Guidelines: ${identity.guidelines ?? 'Pending; request the company brand guide.'}\n\nUse the bundled adula-frontend-design skill for business interfaces. Keep shadcn/ui and Dialog defaults. A specified font must be licensed and installed locally or added as a project-owned asset; do not fetch unprovided fonts or branding.\n`
   files['AGENTS.md'] =
     '# Project rules\n\nRead docs/design-identity.md before visual design. Request only missing identity items. Application code and UI belong to this project; never edit installed AdulaJS packages (adula, @adula/*).\n'
   for (const [path, contents] of Object.entries(files)) await writeNew(target, path, contents)

@@ -88,7 +88,7 @@
     "@adula/ui": "workspace:*",
     "@aws-sdk/client-s3": "3.1134.0",
     "@aws-sdk/s3-request-presigner": "3.1134.0",
-    "@fontsource/noto-sans-arabic": "5.3.0",
+    "@fontsource/ibm-plex-sans-arabic": "5.3.0",
     "@inertiajs/core": "3.7.1",
     "@inertiajs/react": "3.7.0",
     "@jrmc/adonis-attachment": "5.2.1",

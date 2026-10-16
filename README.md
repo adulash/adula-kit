@@ -1,21 +1,26 @@
 <div align="center">
 
+<img src="docs/assets/adulajs-hero.svg" alt="AdulaJS: the TypeScript framework for business applications. One resource declaration becomes a database table, permissions, screens, a REST API and tests." width="100%">
+
 # AdulaJS
 
-**Business applications on AdonisJS, from one command to production.**
+**The TypeScript framework for business applications, from one command to production.**
 
 Declare a resource once and get its table, permissions, screens, API and tests.
 Arabic-first, permission-safe and built to be extended by AI coding agents.
 
-[![npm](https://img.shields.io/npm/v/adula?label=adula&color=0a7d5a)](https://www.npmjs.com/package/adula)
+[![npm](https://img.shields.io/npm/v/adula?label=adula&color=171717)](https://www.npmjs.com/package/adula)
 [![CI](https://github.com/adulash/adulajs/actions/workflows/ci.yml/badge.svg)](https://github.com/adulash/adulajs/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Node.js 24+](https://img.shields.io/badge/node-%3E%3D24-339933)
-![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-336791)
+[![License: MIT](https://img.shields.io/badge/license-MIT-171717.svg)](LICENSE)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![Node.js 24+](https://img.shields.io/badge/node-%3E%3D24-339933?logo=nodedotjs&logoColor=white)
+![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-336791?logo=postgresql&logoColor=white)
 
 ```sh
 npx create-adula-app@latest my-app
 ```
+
+[Quick start](#quick-start) · [Features](#whats-in-the-box) · [AI agents](#built-for-ai-coding-agents) · [Built with](#built-with) · [Docs](docs/README.md)
 
 </div>
 
@@ -28,9 +33,9 @@ npx create-adula-app@latest my-app
 ## Why AdulaJS
 
 Most business systems repeat the same work: tables, lists, forms, roles, approvals,
-notifications, imports, printing, audit history and backups. AdulaJS turns that work into
-a framework on top of [AdonisJS 7](https://adonisjs.com), PostgreSQL 17 and React 19 with
-Inertia, so your team (or your agent) writes only what is specific to the business.
+notifications, imports, printing, audit history and backups. AdulaJS is a TypeScript
+framework built for business applications: it turns that work into declarations and
+services, so your team (or your agent) writes only what is specific to the business.
 
 - **One declaration, a whole module.** `defineResource` describes fields, forms, lists,
   actions and scope. AdulaJS derives the table, validation, serialization, HTTP routes,
@@ -54,8 +59,8 @@ Inertia, so your team (or your agent) writes only what is specific to the busine
 npx create-adula-app@latest my-app
 ```
 
-The creator starts from an empty folder and does the rest. It installs AdonisJS and
-AdulaJS, starts PostgreSQL 17 and Redis 7 in Docker (or uses your existing services),
+The creator starts from an empty folder and does the rest. It installs AdulaJS and
+its stack, starts PostgreSQL 17 and Redis 7 in Docker (or uses your existing services),
 creates the development and test databases, runs migrations, creates the administrator,
 asks for your company identity and builds the application.
 
@@ -140,6 +145,19 @@ AdulaJS assumes part of your code will be written by agents, and gives them rail
 - **Gaps, not workarounds.** When something is missing, the agent records it in `GAPS.md`,
   and `node ace adula:gaps report` prepares a prefilled issue. Patching installed packages
   is blocked by lint and reported by doctor.
+
+## Built with
+
+AdulaJS composes proven open-source tools instead of reinventing them:
+
+| Layer | Technology |
+|---|---|
+| **Language** | [TypeScript](https://www.typescriptlang.org) 6, strict, on [Node.js](https://nodejs.org) 24+ |
+| **Server** | [AdonisJS](https://adonisjs.com) 7 with Lucid ORM and VineJS validation |
+| **Database** | [PostgreSQL](https://www.postgresql.org) 17, with [Redis](https://redis.io) 7 |
+| **Authorization** | [CASL](https://casl.js.org) 7, compiled to SQL |
+| **Frontend** | [React](https://react.dev) 19 with [Inertia](https://inertiajs.com) 3, built by [Vite](https://vite.dev) |
+| **Interface** | [shadcn/ui](https://ui.shadcn.com) on [Radix UI](https://www.radix-ui.com), [Tailwind CSS](https://tailwindcss.com) 4 and IBM Plex Sans Arabic |
 
 ## Packages
 

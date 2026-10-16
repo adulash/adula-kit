@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="580" viewBox="0 0 1200 580" role="img" aria-labelledby="t d">
+<title id="t">AdulaJS</title>
+<desc id="d">AdulaJS, the TypeScript framework for business applications: one resource declaration becomes a database table, permissions, screens, a REST API and tests.</desc>
+<style>
+text{font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+.mono text,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace}
+g,text,rect{transform-box:fill-box}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}.cursor{animation:blink 1.1s steps(1) infinite}
+@keyframes glow{0%,100%{opacity:.55}50%{opacity:.9}}.glow{animation:glow 6s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+@keyframes a0{0%,13.33%{opacity:0;transform:translateY(8px)}17.08%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a0{animation:a0 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a1{0%,16.00%{opacity:0;transform:translateY(8px)}19.75%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a1{animation:a1 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a2{0%,18.67%{opacity:0;transform:translateY(8px)}22.42%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a2{animation:a2 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a3{0%,21.33%{opacity:0;transform:translateY(8px)}25.08%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a3{animation:a3 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a4{0%,24.00%{opacity:0;transform:translateY(8px)}27.75%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a4{animation:a4 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a5{0%,26.67%{opacity:0;transform:translateY(8px)}30.42%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a5{animation:a5 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a6{0%,29.33%{opacity:0;transform:translateY(8px)}33.08%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a6{animation:a6 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a7{0%,35.42%{opacity:0;transform:translateY(8px)}39.17%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a7{animation:a7 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes l8{0%,36.67%{fill:#171717}39.17%,90.83%{fill:#fafafa}96.67%,100%{fill:#171717}}.l8{animation:l8 12s ease infinite both}
+@keyframes l9{0%,36.67%{fill:#a3a3a3}39.17%,90.83%{fill:#0a0a0a}96.67%,100%{fill:#a3a3a3}}.l9{animation:l9 12s ease infinite both}
+@keyframes a10{0%,38.08%{opacity:0;transform:translateY(8px)}41.83%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a10{animation:a10 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes l11{0%,39.33%{fill:#171717}41.83%,90.83%{fill:#fafafa}96.67%,100%{fill:#171717}}.l11{animation:l11 12s ease infinite both}
+@keyframes l12{0%,39.33%{fill:#a3a3a3}41.83%,90.83%{fill:#0a0a0a}96.67%,100%{fill:#a3a3a3}}.l12{animation:l12 12s ease infinite both}
+@keyframes a13{0%,40.75%{opacity:0;transform:translateY(8px)}44.50%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a13{animation:a13 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes l14{0%,42.00%{fill:#171717}44.50%,90.83%{fill:#fafafa}96.67%,100%{fill:#171717}}.l14{animation:l14 12s ease infinite both}
+@keyframes l15{0%,42.00%{fill:#a3a3a3}44.50%,90.83%{fill:#0a0a0a}96.67%,100%{fill:#a3a3a3}}.l15{animation:l15 12s ease infinite both}
+@keyframes a16{0%,43.42%{opacity:0;transform:translateY(8px)}47.17%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a16{animation:a16 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes l17{0%,44.67%{fill:#171717}47.17%,90.83%{fill:#fafafa}96.67%,100%{fill:#171717}}.l17{animation:l17 12s ease infinite both}
+@keyframes l18{0%,44.67%{fill:#a3a3a3}47.17%,90.83%{fill:#0a0a0a}96.67%,100%{fill:#a3a3a3}}.l18{animation:l18 12s ease infinite both}
+@keyframes a19{0%,46.08%{opacity:0;transform:translateY(8px)}49.83%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a19{animation:a19 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes l20{0%,47.33%{fill:#171717}49.83%,90.83%{fill:#fafafa}96.67%,100%{fill:#171717}}.l20{animation:l20 12s ease infinite both}
+@keyframes l21{0%,47.33%{fill:#a3a3a3}49.83%,90.83%{fill:#0a0a0a}96.67%,100%{fill:#a3a3a3}}.l21{animation:l21 12s ease infinite both}
+@keyframes a22{0%,55.00%{opacity:0;transform:translateY(8px)}58.75%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a22{animation:a22 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a23{0%,57.33%{opacity:0;transform:translateY(8px)}61.08%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a23{animation:a23 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a24{0%,59.67%{opacity:0;transform:translateY(8px)}63.42%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a24{animation:a24 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a25{0%,25.00%{opacity:0;transform:translateY(8px)}28.75%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a25{animation:a25 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes d26{0%,26.67%{stroke-dashoffset:14}31.67%,90.83%{stroke-dashoffset:0}96.67%,100%{stroke-dashoffset:14}}.d26{stroke-dasharray:14;animation:d26 12s ease-in-out infinite both}
+@keyframes a27{0%,27.50%{opacity:0;transform:translateY(8px)}31.25%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a27{animation:a27 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes d28{0%,29.17%{stroke-dashoffset:14}34.17%,90.83%{stroke-dashoffset:0}96.67%,100%{stroke-dashoffset:14}}.d28{stroke-dasharray:14;animation:d28 12s ease-in-out infinite both}
+@keyframes a29{0%,30.00%{opacity:0;transform:translateY(8px)}33.75%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a29{animation:a29 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes d30{0%,31.67%{stroke-dashoffset:14}36.67%,90.83%{stroke-dashoffset:0}96.67%,100%{stroke-dashoffset:14}}.d30{stroke-dasharray:14;animation:d30 12s ease-in-out infinite both}
+@keyframes a31{0%,32.50%{opacity:0;transform:translateY(8px)}36.25%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a31{animation:a31 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes d32{0%,34.17%{stroke-dashoffset:14}39.17%,90.83%{stroke-dashoffset:0}96.67%,100%{stroke-dashoffset:14}}.d32{stroke-dasharray:14;animation:d32 12s ease-in-out infinite both}
+@keyframes a33{0%,9.17%{opacity:0;transform:translateY(8px)}12.92%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a33{animation:a33 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes d34{0%,32.50%{stroke-dashoffset:60}37.50%,90.83%{stroke-dashoffset:0}96.67%,100%{stroke-dashoffset:60}}.d34{stroke-dasharray:60;animation:d34 12s ease-in-out infinite both}
+@keyframes a35{0%,49.17%{opacity:0;transform:translateY(8px)}52.92%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a35{animation:a35 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a36{0%,51.67%{opacity:0;transform:translateY(8px)}55.42%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a36{animation:a36 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a37{0%,0.83%{opacity:0;transform:translateY(8px)}4.58%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a37{animation:a37 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a38{0%,2.92%{opacity:0;transform:translateY(8px)}6.67%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a38{animation:a38 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a39{0%,5.42%{opacity:0;transform:translateY(8px)}9.17%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a39{animation:a39 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a40{0%,7.08%{opacity:0;transform:translateY(8px)}10.83%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a40{animation:a40 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes a41{0%,9.17%{opacity:0;transform:translateY(8px)}12.92%,90.83%{opacity:1;transform:none}96.67%,100%{opacity:0;transform:none}}.a41{animation:a41 12s cubic-bezier(.2,.7,.2,1) infinite both}
+@keyframes s42{0%,10.83%{transform:translateX(0)}24.17%,90.83%{transform:translateX(322px)}96.67%,100%{transform:translateX(0)}}.s42{animation:s42 12s steps(34,end) infinite both}
+@keyframes s43{0%,10.83%{transform:translateX(0)}24.17%,90.83%{transform:translateX(320px)}96.67%,100%{transform:translateX(0)}}.s43{animation:s43 12s steps(34,end) infinite both}
+</style>
+<defs>
+  <clipPath id="cmd"><rect x="1" y="1" width="438" height="52" rx="11"/></clipPath>
+  <radialGradient id="g1" cx="0.78" cy="0.35" r="0.6"><stop offset="0" stop-color="#3f3f46" stop-opacity="0.55"/><stop offset="1" stop-color="#0a0a0a" stop-opacity="0"/></radialGradient>
+  <radialGradient id="g2" cx="0.1" cy="0.1" r="0.5"><stop offset="0" stop-color="#27272a" stop-opacity="0.6"/><stop offset="1" stop-color="#0a0a0a" stop-opacity="0"/></radialGradient>
+  <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.035"/></pattern>
+  <marker id="tip" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#737373"/></marker>
+  <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity="0.5"/></filter>
+</defs>
+<rect width="1200" height="580" rx="20" fill="#0a0a0a"/>
+<rect width="1200" height="580" rx="20" fill="url(#grid)"/>
+<rect class="glow" width="1200" height="580" rx="20" fill="url(#g1)"/>
+<rect width="1200" height="580" rx="20" fill="url(#g2)"/>
+<rect x="0.5" y="0.5" width="1199" height="579" rx="19.5" fill="none" stroke="#262626"/>
+
+<g class="a37"><g transform="translate(64 70)"><rect width="246" height="30" rx="15" fill="#171717" stroke="#2e2e2e"/><circle cx="18" cy="15" r="4" fill="#4ade80"/><text x="32" y="20" font-size="13" fill="#a3a3a3">v2.0 · open source · MIT</text></g></g>
+<text class="a38" x="62" y="178" font-size="76" font-weight="800" fill="#fafafa" letter-spacing="-2.5">AdulaJS</text>
+<text class="a39" x="64" y="226" font-size="25" fill="#e5e5e5" font-weight="600" letter-spacing="-0.3">The TypeScript framework</text>
+<text class="a40" x="64" y="258" font-size="25" fill="#a3a3a3" font-weight="600" letter-spacing="-0.3">for business applications.</text>
+<g class="a41"><g class="mono" transform="translate(64 296)"><rect width="440" height="54" rx="12" fill="#171717" stroke="#2e2e2e"/><text x="20" y="33" font-size="16.5" fill="#737373">$</text><g clip-path="url(#cmd)"><text x="40" y="33" font-size="16.5" fill="#fafafa">npx create-adula-app@latest my-app</text><rect class="s42" x="38" y="12" width="330" height="30" fill="#171717"/><g class="s43"><rect class="cursor" x="40" y="18" width="9" height="20" fill="#fafafa"/></g></g></g></g>
+<g class="a25"><g transform="translate(64 410)"><circle cx="9" cy="-5" r="9" fill="#171717" stroke="#333"/><path class="d26" d="M5 -5 l3 3 l5 -6" fill="none" stroke="#fafafa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><text x="28" y="0" font-size="15.5" fill="#d4d4d4">One declaration: table, screens, API and tests</text></g></g>
+  <g class="a27"><g transform="translate(64 440)"><circle cx="9" cy="-5" r="9" fill="#171717" stroke="#333"/><path class="d28" d="M5 -5 l3 3 l5 -6" fill="none" stroke="#fafafa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><text x="28" y="0" font-size="15.5" fill="#d4d4d4">Permissions enforced in the UI, services and SQL</text></g></g>
+  <g class="a29"><g transform="translate(64 470)"><circle cx="9" cy="-5" r="9" fill="#171717" stroke="#333"/><path class="d30" d="M5 -5 l3 3 l5 -6" fill="none" stroke="#fafafa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><text x="28" y="0" font-size="15.5" fill="#d4d4d4">Arabic-first RTL interface you own</text></g></g>
+  <g class="a31"><g transform="translate(64 500)"><circle cx="9" cy="-5" r="9" fill="#171717" stroke="#333"/><path class="d32" d="M5 -5 l3 3 l5 -6" fill="none" stroke="#fafafa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><text x="28" y="0" font-size="15.5" fill="#d4d4d4">Built to be extended by AI coding agents</text></g></g>
+
+<g class="a33" filter="url(#shadow)">
+  <rect x="600" y="64" width="536" height="236" rx="14" fill="#111111" stroke="#2a2a2a"/>
+  <path d="M600 78a14 14 0 0 1 14-14h508a14 14 0 0 1 14 14v18H600z" fill="#171717"/>
+  <circle cx="622" cy="82" r="5" fill="#3f3f46"/><circle cx="640" cy="82" r="5" fill="#3f3f46"/><circle cx="658" cy="82" r="5" fill="#3f3f46"/>
+  <text x="868" y="87" text-anchor="middle" font-size="12.5" fill="#737373" class="mono">modules/sales/resources/customers.ts</text>
+  <g class="mono" font-size="14.5">
+    <text class="a0" x="628" y="136" xml:space="preserve"><tspan fill="#93c5fd">export default </tspan><tspan fill="#fcd34d">defineResource</tspan><tspan fill="#737373">({</tspan></text>
+    <text class="a1" x="628" y="161" xml:space="preserve">  <tspan fill="#e5e5e5">name</tspan><tspan fill="#737373">: </tspan><tspan fill="#86efac">'customers'</tspan><tspan fill="#737373">,</tspan></text>
+    <text class="a2" x="628" y="186" xml:space="preserve">  <tspan fill="#e5e5e5">label</tspan><tspan fill="#737373">: { </tspan><tspan fill="#e5e5e5">ar</tspan><tspan fill="#737373">: </tspan><tspan fill="#86efac">'العملاء'</tspan><tspan fill="#737373"> },</tspan></text>
+    <text class="a3" x="628" y="211" xml:space="preserve">  <tspan fill="#e5e5e5">fields</tspan><tspan fill="#737373">: { </tspan><tspan fill="#e5e5e5">name</tspan><tspan fill="#737373">: { </tspan><tspan fill="#e5e5e5">type</tspan><tspan fill="#737373">: </tspan><tspan fill="#86efac">'string'</tspan><tspan fill="#737373">, </tspan><tspan fill="#e5e5e5">required</tspan><tspan fill="#737373">: </tspan><tspan fill="#f9a8d4">true</tspan><tspan fill="#737373"> } },</tspan></text>
+    <text class="a4" x="628" y="236" xml:space="preserve">  <tspan fill="#e5e5e5">list</tspan><tspan fill="#737373">: [</tspan><tspan fill="#86efac">'name'</tspan><tspan fill="#737373">, </tspan><tspan fill="#86efac">'email'</tspan><tspan fill="#737373">],</tspan></text>
+    <text class="a5" x="628" y="261" xml:space="preserve">  <tspan fill="#e5e5e5">actions</tspan><tspan fill="#737373">: [</tspan><tspan fill="#86efac">'view'</tspan><tspan fill="#737373">, </tspan><tspan fill="#86efac">'create'</tspan><tspan fill="#737373">, </tspan><tspan fill="#86efac">'update'</tspan><tspan fill="#737373">],</tspan></text>
+    <text class="a6" x="628" y="286" xml:space="preserve"><tspan fill="#737373">})</tspan></text>
+  </g>
+</g>
+<path class="d34" d="M868 304 V 330" stroke="#737373" stroke-width="1.6" fill="none" marker-end="url(#tip)" stroke-dashoffset="60"/>
+<g>
+    <g class="a7"><rect class="l8" x="600" y="338" width="129.60000000000002" height="32" rx="16" stroke="#262626"/><text class="l9" x="664.8" y="359" text-anchor="middle" font-size="13" font-weight="600">Database table</text></g>
+    <g class="a10"><rect class="l11" x="737.6" y="338" width="107.4" height="32" rx="16" stroke="#262626"/><text class="l12" x="791.3000000000001" y="359" text-anchor="middle" font-size="13" font-weight="600">Permissions</text></g>
+    <g class="a13"><rect class="l14" x="853" y="338" width="77.80000000000001" height="32" rx="16" stroke="#262626"/><text class="l15" x="891.9" y="359" text-anchor="middle" font-size="13" font-weight="600">Screens</text></g>
+    <g class="a16"><rect class="l17" x="938.8" y="338" width="85.2" height="32" rx="16" stroke="#262626"/><text class="l18" x="981.4" y="359" text-anchor="middle" font-size="13" font-weight="600">REST API</text></g>
+    <g class="a19"><rect class="l20" x="1032" y="338" width="63" height="32" rx="16" stroke="#262626"/><text class="l21" x="1063.5" y="359" text-anchor="middle" font-size="13" font-weight="600">Tests</text></g>
+</g>
+<g class="a35" filter="url(#shadow)">
+  <rect x="600" y="388" width="536" height="160" rx="14" fill="#ffffff"/>
+  <g class="a36">
+    <text x="1110" y="420" text-anchor="end" font-size="17" font-weight="700" fill="#0a0a0a">العملاء</text>
+    <rect x="616" y="402" width="92" height="28" rx="7" fill="#171717"/><text x="662" y="421" text-anchor="middle" font-size="12.5" font-weight="600" fill="#fafafa">إضافة عميل</text>
+    <rect x="720" y="402" width="150" height="28" rx="7" fill="#ffffff" stroke="#e5e5e5"/><text x="858" y="421" text-anchor="end" font-size="12" fill="#a3a3a3">بحث…</text>
+  </g>
+  <g class="a22"><line x1="616" x2="1120" y1="461" y2="461" stroke="#e5e5e5"/><text x="1110" y="478" text-anchor="end" font-size="13" fill="#0a0a0a">شركة الأفق للتجارة</text><text x="880" y="478" text-anchor="middle" font-size="12.5" fill="#737373" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">info@ufuq.sa</text><rect x="640" y="465" width="40" height="18" rx="9" fill="#171717"/><text x="660" y="478" text-anchor="middle" font-size="11" font-weight="600" fill="#fafafa">نشط</text></g>
+    <g class="a23"><line x1="616" x2="1120" y1="487" y2="487" stroke="#e5e5e5"/><text x="1110" y="504" text-anchor="end" font-size="13" fill="#0a0a0a">مؤسسة النخبة</text><text x="880" y="504" text-anchor="middle" font-size="12.5" fill="#737373" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">sales@nukhba.sa</text><rect x="640" y="491" width="40" height="18" rx="9" fill="#171717"/><text x="660" y="504" text-anchor="middle" font-size="11" font-weight="600" fill="#fafafa">نشط</text></g>
+    <g class="a24"><line x1="616" x2="1120" y1="513" y2="513" stroke="#e5e5e5"/><text x="1110" y="530" text-anchor="end" font-size="13" fill="#0a0a0a">مجموعة الرواد</text><text x="880" y="530" text-anchor="middle" font-size="12.5" fill="#737373" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">hello@rowad.sa</text><rect x="634" y="517" width="52" height="18" rx="9" fill="#f5f5f5"/><text x="660" y="530" text-anchor="middle" font-size="11" font-weight="600" fill="#171717">معلّق</text></g>
+</g>
+</svg>
