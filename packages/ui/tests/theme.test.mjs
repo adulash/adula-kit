@@ -10,7 +10,7 @@ test('inline theme values are variables that the project brand.css can override'
   const inline = block('@theme inline')
   assert.ok(inline.includes('--color-ring: var(--ring);'))
   assert.doesNotMatch(inline, /#[\da-f]{3,8}\b/i)
-  assert.match(inline, /--font-sans: var\(--brand-font, 'Noto Sans Arabic'\), sans-serif;/)
+  assert.match(inline, /--font-sans: var\(--brand-font, 'IBM Plex Sans Arabic'\), sans-serif;/)
   const defaults = block(':root')
   for (const token of new Set([...inline.matchAll(/var\(--([a-z-]+)\)/g)].map((m) => m[1])))
     assert.match(defaults, new RegExp(`--${token}: `), `missing default for --${token}`)

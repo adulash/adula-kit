@@ -94,7 +94,7 @@ export default class Ui extends BaseCommand {
       dependencies: [
         ...new Set([
           ...[...collected.values()].flatMap((item) => item.dependencies ?? []),
-          ...['tw-animate-css', '@fontsource/noto-sans-arabic'].map(
+          ...['tw-animate-css', '@fontsource/ibm-plex-sans-arabic'].map(
             (name) => `${name}@${manifest.dependencies[name]}`
           ),
         ]),
